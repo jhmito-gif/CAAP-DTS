@@ -4,5 +4,5 @@
             {{ __('Dashboard') }}
         </h2>
     </x-slot>
-    <livewire:record-table>
+    <livewire:record-table/>
 </x-app-layout>

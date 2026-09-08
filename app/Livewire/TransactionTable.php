@@ -2,6 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Models\Office;
+use App\Models\Status;
 use App\Models\Record;
 use Livewire\Component;
 use App\Models\Transaction;
@@ -30,7 +32,7 @@ class TransactionTable extends Component
         $userOffice = Auth::user()->office;
 
         // Check if user’s office is part of any transaction (destination or office)
-        $hasAccess = \App\Models\Transaction::where('record_id', $recordId)
+        $hasAccess = Transaction::where('record_id', $recordId)
             ->where(function ($query) use ($userOffice) {
                 $query->where('destination', $userOffice)
                     ->orWhere('office', $userOffice);
@@ -44,8 +46,8 @@ class TransactionTable extends Component
         }
 
         // Load dropdowns
-        $this->officeOptions = \App\Models\Office::pluck('name', 'name')->toArray();
-        $this->statusOptions = \App\Models\Status::pluck('name', 'name')->toArray();
+        $this->officeOptions = Office::pluck('name', 'name')->toArray();
+        $this->statusOptions = Status::pluck('name', 'name')->toArray();
     }
 
     public function sendTransaction()
@@ -73,7 +75,7 @@ class TransactionTable extends Component
 
     public function markAsReceived($id)
     {
-        $transaction = \App\Models\Transaction::find($id);
+        $transaction = Transaction::find($id);
 
         if ($transaction && !$transaction->date_recieved) {
             $transaction->update([

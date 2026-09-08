@@ -4,6 +4,6 @@
             {{ __('Incoming Records') }}
         </h2>
     </x-slot>
-    <livewire:incoming-table>
-    <livewire:create-incoming>
+    <livewire:incoming-table/>
+    <livewire:create-incoming/>
 </x-app-layout>

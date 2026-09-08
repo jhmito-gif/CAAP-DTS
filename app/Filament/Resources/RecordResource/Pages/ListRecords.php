@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\RecordResource\Pages;
 
+use Filament\Actions\CreateAction;
 use App\Filament\Resources\RecordResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords as BaseListRecords;
@@ -13,7 +14,7 @@ class ListRecords extends BaseListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 }

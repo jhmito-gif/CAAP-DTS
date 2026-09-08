@@ -7,7 +7,7 @@
  
 
 
-    <livewire:outgoing-table>
-    <livewire:create-outgoing>
+    <livewire:outgoing-table/>
+    <livewire:create-outgoing/>
 
 </x-app-layout>

@@ -2,11 +2,17 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\AccessResource\Pages\ListAccesses;
+use App\Filament\Resources\AccessResource\Pages\CreateAccess;
+use App\Filament\Resources\AccessResource\Pages\EditAccess;
 use App\Filament\Resources\AccessResource\Pages;
 use App\Filament\Resources\AccessResource\RelationManagers;
 use App\Models\Access;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,12 +23,12 @@ class AccessResource extends Resource
 {
     protected static ?string $model = Access::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 //
             ]);
     }
@@ -36,12 +42,12 @@ class AccessResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -56,9 +62,9 @@ class AccessResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListAccesses::route('/'),
-            'create' => Pages\CreateAccess::route('/create'),
-            'edit' => Pages\EditAccess::route('/{record}/edit'),
+            'index' => ListAccesses::route('/'),
+            'create' => CreateAccess::route('/create'),
+            'edit' => EditAccess::route('/{record}/edit'),
         ];
     }
 }
