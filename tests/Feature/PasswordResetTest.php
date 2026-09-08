@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
+use App\Notifications\CustomResetPassword;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Fortify\Features;
 
@@ -18,11 +18,11 @@ test('reset password link can be requested', function () {
 
     $user = User::factory()->create();
 
-    $response = $this->post('/forgot-password', [
+    $this->post('/forgot-password', [
         'email' => $user->email,
     ]);
 
-    Notification::assertSentTo($user, ResetPassword::class);
+    Notification::assertSentTo($user, CustomResetPassword::class);
 })->skip(function () {
     return ! Features::enabled(Features::resetPasswords());
 }, 'Password updates are not enabled.');
@@ -32,17 +32,21 @@ test('reset password screen can be rendered', function () {
 
     $user = User::factory()->create();
 
-    $response = $this->post('/forgot-password', [
+    $this->post('/forgot-password', [
         'email' => $user->email,
     ]);
 
-    Notification::assertSentTo($user, ResetPassword::class, function (object $notification) {
-        $response = $this->get('/reset-password/'.$notification->token);
+    Notification::assertSentTo(
+        $user,
+        CustomResetPassword::class,
+        function (object $notification) {
+            $response = $this->get('/reset-password/'.$notification->token);
 
-        $response->assertStatus(200);
+            $response->assertStatus(200);
 
-        return true;
-    });
+            return true;
+        }
+    );
 })->skip(function () {
     return ! Features::enabled(Features::resetPasswords());
 }, 'Password updates are not enabled.');
@@ -52,22 +56,26 @@ test('password can be reset with valid token', function () {
 
     $user = User::factory()->create();
 
-    $response = $this->post('/forgot-password', [
+    $this->post('/forgot-password', [
         'email' => $user->email,
     ]);
 
-    Notification::assertSentTo($user, ResetPassword::class, function (object $notification) use ($user) {
-        $response = $this->post('/reset-password', [
-            'token' => $notification->token,
-            'email' => $user->email,
-            'password' => 'password',
-            'password_confirmation' => 'password',
-        ]);
+    Notification::assertSentTo(
+        $user,
+        CustomResetPassword::class,
+        function (object $notification) use ($user) {
+            $response = $this->post('/reset-password', [
+                'token' => $notification->token,
+                'email' => $user->email,
+                'password' => 'NewPassword1!',
+                'password_confirmation' => 'NewPassword1!',
+            ]);
 
-        $response->assertSessionHasNoErrors();
+            $response->assertSessionHasNoErrors();
 
-        return true;
-    });
+            return true;
+        }
+    );
 })->skip(function () {
     return ! Features::enabled(Features::resetPasswords());
 }, 'Password updates are not enabled.');

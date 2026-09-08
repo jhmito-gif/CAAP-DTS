@@ -11,12 +11,12 @@ test('password can be updated', function () {
     Livewire::test(UpdatePasswordForm::class)
         ->set('state', [
             'current_password' => 'password',
-            'password' => 'new-password',
-            'password_confirmation' => 'new-password',
+            'password' => 'NewPassword1!',
+            'password_confirmation' => 'NewPassword1!',
         ])
         ->call('updatePassword');
 
-    expect(Hash::check('new-password', $user->fresh()->password))->toBeTrue();
+    expect(Hash::check('NewPassword1!', $user->fresh()->password))->toBeTrue();
 });
 
 test('current password must be correct', function () {
@@ -40,8 +40,8 @@ test('new passwords must match', function () {
     Livewire::test(UpdatePasswordForm::class)
         ->set('state', [
             'current_password' => 'password',
-            'password' => 'new-password',
-            'password_confirmation' => 'wrong-password',
+            'password' => 'NewPassword1!',
+            'password_confirmation' => 'DifferentPassword1!',
         ])
         ->call('updatePassword')
         ->assertHasErrors(['password']);
