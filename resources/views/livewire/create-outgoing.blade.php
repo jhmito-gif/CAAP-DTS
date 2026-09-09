@@ -494,13 +494,3 @@
 
     </div>
 </div>
-
-
-<!-- Livewire: close modal after successful creation -->
-<script>
-    document.addEventListener('livewire:init', () => {
-        Livewire.on('closeModal', () => {
-            window.dispatchEvent(new CustomEvent('close-send-modal'));
-        });
-    });
-</script>

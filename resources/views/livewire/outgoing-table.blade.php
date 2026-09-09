@@ -195,7 +195,7 @@
                                 @endphp
 
                                 <tr
-                                    wire:key="{{ $record->id }}"
+                                    wire:key="outgoing-record-{{ $record->id }}"
                                     onclick="window.location='{{ route('outgoing-transactions', $record->id) }}'"
                                     class="group cursor-pointer transition-colors duration-100 hover:bg-emerald-50/40"
                                 >

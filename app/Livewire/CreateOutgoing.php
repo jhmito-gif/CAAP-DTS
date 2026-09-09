@@ -113,6 +113,7 @@ class CreateOutgoing extends Component
         $this->reset(['office', 'subject', 'remarks', 'status']);
 
         $this->dispatch('recordAdded');
+        $this->dispatch('close-send-modal');
     }
 
     public function render()
