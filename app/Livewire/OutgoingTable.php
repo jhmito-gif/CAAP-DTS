@@ -16,6 +16,16 @@ class OutgoingTable extends Component
 
     protected $listeners = ['recordAdded' => '$refresh'];
 
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
         $userOffice = Auth::user()->office;

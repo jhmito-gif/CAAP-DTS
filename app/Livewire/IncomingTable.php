@@ -23,6 +23,11 @@ class IncomingTable extends Component
         $this->resetPage();
     }
 
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
         $userOffice = Auth::user()->office;
