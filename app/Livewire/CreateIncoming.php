@@ -3,7 +3,6 @@
 namespace App\Livewire;
 
 use Livewire\Component;
-use Livewire\Attributes\Rule;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Record;
 use App\Models\Transaction;
@@ -13,8 +12,6 @@ use Carbon\Carbon;
 
 class CreateIncoming extends Component
 {    
-    #[Rule('required|string|max:255')]
-    public $reference = '';
     public $subject;
     public $office = '';    
     public $remarks; 
@@ -32,17 +29,14 @@ class CreateIncoming extends Component
    
 
     public function createRecord(){
-        
         $this->validate([
-        'office' => 'required',        
-        'reference' => 'required|string|unique:records,reference',
+        'office' => 'required|exists:offices,name',
         'subject' => 'required|string',
         'remarks' => 'required|string',
         'status' => 'required',
         ]);
 
-        $office = $this->office;
-        $reference = $this->reference;
+        $reference = $this->generateReferenceForOffice(Auth::user()->office);
 
         // Save record
         $record = Record::create([
@@ -65,9 +59,37 @@ class CreateIncoming extends Component
 
 
         session()->flash('message', 'Record received successfully.');
-        $this->reset(['office', 'subject', 'reference', 'status', 'remarks']);
+        $this->reset(['office', 'subject', 'status', 'remarks']);
 
         $this->dispatch('recordAdded');
+    }
+
+    private function generateReferenceForOffice(string $office): string
+    {
+        $year = Carbon::now()->year;
+        $prefix = "{$office}-{$year}-";
+
+        $latest = Record::where(function ($query) use ($office) {
+                $query->where('origin', $office)
+                    ->orWhere('owner', $office);
+            })
+            ->where('reference', 'like', "{$prefix}%")
+            ->whereYear('created_at', $year)
+            ->latest('id')
+            ->first();
+
+        $nextNumber = 1;
+
+        if ($latest && preg_match('/^' . preg_quote($prefix, '/') . '(\d+)$/', $latest->reference, $matches)) {
+            $nextNumber = intval($matches[1]) + 1;
+        }
+
+        do {
+            $reference = $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+            $nextNumber++;
+        } while (Record::where('reference', $reference)->exists());
+
+        return $reference;
     }
 
     public function render()

@@ -76,14 +76,6 @@
                 @error('office') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
             </div>
 
-            <!-- Reference -->
-            <div>
-                <label for="reference" class="block text-sm font-medium text-gray-700 mb-1">Reference ID</label>
-                <input wire:model="reference" id="reference"
-                    class="w-full rounded-lg border-gray-300 px-4 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                @error('reference') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
-            </div>
-
             <!-- Subject -->
             <div>
                 <label for="subject" class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
