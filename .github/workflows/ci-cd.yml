@@ -34,6 +34,11 @@ jobs:
       - name: Install PHP dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
 
+      - name: Verify Livewire assets are current
+        run: |
+          php artisan vendor:publish --tag=livewire:assets --force --no-interaction
+          git diff --exit-code public/vendor/livewire
+
       - name: Prepare Laravel
         run: |
           cp .env.example .env
