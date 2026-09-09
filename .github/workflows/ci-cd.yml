@@ -1,0 +1,73 @@
+name: CAAP-DTS CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: caap-dts-production
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    name: Test and Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, xml, curl, zip, intl, bcmath, sqlite3
+          coverage: none
+
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Prepare Laravel
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Run tests
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+        run: php artisan test
+
+  deploy:
+    name: Deploy Production
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    # Production self-hosted runner.
+    # Never use this runner for pull_request jobs.
+    runs-on: self-hosted
+
+    environment: production
+
+    steps:
+      - name: Deploy CAAP-DTS
+        run: /usr/local/bin/deploy-caap-dts
