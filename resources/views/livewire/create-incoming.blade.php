@@ -76,6 +76,23 @@
                 @error('office') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
             </div>
 
+            <div>
+                <label for="internalReferencePreview" class="block text-sm font-medium text-gray-700 mb-1">Internal Reference ID</label>
+                <input id="internalReferencePreview"
+                    type="text"
+                    value="{{ $internalReferencePreview }}"
+                    readonly
+                    class="w-full rounded-lg border-gray-300 bg-gray-50 px-4 py-2 font-semibold text-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+
+            <div>
+                <label for="originReference" class="block text-sm font-medium text-gray-700 mb-1">Origin Reference ID</label>
+                <input wire:model="originReference" id="originReference"
+                    class="w-full rounded-lg border-gray-300 px-4 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="Reference number from origin office">
+                @error('originReference') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+            </div>
+
             <!-- Subject -->
             <div>
                 <label for="subject" class="block text-sm font-medium text-gray-700 mb-1">Subject</label>

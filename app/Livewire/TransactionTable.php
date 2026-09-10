@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Office;
+use App\Models\RecordTagging;
 use App\Models\Status;
 use App\Models\Record;
 use Livewire\Component;
@@ -39,8 +40,14 @@ class TransactionTable extends Component
             })
             ->exists();
 
-        // Verify ownership or transaction involvement
-        if ($this->record->owner !== $userOffice && !$hasAccess) {
+        // Someone tagged on this record can open it, otherwise the tag
+        // notification would link somewhere they are bounced out of.
+        $isTagged = RecordTagging::where('record_id', $recordId)
+            ->where('user_id', Auth::id())
+            ->exists();
+
+        // Verify ownership, transaction involvement, or being tagged
+        if ($this->record->owner !== $userOffice && !$hasAccess && !$isTagged) {
             session()->flash('error', 'Unauthorized access to record.');
             return $this->redirectRoute('dashboard'); // Livewire-safe redirect
         }
@@ -58,8 +65,12 @@ class TransactionTable extends Component
             'office' => 'required|string',
         ]);
 
+        $record = Record::findOrFail($this->recordId);
+
         $transact = Transaction::create([
             'record_id' => $this->recordId,
+            'internal_reference' => $record->reference,
+            'origin_reference' => $record->origin_reference,
             'remarks' => $this->remarks,
             'status' => $this->status,
             'destination' => $this->office,
@@ -79,10 +90,19 @@ class TransactionTable extends Component
 
         if ($transaction && !$transaction->date_recieved) {
             $transaction->update([
-                'recieved_by' => Auth::user()->name, 
+                'recieved_by' => Auth::user()->name,
                 'date_recieved' => Carbon::now(),
             ]);
         }
+    }
+
+    /**
+     * Re-render so the tagged-personnel list reflects the tagging modal.
+     */
+    #[\Livewire\Attributes\On('tags-updated')]
+    public function refreshTags(): void
+    {
+        //
     }
 
     public function render()
@@ -95,9 +115,17 @@ class TransactionTable extends Component
             ->orderBy('created_at', 'desc')
             ->get();
         
-        $record = Record::find($this->recordId);
+        $record = Record::with('taggedUsers')->find($this->recordId);
+
+        $rasTransactions = Transaction::where('record_id', $this->recordId)
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get();
 
         $lastTransaction = $transactions->first(); // already ordered DESC
+        $receivableTransaction = $transactions->first(function ($transaction) {
+            return $transaction->date_recieved === null;
+        });
 
         $showSendButton = false;
 
@@ -111,7 +139,9 @@ class TransactionTable extends Component
         return view('livewire.transaction-table', [
             'transactions' => $transactions,            
             'record' => $record,
-            'showSendButton' => $showSendButton
+            'rasTransactions' => $rasTransactions,
+            'showSendButton' => $showSendButton,
+            'receivableTransaction' => $receivableTransaction,
         ]);
     }
 }

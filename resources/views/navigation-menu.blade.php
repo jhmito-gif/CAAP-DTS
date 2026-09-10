@@ -57,6 +57,11 @@
             </div>
 
             <div class="hidden sm:flex sm:items-center sm:ms-6 sm:gap-2">
+                <!-- Notifications -->
+                @auth
+                    @livewire('notification-center')
+                @endauth
+
                 <!-- Teams Dropdown -->
                 @if (Laravel\Jetstream\Jetstream::hasTeamFeatures())
                     <div class="relative">

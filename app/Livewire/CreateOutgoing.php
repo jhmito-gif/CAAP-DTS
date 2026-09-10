@@ -100,6 +100,8 @@ class CreateOutgoing extends Component
 
         Transaction::create([
             'record_id' => $record->id,
+            'internal_reference' => $record->reference,
+            'origin_reference' => $record->origin_reference,
             'remarks' => $this->remarks,
             'status' => $this->status,
             'destination' => $this->office,

@@ -68,8 +68,10 @@
             {{-- ========================================================= --}}
             {{-- RECORD HEADER --}}
             {{-- ========================================================= --}}
+            <div class="mb-7 grid gap-6 xl:grid-cols-2 xl:items-start">
+                <div class="min-w-0">
             <div
-                class="mb-7 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+                class="overflow-hidden rounded-t-lg border border-b-0 border-gray-200 bg-white"
             >
 
                 {{-- Top Accent --}}
@@ -78,201 +80,82 @@
                 ></div>
 
 
-                <div class="p-6 sm:p-7">
+                <div class="p-4 sm:p-5">
 
-                    <div
-                        class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between"
-                    >
+                    {{-- ========================================================= --}}
+                    {{-- IDENTITY + ACTION ICONS --}}
+                    {{-- ========================================================= --}}
+                    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 
-                        {{-- ================================================= --}}
-                        {{-- RECORD INFORMATION --}}
-                        {{-- ================================================= --}}
-                        <div class="min-w-0 flex-1">
 
-                            <div class="mb-5 flex items-start gap-4">
+                        {{-- ===================================================== --}}
+                        {{-- RECORD IDENTITY --}}
+                        {{-- ===================================================== --}}
+                        <div class="flex min-w-0 flex-1 items-start gap-3">
 
-                                {{-- Main Icon --}}
-                                <div
-                                    class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600"
+                            {{-- Main Icon --}}
+                            <div
+                                class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-600"
+                            >
+                                <svg
+                                    class="size-6"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke-width="1.8"
+                                    stroke="currentColor"
                                 >
-                                    <svg
-                                        class="size-6"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke-width="1.8"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5V6.75A3.375 3.375 0 0011.25 3.375H6.75A2.25 2.25 0 004.5 6v12a2.25 2.25 0 002.25 2.25h10.5A2.25 2.25 0 0019.5 18v-3.75z"
-                                        />
-                                    </svg>
-                                </div>
-
-
-                                <div class="min-w-0 flex-1">
-
-                                    <p
-                                        class="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-gray-400"
-                                    >
-                                        Transaction Record
-                                    </p>
-
-                                    <h1
-                                        class="truncate text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl"
-                                    >
-                                        {{ $record->reference ?? 'N/A' }}
-                                    </h1>
-
-                                    <p class="mt-1 text-sm text-gray-500">
-                                        View transaction details and routing history
-                                    </p>
-
-                                </div>
-
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5V6.75A3.375 3.375 0 0011.25 3.375H6.75A2.25 2.25 0 004.5 6v12a2.25 2.25 0 002.25 2.25h10.5A2.25 2.25 0 0019.5 18v-3.75z"
+                                    />
+                                </svg>
                             </div>
 
 
-                            {{-- ================================================= --}}
-                            {{-- INFORMATION CARDS --}}
-                            {{-- ================================================= --}}
-                            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            <div class="min-w-0 flex-1">
 
-                                {{-- Origin --}}
-                                <div
-                                    class="rounded-xl border border-gray-100 bg-gray-50/70 p-4"
+                                <p
+                                    class="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-gray-400"
                                 >
+                                    Transaction Record
+                                </p>
 
-                                    <div
-                                        class="mb-2 flex items-center gap-2 text-gray-400"
-                                    >
-                                        <svg
-                                            class="size-4"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke-width="2"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                d="M12 21a9 9 0 100-18 9 9 0 000 18z"
-                                            />
-                                        </svg>
-
-                                        <p
-                                            class="text-[10px] font-bold uppercase tracking-wider"
-                                        >
-                                            Origin Office
-                                        </p>
-                                    </div>
-
-                                    <p
-                                        class="truncate text-sm font-semibold text-gray-800"
-                                    >
-                                        {{ $record->origin ?? 'N/A' }}
-                                    </p>
-
-                                </div>
-
-
-                                {{-- Reference --}}
-                                <div
-                                    class="rounded-xl border border-blue-100 bg-blue-50/50 p-4"
+                                <h1
+                                    class="break-all text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl"
                                 >
+                                    {{ $record->reference ?? 'N/A' }}
+                                </h1>
 
-                                    <div
-                                        class="mb-2 flex items-center gap-2 text-blue-400"
-                                    >
-                                        <svg
-                                            class="size-4"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke-width="2"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                d="M4.5 6.75h15m-15 5.25h15m-15 5.25h9"
-                                            />
-                                        </svg>
-
-                                        <p
-                                            class="text-[10px] font-bold uppercase tracking-wider"
-                                        >
-                                            Reference
-                                        </p>
-                                    </div>
-
-                                    <p
-                                        class="truncate text-sm font-bold text-blue-700"
-                                    >
-                                        {{ $record->reference ?? 'N/A' }}
-                                    </p>
-
-                                </div>
-
-
-                                {{-- Subject --}}
-                                <div
-                                    class="rounded-xl border border-gray-100 bg-gray-50/70 p-4 sm:col-span-2 lg:col-span-1"
-                                >
-
-                                    <div
-                                        class="mb-2 flex items-center gap-2 text-gray-400"
-                                    >
-                                        <svg
-                                            class="size-4"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke-width="2"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                d="M8.25 6.75h7.5M8.25 12h7.5m-7.5 5.25H12"
-                                            />
-                                        </svg>
-
-                                        <p
-                                            class="text-[10px] font-bold uppercase tracking-wider"
-                                        >
-                                            Subject
-                                        </p>
-                                    </div>
-
-                                    <p
-                                        class="line-clamp-2 text-sm font-medium leading-5 text-gray-800"
-                                    >
-                                        {{ $record->subject ?? 'N/A' }}
-                                    </p>
-
-                                </div>
+                                <p class="mt-1 text-sm text-gray-500">
+                                    View transaction details and routing history
+                                </p>
 
                             </div>
 
                         </div>
 
 
-                        {{-- ================================================= --}}
-                        {{-- ACTION BUTTONS --}}
-                        {{-- ================================================= --}}
-                        <div
-                            class="flex shrink-0 flex-wrap items-center gap-2 lg:min-w-[170px] lg:flex-col lg:items-stretch"
-                        >
 
+                        {{-- ===================================================== --}}
+                        {{-- ACTION ICONS --}}
+                        {{-- ===================================================== --}}
+                        <div class="flex shrink-0 flex-wrap items-center gap-2">
+
+
+                            {{-- Send --}}
                             @if ($showSendButton)
+
                                 <button
                                     type="button"
                                     data-bs-toggle="modal"
                                     data-bs-target="#sendModal"
-                                    class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                    aria-label="Send this record to another office"
+                                    class="group relative inline-flex size-10 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600 transition-all duration-150 hover:-translate-y-0.5 hover:border-blue-600 hover:bg-blue-600 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:translate-y-0 active:shadow-sm"
                                 >
+
                                     <svg
-                                        class="size-4"
+                                        class="size-[18px]"
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke-width="2"
@@ -285,18 +168,177 @@
                                         />
                                     </svg>
 
-                                    Send
+                                    <span
+                                        class="pointer-events-none absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-150 group-hover:translate-y-0 group-hover:opacity-100"
+                                    >
+                                        Send
+                                    </span>
+
                                 </button>
+
                             @endif
 
 
+                            {{-- Mark as Received --}}
+                            @if ($receivableTransaction)
+
+                                <button
+                                    type="button"
+                                    wire:click="markAsReceived({{ $receivableTransaction->id }})"
+                                    wire:loading.attr="disabled"
+                                    wire:target="markAsReceived({{ $receivableTransaction->id }})"
+                                    aria-label="Mark this record as received"
+                                    class="group relative inline-flex size-10 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 transition-all duration-150 hover:-translate-y-0.5 hover:border-emerald-600 hover:bg-emerald-600 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+
+                                    <svg
+                                        wire:loading.remove
+                                        wire:target="markAsReceived({{ $receivableTransaction->id }})"
+                                        class="size-[18px]"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke-width="2"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="m4.5 12.75 6 6 9-13.5"
+                                        />
+                                    </svg>
+
+                                    <svg
+                                        wire:loading
+                                        wire:target="markAsReceived({{ $receivableTransaction->id }})"
+                                        class="size-[18px] animate-spin"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <circle
+                                            class="opacity-25"
+                                            cx="12"
+                                            cy="12"
+                                            r="10"
+                                            stroke="currentColor"
+                                            stroke-width="4"
+                                        ></circle>
+
+                                        <path
+                                            class="opacity-75"
+                                            fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                                        ></path>
+                                    </svg>
+
+                                    <span
+                                        class="pointer-events-none absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-150 group-hover:translate-y-0 group-hover:opacity-100"
+                                    >
+                                        <span wire:loading.remove wire:target="markAsReceived({{ $receivableTransaction->id }})">
+                                            Mark as Received
+                                        </span>
+
+                                        <span wire:loading wire:target="markAsReceived({{ $receivableTransaction->id }})">
+                                            Updating...
+                                        </span>
+                                    </span>
+
+                                </button>
+
+                            @endif
+
+
+                            {{-- Urgent toggle --}}
+                            <form
+                                action="{{ route('records.toggle-urgent', $record->id) }}"
+                                method="POST"
+                                class="inline-flex"
+                            >
+                                @csrf
+                                @method('PATCH')
+
+
+                                @if ($record->is_urgent)
+
+                                    <button
+                                        type="submit"
+                                        onclick="return confirm('Remove urgent status from this record?')"
+                                        aria-label="Remove the urgent flag from this record"
+                                        class="group relative inline-flex size-10 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-600 transition-all duration-150 hover:-translate-y-0.5 hover:border-amber-500 hover:bg-amber-500 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 active:translate-y-0 active:shadow-sm"
+                                    >
+
+                                        <svg
+                                            class="size-[18px]"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke-width="2"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                d="M9.143 17.082a24.248 24.248 0 003.844.148m-3.844-.148a23.856 23.856 0 01-5.455-1.31 8.964 8.964 0 002.3-5.542m3.155 6.852a3 3 0 005.667 1.97m1.965-2.277L21 21m-4.225-4.225a23.81 23.81 0 003.536-1.003A8.967 8.967 0 0118 9.75V9A6 6 0 006.53 6.53m10.245 10.245L6.53 6.53M3 3l3.53 3.53"
+                                            />
+                                        </svg>
+
+                                        <span
+                                            class="pointer-events-none absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-150 group-hover:translate-y-0 group-hover:opacity-100"
+                                        >
+                                            Remove Urgent
+                                        </span>
+
+                                    </button>
+
+                                @else
+
+                                    <button
+                                        type="submit"
+                                        onclick="return confirm('Mark this record as urgent?')"
+                                        aria-label="Mark this record as urgent"
+                                        class="group relative inline-flex size-10 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition-all duration-150 hover:-translate-y-0.5 hover:border-red-600 hover:bg-red-600 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 active:translate-y-0 active:shadow-sm"
+                                    >
+
+                                        <svg
+                                            class="size-[18px]"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke-width="2"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+                                            />
+                                        </svg>
+
+                                        <span
+                                            class="pointer-events-none absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-150 group-hover:translate-y-0 group-hover:opacity-100"
+                                        >
+                                            Mark Urgent
+                                        </span>
+
+                                    </button>
+
+                                @endif
+
+                            </form>
+
+
+                            {{-- Tag People --}}
+                            @livewire('tag-people', ['recordId' => $record->id], key('tag-people-' . $record->id))
+
+
+                            {{-- Print --}}
                             <a
                                 href="{{ route('records-pdf', $record->id) }}"
                                 target="_blank"
-                                class="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 hover:text-gray-900"
+                                rel="noopener"
+                                aria-label="Open the printable Routing Action Slip"
+                                class="group relative inline-flex size-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition-all duration-150 hover:-translate-y-0.5 hover:border-gray-900 hover:bg-gray-900 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 active:translate-y-0 active:shadow-sm"
                             >
+
                                 <svg
-                                    class="size-4"
+                                    class="size-[18px]"
                                     fill="none"
                                     viewBox="0 0 24 24"
                                     stroke-width="2"
@@ -305,12 +347,211 @@
                                     <path
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
-                                        d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18"
+                                        d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Z"
                                     />
                                 </svg>
 
-                                Print
+                                <span
+                                    class="pointer-events-none absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-150 group-hover:translate-y-0 group-hover:opacity-100"
+                                >
+                                    Print RAS
+                                </span>
+
                             </a>
+
+                        </div>
+
+                    </div>
+
+
+
+                    {{-- ========================================================= --}}
+                    {{-- RECORD DETAILS --}}
+                    {{-- Full card width, so references are never clipped. --}}
+                    {{-- ========================================================= --}}
+                    <div class="mt-4 border-t border-gray-100 pt-4">
+
+                        <dl class="grid gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+
+
+                            {{-- Origin Office --}}
+                            <div class="min-w-0 border-l-2 border-gray-200 pl-3">
+
+                                <dt class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+
+                                    <svg
+                                        class="size-3.5 shrink-0"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke-width="2"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"
+                                        />
+                                    </svg>
+
+                                    Origin Office
+
+                                </dt>
+
+                                <dd class="mt-1 break-words text-sm font-semibold text-gray-800">
+                                    {{ $record->origin ?: '—' }}
+                                </dd>
+
+                            </div>
+
+
+                            {{-- Tracking Reference --}}
+                            <div class="min-w-0 border-l-2 border-blue-300 pl-3">
+
+                                <dt class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-400">
+
+                                    <svg
+                                        class="size-3.5 shrink-0"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke-width="2"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="M4.5 6.75h15m-15 5.25h15m-15 5.25h9"
+                                        />
+                                    </svg>
+
+                                    Tracking Reference
+
+                                </dt>
+
+                                <dd class="mt-1 break-all text-sm font-bold text-blue-700">
+                                    {{ $record->reference ?: '—' }}
+                                </dd>
+
+                            </div>
+
+
+                            {{-- Origin Reference --}}
+                            <div class="min-w-0 border-l-2 border-indigo-300 pl-3">
+
+                                <dt class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-400">
+
+                                    <svg
+                                        class="size-3.5 shrink-0"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke-width="2"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                        />
+                                    </svg>
+
+                                    Origin Reference
+
+                                </dt>
+
+                                <dd class="mt-1 break-all text-sm font-bold text-indigo-700">
+                                    {{ $record->origin_reference ?: '—' }}
+                                </dd>
+
+                            </div>
+
+                        </dl>
+
+
+                        {{-- Subject --}}
+                        <div class="mt-3 min-w-0 border-l-2 border-gray-200 pl-3">
+
+                            <dt class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+
+                                <svg
+                                    class="size-3.5 shrink-0"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke-width="2"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M8.25 6.75h7.5M8.25 12h7.5m-7.5 5.25H12"
+                                    />
+                                </svg>
+
+                                Subject
+
+                            </dt>
+
+                            <dd class="mt-1 break-words text-sm font-medium leading-5 text-gray-800">
+                                {{ $record->subject ?: '—' }}
+                            </dd>
+
+                        </div>
+
+
+                        {{-- Tagged Personnel --}}
+                        <div class="mt-3 min-w-0 border-l-2 border-violet-300 pl-3">
+
+                            <dt class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-violet-400">
+
+                                <svg
+                                    class="size-3.5 shrink-0"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke-width="2"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"
+                                    />
+                                </svg>
+
+                                Tagged Personnel
+
+                            </dt>
+
+                            <dd class="mt-1.5">
+
+                                @if ($record->taggedUsers->isEmpty())
+
+                                    <span class="text-sm text-gray-400">
+                                        No one tagged yet
+                                    </span>
+
+                                @else
+
+                                    <div class="flex flex-wrap gap-1.5">
+
+                                        @foreach ($record->taggedUsers as $tagged)
+                                            <span class="inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-700">
+
+                                                <span class="flex size-4 items-center justify-center rounded-full bg-violet-200 text-[9px] font-bold uppercase text-violet-800">
+                                                    {{ \Illuminate\Support\Str::substr($tagged->name, 0, 1) }}
+                                                </span>
+
+                                                {{ $tagged->name }}
+
+                                                <span class="font-medium text-violet-400">
+                                                    {{ $tagged->pivot->office ?: $tagged->office }}
+                                                </span>
+
+                                            </span>
+                                        @endforeach
+
+                                    </div>
+
+                                @endif
+
+                            </dd>
 
                         </div>
 
@@ -320,17 +561,16 @@
 
             </div>
 
-
             {{-- ========================================================= --}}
             {{-- TRANSACTION HISTORY --}}
             {{-- ========================================================= --}}
             <div
-                class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+                class="overflow-hidden rounded-b-lg border border-gray-200 bg-white"
             >
 
                 {{-- Section Header --}}
                 <div
-                    class="border-b border-gray-200 bg-gray-50/70 px-5 py-4 sm:px-6"
+                    class="border-b border-gray-200 bg-white px-4 py-3 sm:px-5"
                 >
                     <div class="flex items-center justify-between gap-4">
 
@@ -356,7 +596,7 @@
 
 
                 {{-- Timeline --}}
-                <div class="p-5 sm:p-6 lg:p-8">
+                <div class="px-4 sm:px-5">
 
                     @forelse ($transactions as $transact)
 
@@ -366,13 +606,13 @@
 
 
                         <div
-                            class="group relative pb-10 pl-12 last:pb-0 sm:pl-14"
+                            class="group relative border-b border-gray-100 py-4 pl-8 last:border-b-0"
                         >
 
                             {{-- Vertical Line --}}
                             @if (!$loop->last)
                                 <div
-                                    class="absolute left-[19px] top-10 h-[calc(100%-1.25rem)] w-px bg-gray-200 sm:left-[23px]"
+                                    class="absolute left-[9px] top-8 h-[calc(100%-1rem)] w-px bg-gray-200"
                                 ></div>
                             @endif
 
@@ -380,10 +620,9 @@
                             {{-- Timeline Icon --}}
                             <div
                                 class="
-                                    absolute left-0 top-0 z-10
-                                    flex size-10 items-center justify-center rounded-full
-                                    border-4 border-white shadow-sm
-                                    sm:size-12
+                                    absolute left-0 top-4 z-10
+                                    flex size-5 items-center justify-center rounded-full
+                                    border-2 border-white
 
                                     {{ $isReceived
                                         ? 'bg-emerald-100 text-emerald-700'
@@ -394,7 +633,7 @@
                                 @if ($isReceived)
 
                                     <svg
-                                        class="size-4 sm:size-5"
+                                        class="size-3"
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke-width="2.5"
@@ -410,7 +649,7 @@
                                 @else
 
                                     <svg
-                                        class="size-4 sm:size-5"
+                                        class="size-3"
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke-width="2"
@@ -429,16 +668,16 @@
 
                             {{-- Transaction Card --}}
                             <div
-                                class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition duration-200 hover:border-gray-300 hover:shadow-md"
+                                class="min-w-0 bg-white"
                             >
 
                                 {{-- Transaction Header --}}
                                 <div
-                                    class="border-b border-gray-100 bg-gray-50/60 px-5 py-4 sm:px-6"
+                                    class="pb-3"
                                 >
 
                                     <div
-                                        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                                        class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"
                                     >
 
                                         <div class="min-w-0">
@@ -490,17 +729,16 @@
 
 
                                             <h3
-                                                class="text-base font-bold text-gray-900 sm:text-lg"
+                                                class="sr-only"
                                             >
                                                 {{ $transact->status ?? 'Transaction Activity' }}
                                             </h3>
 
                                         </div>
 
-
                                         {{-- Logged Date --}}
                                         <div
-                                            class="flex shrink-0 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-500"
+                                            class="flex shrink-0 items-center gap-1.5 text-[11px] text-gray-500"
                                         >
                                             <svg
                                                 class="size-4 text-gray-400"
@@ -518,7 +756,7 @@
 
                                             <span>
                                                 {{ $transact->created_at
-                                                    ? $transact->created_at->format('M d, Y • h:i A')
+                                                    ? $transact->created_at->format('M d, Y \a\t h:i A')
                                                     : 'No Date Logged'
                                                 }}
                                             </span>
@@ -529,7 +767,7 @@
                                 </div>
 
 
-                                <div class="space-y-5 p-5 sm:p-6">
+                                <div class="space-y-3">
 
                                     {{-- ================================================= --}}
                                     {{-- ROUTING --}}
@@ -549,7 +787,7 @@
 
                                             {{-- Sender --}}
                                             <div
-                                                class="rounded-xl border border-gray-200 bg-gray-50/60 p-4"
+                                                class="min-w-0 py-1"
                                             >
                                                 <p
                                                     class="mb-2 text-[10px] font-bold uppercase tracking-wider text-gray-400"
@@ -561,7 +799,7 @@
                                                 <div class="flex items-center gap-3">
 
                                                     <div
-                                                        class="flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-bold uppercase text-gray-700"
+                                                        class="flex size-7 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] font-bold uppercase text-gray-700"
                                                     >
                                                         {{ strtoupper(substr($transact->office ?? '?', 0, 1)) }}
                                                     </div>
@@ -589,7 +827,7 @@
                                             <div class="hidden sm:flex">
 
                                                 <div
-                                                    class="flex size-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-400 shadow-sm"
+                                                    class="flex size-6 items-center justify-center text-gray-400"
                                                 >
                                                     <svg
                                                         class="size-4"
@@ -611,7 +849,7 @@
 
                                             {{-- Destination --}}
                                             <div
-                                                class="rounded-xl border border-blue-100 bg-blue-50/70 p-4"
+                                                class="min-w-0 py-1"
                                             >
                                                 <p
                                                     class="mb-2 text-[10px] font-bold uppercase tracking-wider text-blue-400"
@@ -623,7 +861,7 @@
                                                 <div class="flex items-center gap-3">
 
                                                     <div
-                                                        class="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold uppercase text-blue-700"
+                                                        class="flex size-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-[10px] font-bold uppercase text-blue-700"
                                                     >
                                                         {{ strtoupper(substr($transact->destination ?? '?', 0, 1)) }}
                                                     </div>
@@ -655,13 +893,13 @@
                                     {{-- REMARKS --}}
                                     {{-- ================================================= --}}
                                     <div
-                                        class="rounded-xl border border-gray-200 bg-gray-50/50 p-5"
+                                        class="border-l-2 border-gray-200 py-1 pl-3"
                                     >
 
                                         <div class="mb-3 flex items-center gap-2">
 
                                             <div
-                                                class="flex size-8 items-center justify-center rounded-lg bg-white text-gray-500 ring-1 ring-gray-200"
+                                                class="hidden"
                                             >
                                                 <svg
                                                     class="size-4"
@@ -705,7 +943,7 @@
                                     @if ($isReceived)
 
                                         <div
-                                            class="rounded-xl border border-emerald-100 bg-emerald-50/70 p-5"
+                                            class="border-l-2 border-emerald-400 bg-emerald-50/40 px-3 py-2"
                                         >
 
                                             <div
@@ -713,7 +951,7 @@
                                             >
 
                                                 <div
-                                                    class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700"
+                                                    class="flex size-7 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-emerald-700"
                                                 >
                                                     <svg
                                                         class="size-5"
@@ -749,12 +987,12 @@
 
 
                                             <div
-                                                class="grid gap-4 sm:grid-cols-2"
+                                                class="grid gap-2 sm:grid-cols-2"
                                             >
 
                                                 {{-- Received Date --}}
                                                 <div
-                                                    class="rounded-lg bg-white/70 p-3"
+                                                    class="py-1"
                                                 >
                                                     <p
                                                         class="text-[10px] font-bold uppercase tracking-wider text-emerald-600/70"
@@ -772,7 +1010,7 @@
 
                                                 {{-- Received By --}}
                                                 <div
-                                                    class="rounded-lg bg-white/70 p-3"
+                                                    class="py-1"
                                                 >
                                                     <p
                                                         class="text-[10px] font-bold uppercase tracking-wider text-emerald-600/70"
@@ -811,11 +1049,11 @@
                                     @else
 
                                         <div
-                                            class="rounded-xl border border-amber-100 bg-amber-50/70 p-5"
+                                            class="border-l-2 border-amber-400 bg-amber-50/40 px-3 py-2"
                                         >
 
                                             <div
-                                                class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+                                                class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
                                             >
 
                                                 <div
@@ -823,7 +1061,7 @@
                                                 >
 
                                                     <div
-                                                        class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700"
+                                                        class="flex size-7 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-700"
                                                     >
                                                         <svg
                                                             class="size-5"
@@ -857,71 +1095,6 @@
 
                                                 </div>
 
-
-                                                <button
-                                                    type="button"
-                                                    wire:click="markAsReceived({{ $transact->id }})"
-                                                    wire:loading.attr="disabled"
-                                                    wire:target="markAsReceived({{ $transact->id }})"
-                                                    class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-                                                >
-
-                                                    <svg
-                                                        wire:loading.remove
-                                                        wire:target="markAsReceived({{ $transact->id }})"
-                                                        class="size-4"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        stroke-width="2"
-                                                        stroke="currentColor"
-                                                    >
-                                                        <path
-                                                            stroke-linecap="round"
-                                                            stroke-linejoin="round"
-                                                            d="m4.5 12.75 6 6 9-13.5"
-                                                        />
-                                                    </svg>
-
-
-                                                    <svg
-                                                        wire:loading
-                                                        wire:target="markAsReceived({{ $transact->id }})"
-                                                        class="size-4 animate-spin"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                    >
-                                                        <circle
-                                                            class="opacity-25"
-                                                            cx="12"
-                                                            cy="12"
-                                                            r="10"
-                                                            stroke="currentColor"
-                                                            stroke-width="4"
-                                                        ></circle>
-
-                                                        <path
-                                                            class="opacity-75"
-                                                            fill="currentColor"
-                                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                                                        ></path>
-                                                    </svg>
-
-
-                                                    <span
-                                                        wire:loading.remove
-                                                        wire:target="markAsReceived({{ $transact->id }})"
-                                                    >
-                                                        Mark as Received
-                                                    </span>
-
-                                                    <span
-                                                        wire:loading
-                                                        wire:target="markAsReceived({{ $transact->id }})"
-                                                    >
-                                                        Updating...
-                                                    </span>
-
-                                                </button>
 
                                             </div>
 
@@ -973,6 +1146,17 @@
 
                 </div>
 
+            </div>
+
+                </div>
+
+                <div class="min-w-0 xl:sticky xl:top-6">
+                    @include('partials.ras-viewer', [
+                        'record' => $record,
+                        'rasTransactions' => $rasTransactions,
+                        'heightClass' => 'h-[760px]',
+                    ])
+                </div>
             </div>
 
         </div>
@@ -1140,7 +1324,7 @@
 
 
                         <select
-                            wire:model="office"
+                            wire:model.live="office"
                             id="office"
                             class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                         >
@@ -1223,7 +1407,7 @@
 
 
                         <textarea
-                            wire:model="remarks"
+                            wire:model.live.debounce.300ms="remarks"
                             id="remarks"
                             rows="4"
                             class="w-full resize-none rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-700 shadow-sm outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
@@ -1238,6 +1422,13 @@
                         @enderror
 
                     </div>
+
+                    @include('partials.ras-movement-preview', [
+                        'fromOffice' => Auth::user()->office,
+                        'toOffice' => $office,
+                        'status' => $status,
+                        'remarks' => $remarks,
+                    ])
 
                 </div>
 
