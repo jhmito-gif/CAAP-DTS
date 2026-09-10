@@ -8,17 +8,17 @@
         <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
 
             <div>
-                <h2 class="text-xl font-semibold leading-tight text-gray-800">
+                <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-100">
                     {{ __('Dashboard') }}
                 </h2>
 
-                <p class="mt-0.5 text-sm text-gray-500">
+                <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
                     {{ Auth::user()->office }}
                 </p>
             </div>
 
 
-            <div class="hidden items-center gap-2 text-sm text-gray-400 sm:flex">
+            <div class="hidden items-center gap-2 text-sm text-gray-400 dark:text-gray-500 sm:flex">
 
                 <svg
                     class="size-4"
@@ -44,7 +44,7 @@
 
 
 
-    <div class="min-h-screen bg-gray-50/70">
+    <div class="min-h-screen bg-gray-50/70 dark:bg-gray-900">
 
         <div class="mx-auto max-w-7xl space-y-7 px-4 py-7 sm:px-6 lg:px-8">
 
@@ -53,7 +53,7 @@
             {{-- WELCOME / OFFICE SUMMARY --}}
             {{-- ========================================================= --}}
             <section
-                class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+                class="relative overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 shadow-sm"
             >
 
                 {{-- Accent --}}
@@ -67,21 +67,21 @@
                     <div>
 
                         <p
-                            class="text-xs font-bold uppercase tracking-[0.18em] text-blue-500"
+                            class="text-xs font-bold uppercase tracking-[0.18em] text-blue-500 dark:text-blue-400"
                         >
                             Records Management System
                         </p>
 
 
                         <h1
-                            class="mt-1 text-2xl font-bold tracking-tight text-gray-900"
+                            class="mt-1 text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
                         >
                             Welcome, {{ Auth::user()->name }}
                         </h1>
 
 
                         <p
-                            class="mt-1 max-w-2xl text-sm leading-6 text-gray-500"
+                            class="mt-1 max-w-2xl text-sm leading-6 text-gray-500 dark:text-gray-400"
                         >
                             Monitor incoming documents, outgoing records,
                             urgent transactions, and recent office activity.
@@ -93,11 +93,11 @@
 
                     {{-- Office --}}
                     <div
-                        class="flex shrink-0 items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3"
+                        class="flex shrink-0 items-center gap-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/80 dark:bg-gray-900 px-4 py-3"
                     >
 
                         <div
-                            class="flex size-10 items-center justify-center rounded-full bg-white text-blue-600 shadow-sm"
+                            class="flex size-10 items-center justify-center rounded-full bg-white dark:!bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm"
                         >
 
                             <svg
@@ -120,13 +120,13 @@
                         <div>
 
                             <p
-                                class="text-[10px] font-bold uppercase tracking-wide text-gray-400"
+                                class="text-[10px] font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500"
                             >
                                 Current Office
                             </p>
 
                             <p
-                                class="max-w-[220px] truncate text-sm font-semibold text-gray-800"
+                                class="max-w-[220px] truncate text-sm font-semibold text-gray-800 dark:text-gray-100"
                             >
                                 {{ Auth::user()->office }}
                             </p>
@@ -156,13 +156,13 @@
                     {{-- ================================================= --}}
                     <a
                         href="{{ route('incoming-record') }}"
-                        class="group rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+                        class="group rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
                     >
 
                         <div class="mb-4 flex items-start justify-between">
 
                             <div
-                                class="flex size-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-colors group-hover:bg-blue-100"
+                                class="flex size-11 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 transition-colors group-hover:bg-blue-100"
                             >
 
                                 <svg
@@ -183,7 +183,7 @@
 
 
                             <svg
-                                class="size-4 text-gray-300 transition-all group-hover:translate-x-0.5 group-hover:text-blue-500"
+                                class="size-4 text-gray-300 dark:text-gray-600 transition-all group-hover:translate-x-0.5 group-hover:text-blue-500"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke-width="2"
@@ -199,17 +199,17 @@
                         </div>
 
 
-                        <p class="text-3xl font-bold tracking-tight text-gray-900">
+                        <p class="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
                             {{ number_format($incomingRecords) }}
                         </p>
 
 
-                        <p class="mt-1 text-sm font-semibold text-gray-700">
+                        <p class="mt-1 text-sm font-semibold text-gray-700 dark:text-gray-200">
                             Incoming Records
                         </p>
 
 
-                        <p class="mt-1 text-xs leading-5 text-gray-400">
+                        <p class="mt-1 text-xs leading-5 text-gray-400 dark:text-gray-500">
                             Unique records routed to your office
                         </p>
 
@@ -222,13 +222,13 @@
                     {{-- ================================================= --}}
                     <a
                         href="{{ route('outgoing-record') }}"
-                        class="group rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
+                        class="group rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
                     >
 
                         <div class="mb-4 flex items-start justify-between">
 
                             <div
-                                class="flex size-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition-colors group-hover:bg-emerald-100"
+                                class="flex size-11 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 transition-colors group-hover:bg-emerald-100"
                             >
 
                                 <svg
@@ -249,7 +249,7 @@
 
 
                             <svg
-                                class="size-4 text-gray-300 transition-all group-hover:translate-x-0.5 group-hover:text-emerald-500"
+                                class="size-4 text-gray-300 dark:text-gray-600 transition-all group-hover:translate-x-0.5 group-hover:text-emerald-500"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke-width="2"
@@ -265,17 +265,17 @@
                         </div>
 
 
-                        <p class="text-3xl font-bold tracking-tight text-gray-900">
+                        <p class="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
                             {{ number_format($outgoingRecords) }}
                         </p>
 
 
-                        <p class="mt-1 text-sm font-semibold text-gray-700">
+                        <p class="mt-1 text-sm font-semibold text-gray-700 dark:text-gray-200">
                             Outgoing Records
                         </p>
 
 
-                        <p class="mt-1 text-xs leading-5 text-gray-400">
+                        <p class="mt-1 text-xs leading-5 text-gray-400 dark:text-gray-500">
                             Records originating from your office
                         </p>
 
@@ -289,12 +289,12 @@
                     <a
                         href="{{ route('incoming-record') }}"
                         class="
-                            group rounded-2xl border bg-white p-5 shadow-sm
+                            group rounded-2xl border bg-white dark:!bg-gray-800 p-5 shadow-sm
                             transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md
 
                             {{ $awaitingReceipt > 0
-                                ? 'border-amber-200 hover:border-amber-300'
-                                : 'border-gray-200'
+                                ? 'border-amber-200 dark:border-amber-800 hover:border-amber-300 dark:hover:border-amber-700'
+                                : 'border-gray-200 dark:border-gray-700'
                             }}
                         "
                     >
@@ -302,7 +302,7 @@
                         <div class="mb-4 flex items-start justify-between">
 
                             <div
-                                class="flex size-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600"
+                                class="flex size-11 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
                             >
 
                                 <svg
@@ -341,17 +341,17 @@
                         </div>
 
 
-                        <p class="text-3xl font-bold tracking-tight text-gray-900">
+                        <p class="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
                             {{ number_format($awaitingReceipt) }}
                         </p>
 
 
-                        <p class="mt-1 text-sm font-semibold text-gray-700">
+                        <p class="mt-1 text-sm font-semibold text-gray-700 dark:text-gray-200">
                             Awaiting Receipt
                         </p>
 
 
-                        <p class="mt-1 text-xs leading-5 text-gray-400">
+                        <p class="mt-1 text-xs leading-5 text-gray-400 dark:text-gray-500">
                             Transactions waiting for acknowledgement
                         </p>
 
@@ -364,11 +364,11 @@
                     {{-- ================================================= --}}
                     <div
                         class="
-                            rounded-2xl border bg-white p-5 shadow-sm
+                            rounded-2xl border bg-white dark:!bg-gray-800 p-5 shadow-sm
 
                             {{ $urgentCount > 0
-                                ? 'border-red-200'
-                                : 'border-gray-200'
+                                ? 'border-red-200 dark:border-red-800'
+                                : 'border-gray-200 dark:border-gray-700'
                             }}
                         "
                     >
@@ -380,8 +380,8 @@
                                     flex size-11 items-center justify-center rounded-xl
 
                                     {{ $urgentCount > 0
-                                        ? 'bg-red-50 text-red-600'
-                                        : 'bg-gray-50 text-gray-400'
+                                        ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                                        : 'bg-gray-50 dark:bg-gray-900 text-gray-400 dark:text-gray-500'
                                     }}
                                 "
                             >
@@ -406,7 +406,7 @@
                             @if ($urgentCount > 0)
 
                                 <span
-                                    class="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-red-700"
+                                    class="inline-flex items-center gap-1.5 rounded-full bg-red-50 dark:bg-red-900/30 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-red-700 dark:text-red-300"
                                 >
 
                                     <span
@@ -422,17 +422,17 @@
                         </div>
 
 
-                        <p class="text-3xl font-bold tracking-tight text-gray-900">
+                        <p class="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
                             {{ number_format($urgentCount) }}
                         </p>
 
 
-                        <p class="mt-1 text-sm font-semibold text-gray-700">
+                        <p class="mt-1 text-sm font-semibold text-gray-700 dark:text-gray-200">
                             Urgent Records
                         </p>
 
 
-                        <p class="mt-1 text-xs leading-5 text-gray-400">
+                        <p class="mt-1 text-xs leading-5 text-gray-400 dark:text-gray-500">
                             Priority records involving your office
                         </p>
 
@@ -451,11 +451,11 @@
 
                 <div class="mb-3">
 
-                    <h2 class="text-base font-bold text-gray-900">
+                    <h2 class="text-base font-bold text-gray-900 dark:text-gray-100">
                         Today's Overview
                     </h2>
 
-                    <p class="mt-0.5 text-xs text-gray-400">
+                    <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
                         Activity recorded today
                     </p>
 
@@ -467,11 +467,11 @@
 
                     {{-- Activity Today --}}
                     <div
-                        class="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
+                        class="flex items-center gap-4 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 p-5 shadow-sm"
                     >
 
                         <div
-                            class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600"
+                            class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
                         >
 
                             <svg
@@ -493,15 +493,15 @@
 
                         <div class="min-w-0">
 
-                            <p class="text-2xl font-bold text-gray-900">
+                            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">
                                 {{ number_format($activityToday) }}
                             </p>
 
-                            <p class="text-sm font-semibold text-gray-700">
+                            <p class="text-sm font-semibold text-gray-700 dark:text-gray-200">
                                 Activities Today
                             </p>
 
-                            <p class="mt-0.5 text-xs text-gray-400">
+                            <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
                                 Transactions sent or received by your office
                             </p>
 
@@ -513,11 +513,11 @@
 
                     {{-- Received Today --}}
                     <div
-                        class="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
+                        class="flex items-center gap-4 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 p-5 shadow-sm"
                     >
 
                         <div
-                            class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"
+                            class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
                         >
 
                             <svg
@@ -539,15 +539,15 @@
 
                         <div class="min-w-0">
 
-                            <p class="text-2xl font-bold text-gray-900">
+                            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">
                                 {{ number_format($receivedToday) }}
                             </p>
 
-                            <p class="text-sm font-semibold text-gray-700">
+                            <p class="text-sm font-semibold text-gray-700 dark:text-gray-200">
                                 Received Today
                             </p>
 
-                            <p class="mt-0.5 text-xs text-gray-400">
+                            <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
                                 Transactions acknowledged by your office
                             </p>
 
@@ -568,11 +568,11 @@
 
                 <div class="mb-3">
 
-                    <h2 class="text-base font-bold text-gray-900">
+                    <h2 class="text-base font-bold text-gray-900 dark:text-gray-100">
                         Quick Access
                     </h2>
 
-                    <p class="mt-0.5 text-xs text-gray-400">
+                    <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
                         Manage your document workflows
                     </p>
 
@@ -585,13 +585,13 @@
                     {{-- Incoming --}}
                     <a
                         href="{{ route('incoming-record') }}"
-                        class="group overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+                        class="group overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
                     >
 
                         <div class="flex items-center gap-4">
 
                             <div
-                                class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-blue-50 transition-colors group-hover:bg-blue-100"
+                                class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-900/30 transition-colors group-hover:bg-blue-100"
                             >
 
                                 <img
@@ -605,19 +605,19 @@
 
                             <div class="min-w-0 flex-1">
 
-                                <h3 class="text-base font-bold text-gray-900">
+                                <h3 class="text-base font-bold text-gray-900 dark:text-gray-100">
                                     Incoming Records
                                 </h3>
 
 
-                                <p class="mt-1 text-sm leading-5 text-gray-500">
+                                <p class="mt-1 text-sm leading-5 text-gray-500 dark:text-gray-400">
                                     Receive, search, acknowledge and forward
                                     incoming transactions.
                                 </p>
 
 
                                 <div
-                                    class="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-blue-600"
+                                    class="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400"
                                 >
 
                                     Open Incoming
@@ -650,13 +650,13 @@
                     {{-- Outgoing --}}
                     <a
                         href="{{ route('outgoing-record') }}"
-                        class="group overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
+                        class="group overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
                     >
 
                         <div class="flex items-center gap-4">
 
                             <div
-                                class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 transition-colors group-hover:bg-emerald-100"
+                                class="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 transition-colors group-hover:bg-emerald-100"
                             >
 
                                 <img
@@ -670,19 +670,19 @@
 
                             <div class="min-w-0 flex-1">
 
-                                <h3 class="text-base font-bold text-gray-900">
+                                <h3 class="text-base font-bold text-gray-900 dark:text-gray-100">
                                     Outgoing Records
                                 </h3>
 
 
-                                <p class="mt-1 text-sm leading-5 text-gray-500">
+                                <p class="mt-1 text-sm leading-5 text-gray-500 dark:text-gray-400">
                                     Create, send and monitor records
                                     originating from your office.
                                 </p>
 
 
                                 <div
-                                    class="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-emerald-600"
+                                    class="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
                                 >
 
                                     Open Outgoing
@@ -728,21 +728,21 @@
                 {{-- RECENT ACTIVITY --}}
                 {{-- ===================================================== --}}
                 <div
-                    class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+                    class="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 shadow-sm"
                 >
 
                     {{-- Header --}}
                     <div
-                        class="flex items-center justify-between border-b border-gray-100 bg-gray-50/60 px-5 py-4"
+                        class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900 px-5 py-4"
                     >
 
                         <div>
 
-                            <h2 class="text-sm font-bold text-gray-900">
+                            <h2 class="text-sm font-bold text-gray-900 dark:text-gray-100">
                                 Recent Activity
                             </h2>
 
-                            <p class="mt-0.5 text-xs text-gray-400">
+                            <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
                                 Latest transactions involving your office
                             </p>
 
@@ -751,7 +751,7 @@
 
                         <a
                             href="{{ route('incoming-record') }}"
-                            class="text-xs font-semibold text-blue-600 transition hover:text-blue-700"
+                            class="text-xs font-semibold text-blue-600 dark:text-blue-400 transition hover:text-blue-700 dark:hover:text-blue-300"
                         >
                             View records
                         </a>
@@ -761,7 +761,7 @@
 
 
                     {{-- Activity --}}
-                    <div class="divide-y divide-gray-100">
+                    <div class="divide-y divide-gray-100 dark:divide-gray-800">
 
                         @forelse ($recentTransactions as $transaction)
 
@@ -775,7 +775,7 @@
 
                                 <a
                                     href="{{ route('show-transactions', $record->id) }}"
-                                    class="group flex items-start gap-3 px-5 py-4 transition-colors hover:bg-gray-50"
+                                    class="group flex items-start gap-3 px-5 py-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
                                 >
 
                                     {{-- Icon --}}
@@ -784,8 +784,8 @@
                                             mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full
 
                                             {{ $received
-                                                ? 'bg-emerald-50 text-emerald-600'
-                                                : 'bg-amber-50 text-amber-600'
+                                                ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                                                : 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
                                             }}
                                         "
                                     >
@@ -838,7 +838,7 @@
                                             <div class="flex min-w-0 items-center gap-2">
 
                                                 <p
-                                                    class="truncate text-sm font-semibold text-gray-800 transition-colors group-hover:text-blue-600"
+                                                    class="truncate text-sm font-semibold text-gray-800 dark:text-gray-100 transition-colors group-hover:text-blue-600"
                                                 >
                                                     {{ $record->reference }}
                                                 </p>
@@ -847,7 +847,7 @@
                                                 @if ($record->is_urgent)
 
                                                     <span
-                                                        class="shrink-0 rounded-full bg-red-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-red-600"
+                                                        class="shrink-0 rounded-full bg-red-50 dark:bg-red-900/30 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-red-600 dark:text-red-400"
                                                     >
                                                         Urgent
                                                     </span>
@@ -858,7 +858,7 @@
 
 
                                             <span
-                                                class="shrink-0 text-[11px] text-gray-400"
+                                                class="shrink-0 text-[11px] text-gray-400 dark:text-gray-500"
                                             >
                                                 {{ $transaction->created_at?->diffForHumans() }}
                                             </span>
@@ -869,7 +869,7 @@
 
                                         {{-- Subject --}}
                                         <p
-                                            class="mt-0.5 truncate text-xs text-gray-400"
+                                            class="mt-0.5 truncate text-xs text-gray-400 dark:text-gray-500"
                                         >
                                             {{ $record->subject }}
                                         </p>
@@ -882,14 +882,14 @@
                                         >
 
                                             <span
-                                                class="max-w-[130px] truncate text-xs font-medium text-gray-600"
+                                                class="max-w-[130px] truncate text-xs font-medium text-gray-600 dark:text-gray-300"
                                             >
                                                 {{ $transaction->office ?? 'N/A' }}
                                             </span>
 
 
                                             <svg
-                                                class="size-3 shrink-0 text-gray-300"
+                                                class="size-3 shrink-0 text-gray-300 dark:text-gray-600"
                                                 fill="none"
                                                 viewBox="0 0 24 24"
                                                 stroke-width="2"
@@ -904,7 +904,7 @@
 
 
                                             <span
-                                                class="max-w-[130px] truncate text-xs font-semibold text-blue-600"
+                                                class="max-w-[130px] truncate text-xs font-semibold text-blue-600 dark:text-blue-400"
                                             >
                                                 {{ $transaction->destination ?? 'N/A' }}
                                             </span>
@@ -915,8 +915,8 @@
                                                     ml-auto hidden shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold sm:inline-flex
 
                                                     {{ $received
-                                                        ? 'bg-emerald-50 text-emerald-700'
-                                                        : 'bg-amber-50 text-amber-700'
+                                                        ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                                                        : 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
                                                     }}
                                                 "
                                             >
@@ -937,7 +937,7 @@
                             <div class="px-6 py-14 text-center">
 
                                 <div
-                                    class="mx-auto mb-3 flex size-11 items-center justify-center rounded-full bg-gray-100 text-gray-400"
+                                    class="mx-auto mb-3 flex size-11 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500"
                                 >
 
                                     <svg
@@ -957,12 +957,12 @@
                                 </div>
 
 
-                                <p class="text-sm font-semibold text-gray-600">
+                                <p class="text-sm font-semibold text-gray-600 dark:text-gray-300">
                                     No recent activity
                                 </p>
 
 
-                                <p class="mt-1 text-xs text-gray-400">
+                                <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
                                     New transaction activity will appear here.
                                 </p>
 
@@ -981,29 +981,29 @@
                 {{-- ===================================================== --}}
                 <div
                     class="
-                        overflow-hidden rounded-2xl border bg-white shadow-sm
+                        overflow-hidden rounded-2xl border bg-white dark:!bg-gray-800 shadow-sm
 
                         {{ $urgentCount > 0
-                            ? 'border-red-200'
-                            : 'border-gray-200'
+                            ? 'border-red-200 dark:border-red-800'
+                            : 'border-gray-200 dark:border-gray-700'
                         }}
                     "
                 >
 
                     {{-- Header --}}
                     <div
-                        class="border-b border-gray-100 bg-gray-50/60 px-5 py-4"
+                        class="border-b border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900 px-5 py-4"
                     >
 
                         <div class="flex items-center justify-between">
 
                             <div>
 
-                                <h2 class="text-sm font-bold text-gray-900">
+                                <h2 class="text-sm font-bold text-gray-900 dark:text-gray-100">
                                     Urgent Attention
                                 </h2>
 
-                                <p class="mt-0.5 text-xs text-gray-400">
+                                <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
                                     Priority records involving your office
                                 </p>
 
@@ -1013,7 +1013,7 @@
                             @if ($urgentCount > 0)
 
                                 <span
-                                    class="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-bold text-red-700"
+                                    class="inline-flex items-center gap-1.5 rounded-full bg-red-50 dark:bg-red-900/30 px-2.5 py-1 text-xs font-bold text-red-700 dark:text-red-300"
                                 >
 
                                     <span
@@ -1033,20 +1033,20 @@
 
 
                     {{-- Urgent records --}}
-                    <div class="divide-y divide-gray-100">
+                    <div class="divide-y divide-gray-100 dark:divide-gray-800">
 
                         @forelse ($urgentRecords as $urgent)
 
                             <a
                                 href="{{ route('show-transactions', $urgent->id) }}"
-                                class="group block px-5 py-4 transition-colors hover:bg-red-50/30"
+                                class="group block px-5 py-4 transition-colors hover:bg-red-50/30 dark:hover:bg-red-900/40"
                             >
 
                                 <div class="flex items-start gap-3">
 
                                     {{-- Warning --}}
                                     <div
-                                        class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-600"
+                                        class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400"
                                     >
 
                                         <svg
@@ -1074,14 +1074,14 @@
                                         >
 
                                             <p
-                                                class="truncate text-sm font-bold text-gray-800 transition-colors group-hover:text-red-700"
+                                                class="truncate text-sm font-bold text-gray-800 dark:text-gray-100 transition-colors group-hover:text-red-700"
                                             >
                                                 {{ $urgent->reference }}
                                             </p>
 
 
                                             <svg
-                                                class="size-3.5 shrink-0 text-gray-300 transition-all group-hover:translate-x-0.5 group-hover:text-red-500"
+                                                class="size-3.5 shrink-0 text-gray-300 dark:text-gray-600 transition-all group-hover:translate-x-0.5 group-hover:text-red-500"
                                                 fill="none"
                                                 viewBox="0 0 24 24"
                                                 stroke-width="2"
@@ -1099,7 +1099,7 @@
 
 
                                         <p
-                                            class="mt-1 line-clamp-2 text-xs leading-5 text-gray-500"
+                                            class="mt-1 line-clamp-2 text-xs leading-5 text-gray-500 dark:text-gray-400"
                                         >
                                             {{ $urgent->subject }}
                                         </p>
@@ -1111,14 +1111,14 @@
                                         >
 
                                             <span
-                                                class="max-w-[160px] truncate text-[11px] text-gray-400"
+                                                class="max-w-[160px] truncate text-[11px] text-gray-400 dark:text-gray-500"
                                             >
                                                 {{ $urgent->origin }}
                                             </span>
 
 
                                             <span
-                                                class="shrink-0 text-[10px] text-gray-400"
+                                                class="shrink-0 text-[10px] text-gray-400 dark:text-gray-500"
                                             >
                                                 {{ $urgent->updated_at?->diffForHumans() }}
                                             </span>
@@ -1137,7 +1137,7 @@
                             <div class="px-6 py-14 text-center">
 
                                 <div
-                                    class="mx-auto mb-3 flex size-11 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"
+                                    class="mx-auto mb-3 flex size-11 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
                                 >
 
                                     <svg
@@ -1157,13 +1157,13 @@
                                 </div>
 
 
-                                <p class="text-sm font-semibold text-gray-700">
+                                <p class="text-sm font-semibold text-gray-700 dark:text-gray-200">
                                     All clear
                                 </p>
 
 
                                 <p
-                                    class="mt-1 text-xs leading-5 text-gray-400"
+                                    class="mt-1 text-xs leading-5 text-gray-400 dark:text-gray-500"
                                 >
                                     No urgent records currently require attention.
                                 </p>
@@ -1184,7 +1184,7 @@
             {{-- BOTTOM SUMMARY --}}
             {{-- ========================================================= --}}
             <section
-                class="rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm"
+                class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 px-5 py-4 shadow-sm"
             >
 
                 <div
@@ -1194,7 +1194,7 @@
                     <div class="flex items-center gap-3">
 
                         <div
-                            class="flex size-9 items-center justify-center rounded-lg bg-gray-100 text-gray-500"
+                            class="flex size-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
                         >
 
                             <svg
@@ -1216,11 +1216,11 @@
 
                         <div>
 
-                            <p class="text-sm font-semibold text-gray-700">
+                            <p class="text-sm font-semibold text-gray-700 dark:text-gray-200">
                                 Office Activity Summary
                             </p>
 
-                            <p class="text-xs text-gray-400">
+                            <p class="text-xs text-gray-400 dark:text-gray-500">
                                 Information is based on records involving
                                 {{ Auth::user()->office }}.
                             </p>
@@ -1231,18 +1231,18 @@
 
 
                     <div
-                        class="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-gray-500"
+                        class="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-gray-500 dark:text-gray-400"
                     >
 
                         <span>
-                            <strong class="font-semibold text-gray-700">
+                            <strong class="font-semibold text-gray-700 dark:text-gray-200">
                                 {{ number_format($incomingRecords) }}
                             </strong>
                             incoming
                         </span>
 
                         <span>
-                            <strong class="font-semibold text-gray-700">
+                            <strong class="font-semibold text-gray-700 dark:text-gray-200">
                                 {{ number_format($outgoingRecords) }}
                             </strong>
                             outgoing
@@ -1254,8 +1254,8 @@
                                     font-semibold
 
                                     {{ $awaitingReceipt > 0
-                                        ? 'text-amber-600'
-                                        : 'text-gray-700'
+                                        ? 'text-amber-600 dark:text-amber-400'
+                                        : 'text-gray-700 dark:text-gray-200'
                                     }}
                                 "
                             >
@@ -1270,8 +1270,8 @@
                                     font-semibold
 
                                     {{ $urgentCount > 0
-                                        ? 'text-red-600'
-                                        : 'text-gray-700'
+                                        ? 'text-red-600 dark:text-red-400'
+                                        : 'text-gray-700 dark:text-gray-200'
                                     }}
                                 "
                             >

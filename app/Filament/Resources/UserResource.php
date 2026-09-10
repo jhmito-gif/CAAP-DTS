@@ -4,9 +4,12 @@ namespace App\Filament\Resources;
 
 use Filament\Schemas\Schema;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Tables\Filters\SelectFilter;
 use App\Filament\Resources\UserResource\Pages\ListUsers;
 use App\Filament\Resources\UserResource\Pages\CreateUser;
 use App\Filament\Resources\UserResource\Pages\EditUser;
@@ -30,7 +33,31 @@ class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-users';
+
+    protected static string | \UnitEnum | null $navigationGroup = 'Directory';
+
+    protected static ?int $navigationSort = 1;
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name', 'email', 'office'];
+    }
+
+    public static function getGlobalSearchResultDetails($record): array
+    {
+        return [
+            'Email' => $record->email,
+            'Office' => $record->office,
+        ];
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -78,29 +105,59 @@ class UserResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('name')
+            ->striped()
             ->columns([
-                TextColumn::make('id')
-                    ->label('ID')
-                    ->sortable()
-                    ->searchable(),
                 TextColumn::make('name')
-                    ->searchable(),
-                TextColumn::make('email')
-                    ->searchable(),
+                    ->weight('bold')
+                    ->description(fn (User $record) => $record->email)
+                    ->searchable(['name', 'email'])
+                    ->sortable(),
                 TextColumn::make('office')
+                    ->badge()
+                    ->color('gray')
+                    ->placeholder('—')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('service')
+                    ->placeholder('—')
+                    ->toggleable()
+                    ->searchable(),
+                TextColumn::make('role')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state) => User::ROLES[$state] ?? $state)
+                    ->color(fn (?string $state) => $state === User::ROLE_ADMIN ? 'success' : 'gray')
+                    ->icon(fn (?string $state) => $state === User::ROLE_ADMIN ? 'heroicon-m-shield-check' : 'heroicon-m-user')
+                    ->sortable(),
+                TextColumn::make('created_at')
+                    ->label('Joined')
+                    ->dateTime('M j, Y')
                     ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('office')
+                    ->options(fn () => Office::orderBy('name')->pluck('name', 'name'))
+                    ->searchable()
+                    ->multiple(),
+                SelectFilter::make('role')
+                    ->options(User::ROLES),
             ])
             ->recordActions([
-                EditAction::make(),
+                ActionGroup::make([
+                    EditAction::make(),
+                    DeleteAction::make()
+                        ->visible(fn (User $record) => $record->id !== auth()->id()),
+                ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->emptyStateHeading('No users found')
+            ->emptyStateDescription('Add personnel so they can be assigned to offices and tagged on records.')
+            ->emptyStateIcon('heroicon-o-users');
     }
 
     public static function getRelations(): array

@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-gray-50/70">
+<div class="min-h-screen bg-gray-50/70 dark:bg-gray-900">
 
     <section class="py-8">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -8,12 +8,12 @@
             {{-- ========================================================= --}}
             @if (session()->has('message'))
                 <div
-                    class="mb-5 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-sm"
+                    class="mb-5 flex items-center justify-between rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 px-4 py-3 shadow-sm"
                 >
                     <div class="flex items-center gap-3">
 
                         <div
-                            class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600"
+                            class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 dark:text-emerald-400"
                         >
                             <svg
                                 class="size-4"
@@ -35,7 +35,7 @@
                                 {{ session('message') }}
                             </p>
 
-                            <p class="text-xs text-emerald-600">
+                            <p class="text-xs text-emerald-600 dark:text-emerald-400">
                                 Transaction updated successfully.
                             </p>
                         </div>
@@ -45,7 +45,7 @@
                     <button
                         type="button"
                         onclick="this.parentElement.remove()"
-                        class="rounded-lg p-1.5 text-emerald-500 transition hover:bg-emerald-100 hover:text-emerald-700"
+                        class="rounded-lg p-1.5 text-emerald-500 dark:text-emerald-400 transition hover:bg-emerald-100 hover:text-emerald-700 dark:hover:text-emerald-300"
                     >
                         <svg
                             class="size-4"
@@ -71,7 +71,7 @@
             <div class="mb-7 grid gap-6 xl:grid-cols-2 xl:items-start">
                 <div class="min-w-0">
             <div
-                class="overflow-hidden rounded-t-lg border border-b-0 border-gray-200 bg-white"
+                class="overflow-hidden rounded-t-lg border border-b-0 border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800"
             >
 
                 {{-- Top Accent --}}
@@ -95,7 +95,7 @@
 
                             {{-- Main Icon --}}
                             <div
-                                class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-600"
+                                class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
                             >
                                 <svg
                                     class="size-6"
@@ -116,18 +116,18 @@
                             <div class="min-w-0 flex-1">
 
                                 <p
-                                    class="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-gray-400"
+                                    class="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-gray-400 dark:text-gray-500"
                                 >
                                     Transaction Record
                                 </p>
 
                                 <h1
-                                    class="break-all text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl"
+                                    class="break-all text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:text-3xl"
                                 >
                                     {{ $record->reference ?? 'N/A' }}
                                 </h1>
 
-                                <p class="mt-1 text-sm text-gray-500">
+                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                                     View transaction details and routing history
                                 </p>
 
@@ -151,7 +151,7 @@
                                     data-bs-toggle="modal"
                                     data-bs-target="#sendModal"
                                     aria-label="Send this record to another office"
-                                    class="group relative inline-flex size-10 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600 transition-all duration-150 hover:-translate-y-0.5 hover:border-blue-600 hover:bg-blue-600 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:translate-y-0 active:shadow-sm"
+                                    class="group relative inline-flex size-10 items-center justify-center rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 transition-all duration-150 hover:-translate-y-0.5 hover:border-blue-600 hover:bg-blue-600 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:translate-y-0 active:shadow-sm"
                                 >
 
                                     <svg
@@ -188,7 +188,7 @@
                                     wire:loading.attr="disabled"
                                     wire:target="markAsReceived({{ $receivableTransaction->id }})"
                                     aria-label="Mark this record as received"
-                                    class="group relative inline-flex size-10 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 transition-all duration-150 hover:-translate-y-0.5 hover:border-emerald-600 hover:bg-emerald-600 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+                                    class="group relative inline-flex size-10 items-center justify-center rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 transition-all duration-150 hover:-translate-y-0.5 hover:border-emerald-600 hover:bg-emerald-600 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
                                 >
 
                                     <svg
@@ -263,7 +263,7 @@
                                         type="submit"
                                         onclick="return confirm('Remove urgent status from this record?')"
                                         aria-label="Remove the urgent flag from this record"
-                                        class="group relative inline-flex size-10 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-600 transition-all duration-150 hover:-translate-y-0.5 hover:border-amber-500 hover:bg-amber-500 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 active:translate-y-0 active:shadow-sm"
+                                        class="group relative inline-flex size-10 items-center justify-center rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 transition-all duration-150 hover:-translate-y-0.5 hover:border-amber-500 hover:bg-amber-500 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 active:translate-y-0 active:shadow-sm"
                                     >
 
                                         <svg
@@ -294,7 +294,7 @@
                                         type="submit"
                                         onclick="return confirm('Mark this record as urgent?')"
                                         aria-label="Mark this record as urgent"
-                                        class="group relative inline-flex size-10 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition-all duration-150 hover:-translate-y-0.5 hover:border-red-600 hover:bg-red-600 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 active:translate-y-0 active:shadow-sm"
+                                        class="group relative inline-flex size-10 items-center justify-center rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 transition-all duration-150 hover:-translate-y-0.5 hover:border-red-600 hover:bg-red-600 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 active:translate-y-0 active:shadow-sm"
                                     >
 
                                         <svg
@@ -334,7 +334,7 @@
                                 target="_blank"
                                 rel="noopener"
                                 aria-label="Open the printable Routing Action Slip"
-                                class="group relative inline-flex size-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition-all duration-150 hover:-translate-y-0.5 hover:border-gray-900 hover:bg-gray-900 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 active:translate-y-0 active:shadow-sm"
+                                class="group relative inline-flex size-10 items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 text-gray-500 dark:text-gray-400 transition-all duration-150 hover:-translate-y-0.5 hover:border-gray-900 hover:bg-gray-900 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 active:translate-y-0 active:shadow-sm"
                             >
 
                                 <svg
@@ -369,15 +369,15 @@
                     {{-- RECORD DETAILS --}}
                     {{-- Full card width, so references are never clipped. --}}
                     {{-- ========================================================= --}}
-                    <div class="mt-4 border-t border-gray-100 pt-4">
+                    <div class="mt-4 border-t border-gray-100 dark:border-gray-800 pt-4">
 
                         <dl class="grid gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
 
 
                             {{-- Origin Office --}}
-                            <div class="min-w-0 border-l-2 border-gray-200 pl-3">
+                            <div class="min-w-0 border-l-2 border-gray-200 dark:border-gray-700 pl-3">
 
-                                <dt class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                                <dt class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
 
                                     <svg
                                         class="size-3.5 shrink-0"
@@ -397,7 +397,7 @@
 
                                 </dt>
 
-                                <dd class="mt-1 break-words text-sm font-semibold text-gray-800">
+                                <dd class="mt-1 break-words text-sm font-semibold text-gray-800 dark:text-gray-100">
                                     {{ $record->origin ?: '—' }}
                                 </dd>
 
@@ -405,9 +405,9 @@
 
 
                             {{-- Tracking Reference --}}
-                            <div class="min-w-0 border-l-2 border-blue-300 pl-3">
+                            <div class="min-w-0 border-l-2 border-blue-300 dark:border-blue-700 pl-3">
 
-                                <dt class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-400">
+                                <dt class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-400 dark:text-blue-500">
 
                                     <svg
                                         class="size-3.5 shrink-0"
@@ -427,7 +427,7 @@
 
                                 </dt>
 
-                                <dd class="mt-1 break-all text-sm font-bold text-blue-700">
+                                <dd class="mt-1 break-all text-sm font-bold text-blue-700 dark:text-blue-300">
                                     {{ $record->reference ?: '—' }}
                                 </dd>
 
@@ -435,9 +435,9 @@
 
 
                             {{-- Origin Reference --}}
-                            <div class="min-w-0 border-l-2 border-indigo-300 pl-3">
+                            <div class="min-w-0 border-l-2 border-indigo-300 dark:border-indigo-700 pl-3">
 
-                                <dt class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-400">
+                                <dt class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-400 dark:text-indigo-500">
 
                                     <svg
                                         class="size-3.5 shrink-0"
@@ -457,7 +457,7 @@
 
                                 </dt>
 
-                                <dd class="mt-1 break-all text-sm font-bold text-indigo-700">
+                                <dd class="mt-1 break-all text-sm font-bold text-indigo-700 dark:text-indigo-300">
                                     {{ $record->origin_reference ?: '—' }}
                                 </dd>
 
@@ -467,9 +467,9 @@
 
 
                         {{-- Subject --}}
-                        <div class="mt-3 min-w-0 border-l-2 border-gray-200 pl-3">
+                        <div class="mt-3 min-w-0 border-l-2 border-gray-200 dark:border-gray-700 pl-3">
 
-                            <dt class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                            <dt class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
 
                                 <svg
                                     class="size-3.5 shrink-0"
@@ -489,7 +489,7 @@
 
                             </dt>
 
-                            <dd class="mt-1 break-words text-sm font-medium leading-5 text-gray-800">
+                            <dd class="mt-1 break-words text-sm font-medium leading-5 text-gray-800 dark:text-gray-100">
                                 {{ $record->subject ?: '—' }}
                             </dd>
 
@@ -497,9 +497,9 @@
 
 
                         {{-- Tagged Personnel --}}
-                        <div class="mt-3 min-w-0 border-l-2 border-violet-300 pl-3">
+                        <div class="mt-3 min-w-0 border-l-2 border-violet-300 dark:border-violet-700 pl-3">
 
-                            <dt class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-violet-400">
+                            <dt class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-violet-400 dark:text-violet-500">
 
                                 <svg
                                     class="size-3.5 shrink-0"
@@ -523,7 +523,7 @@
 
                                 @if ($record->taggedUsers->isEmpty())
 
-                                    <span class="text-sm text-gray-400">
+                                    <span class="text-sm text-gray-400 dark:text-gray-500">
                                         No one tagged yet
                                     </span>
 
@@ -532,7 +532,7 @@
                                     <div class="flex flex-wrap gap-1.5">
 
                                         @foreach ($record->taggedUsers as $tagged)
-                                            <span class="inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-700">
+                                            <span class="inline-flex items-center gap-1.5 rounded-full border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-900/30 px-2.5 py-1 text-xs font-semibold text-violet-700 dark:text-violet-300">
 
                                                 <span class="flex size-4 items-center justify-center rounded-full bg-violet-200 text-[9px] font-bold uppercase text-violet-800">
                                                     {{ \Illuminate\Support\Str::substr($tagged->name, 0, 1) }}
@@ -540,7 +540,7 @@
 
                                                 {{ $tagged->name }}
 
-                                                <span class="font-medium text-violet-400">
+                                                <span class="font-medium text-violet-400 dark:text-violet-500">
                                                     {{ $tagged->pivot->office ?: $tagged->office }}
                                                 </span>
 
@@ -565,28 +565,28 @@
             {{-- TRANSACTION HISTORY --}}
             {{-- ========================================================= --}}
             <div
-                class="overflow-hidden rounded-b-lg border border-gray-200 bg-white"
+                class="overflow-hidden rounded-b-lg border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800"
             >
 
                 {{-- Section Header --}}
                 <div
-                    class="border-b border-gray-200 bg-white px-4 py-3 sm:px-5"
+                    class="border-b border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 px-4 py-3 sm:px-5"
                 >
                     <div class="flex items-center justify-between gap-4">
 
                         <div>
-                            <h2 class="text-base font-bold text-gray-900">
+                            <h2 class="text-base font-bold text-gray-900 dark:text-gray-100">
                                 Transaction History
                             </h2>
 
-                            <p class="mt-0.5 text-xs text-gray-400">
+                            <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
                                 Routing and receiving activity for this record
                             </p>
                         </div>
 
 
                         <span
-                            class="shrink-0 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-500"
+                            class="shrink-0 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 px-2.5 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400"
                         >
                             {{ $transactions->count() }}
                         </span>
@@ -606,13 +606,13 @@
 
 
                         <div
-                            class="group relative border-b border-gray-100 py-4 pl-8 last:border-b-0"
+                            class="group relative border-b border-gray-100 dark:border-gray-800 py-4 pl-8 last:border-b-0"
                         >
 
                             {{-- Vertical Line --}}
                             @if (!$loop->last)
                                 <div
-                                    class="absolute left-[9px] top-8 h-[calc(100%-1rem)] w-px bg-gray-200"
+                                    class="absolute left-[9px] top-8 h-[calc(100%-1rem)] w-px bg-gray-200 dark:bg-gray-700"
                                 ></div>
                             @endif
 
@@ -625,8 +625,8 @@
                                     border-2 border-white
 
                                     {{ $isReceived
-                                        ? 'bg-emerald-100 text-emerald-700'
-                                        : 'bg-amber-100 text-amber-700'
+                                        ? 'bg-emerald-100 text-emerald-700 dark:text-emerald-300'
+                                        : 'bg-amber-100 text-amber-700 dark:text-amber-300'
                                     }}
                                 "
                             >
@@ -668,7 +668,7 @@
 
                             {{-- Transaction Card --}}
                             <div
-                                class="min-w-0 bg-white"
+                                class="min-w-0 bg-white dark:!bg-gray-800"
                             >
 
                                 {{-- Transaction Header --}}
@@ -692,8 +692,8 @@
                                                         px-2.5 py-1 text-[11px] font-semibold
 
                                                         {{ $isReceived
-                                                            ? 'bg-emerald-50 text-emerald-700'
-                                                            : 'bg-amber-50 text-amber-700'
+                                                            ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                                                            : 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
                                                         }}
                                                     "
                                                 >
@@ -717,8 +717,8 @@
                                                         text-[11px] font-medium
 
                                                         {{ $isReceived
-                                                            ? 'text-emerald-600'
-                                                            : 'text-amber-600'
+                                                            ? 'text-emerald-600 dark:text-emerald-400'
+                                                            : 'text-amber-600 dark:text-amber-400'
                                                         }}
                                                     "
                                                 >
@@ -738,10 +738,10 @@
 
                                         {{-- Logged Date --}}
                                         <div
-                                            class="flex shrink-0 items-center gap-1.5 text-[11px] text-gray-500"
+                                            class="flex shrink-0 items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400"
                                         >
                                             <svg
-                                                class="size-4 text-gray-400"
+                                                class="size-4 text-gray-400 dark:text-gray-500"
                                                 fill="none"
                                                 viewBox="0 0 24 24"
                                                 stroke-width="2"
@@ -775,7 +775,7 @@
                                     <div>
 
                                         <p
-                                            class="mb-3 text-xs font-bold uppercase tracking-wider text-gray-400"
+                                            class="mb-3 text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500"
                                         >
                                             Routing
                                         </p>
@@ -790,7 +790,7 @@
                                                 class="min-w-0 py-1"
                                             >
                                                 <p
-                                                    class="mb-2 text-[10px] font-bold uppercase tracking-wider text-gray-400"
+                                                    class="mb-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500"
                                                 >
                                                     From
                                                 </p>
@@ -799,7 +799,7 @@
                                                 <div class="flex items-center gap-3">
 
                                                     <div
-                                                        class="flex size-7 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] font-bold uppercase text-gray-700"
+                                                        class="flex size-7 shrink-0 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-[10px] font-bold uppercase text-gray-700 dark:text-gray-200"
                                                     >
                                                         {{ strtoupper(substr($transact->office ?? '?', 0, 1)) }}
                                                     </div>
@@ -807,13 +807,13 @@
 
                                                     <div class="min-w-0">
                                                         <p
-                                                            class="truncate text-sm font-semibold text-gray-800"
+                                                            class="truncate text-sm font-semibold text-gray-800 dark:text-gray-100"
                                                         >
                                                             {{ $transact->office ?? 'N/A' }}
                                                         </p>
 
                                                         <p
-                                                            class="text-[11px] text-gray-400"
+                                                            class="text-[11px] text-gray-400 dark:text-gray-500"
                                                         >
                                                             Sending office
                                                         </p>
@@ -827,7 +827,7 @@
                                             <div class="hidden sm:flex">
 
                                                 <div
-                                                    class="flex size-6 items-center justify-center text-gray-400"
+                                                    class="flex size-6 items-center justify-center text-gray-400 dark:text-gray-500"
                                                 >
                                                     <svg
                                                         class="size-4"
@@ -852,7 +852,7 @@
                                                 class="min-w-0 py-1"
                                             >
                                                 <p
-                                                    class="mb-2 text-[10px] font-bold uppercase tracking-wider text-blue-400"
+                                                    class="mb-2 text-[10px] font-bold uppercase tracking-wider text-blue-400 dark:text-blue-500"
                                                 >
                                                     Destination
                                                 </p>
@@ -861,7 +861,7 @@
                                                 <div class="flex items-center gap-3">
 
                                                     <div
-                                                        class="flex size-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-[10px] font-bold uppercase text-blue-700"
+                                                        class="flex size-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-[10px] font-bold uppercase text-blue-700 dark:text-blue-300"
                                                     >
                                                         {{ strtoupper(substr($transact->destination ?? '?', 0, 1)) }}
                                                     </div>
@@ -875,7 +875,7 @@
                                                         </p>
 
                                                         <p
-                                                            class="text-[11px] text-blue-500"
+                                                            class="text-[11px] text-blue-500 dark:text-blue-400"
                                                         >
                                                             Receiving office
                                                         </p>
@@ -893,7 +893,7 @@
                                     {{-- REMARKS --}}
                                     {{-- ================================================= --}}
                                     <div
-                                        class="border-l-2 border-gray-200 py-1 pl-3"
+                                        class="border-l-2 border-gray-200 dark:border-gray-700 py-1 pl-3"
                                     >
 
                                         <div class="mb-3 flex items-center gap-2">
@@ -917,7 +917,7 @@
                                             </div>
 
                                             <span
-                                                class="text-xs font-bold uppercase tracking-wide text-gray-400"
+                                                class="text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500"
                                             >
                                                 Remarks
                                             </span>
@@ -926,7 +926,7 @@
 
 
                                         <p
-                                            class="whitespace-pre-line text-sm leading-6 text-gray-700"
+                                            class="whitespace-pre-line text-sm leading-6 text-gray-700 dark:text-gray-200"
                                         >
                                             {{ filled($transact->remarks)
                                                 ? $transact->remarks
@@ -943,7 +943,7 @@
                                     @if ($isReceived)
 
                                         <div
-                                            class="border-l-2 border-emerald-400 bg-emerald-50/40 px-3 py-2"
+                                            class="border-l-2 border-emerald-400 bg-emerald-50/40 dark:bg-emerald-900/30 px-3 py-2"
                                         >
 
                                             <div
@@ -951,7 +951,7 @@
                                             >
 
                                                 <div
-                                                    class="flex size-7 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-emerald-700"
+                                                    class="flex size-7 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-emerald-700 dark:text-emerald-300"
                                                 >
                                                     <svg
                                                         class="size-5"
@@ -977,7 +977,7 @@
                                                     </p>
 
                                                     <p
-                                                        class="mt-0.5 text-xs text-emerald-600"
+                                                        class="mt-0.5 text-xs text-emerald-600 dark:text-emerald-400"
                                                     >
                                                         Successfully acknowledged by the receiving office
                                                     </p>
@@ -995,7 +995,7 @@
                                                     class="py-1"
                                                 >
                                                     <p
-                                                        class="text-[10px] font-bold uppercase tracking-wider text-emerald-600/70"
+                                                        class="text-[10px] font-bold uppercase tracking-wider text-emerald-600/70 dark:text-emerald-400"
                                                     >
                                                         Received Date
                                                     </p>
@@ -1013,7 +1013,7 @@
                                                     class="py-1"
                                                 >
                                                     <p
-                                                        class="text-[10px] font-bold uppercase tracking-wider text-emerald-600/70"
+                                                        class="text-[10px] font-bold uppercase tracking-wider text-emerald-600/70 dark:text-emerald-400"
                                                     >
                                                         Received By
                                                     </p>
@@ -1024,7 +1024,7 @@
                                                     >
 
                                                         <div
-                                                            class="flex size-7 shrink-0 items-center justify-center rounded-full bg-white text-[10px] font-bold uppercase text-emerald-700 shadow-sm"
+                                                            class="flex size-7 shrink-0 items-center justify-center rounded-full bg-white dark:!bg-gray-800 text-[10px] font-bold uppercase text-emerald-700 dark:text-emerald-300 shadow-sm"
                                                         >
                                                             {{ strtoupper(substr($transact->recieved_by ?? '?', 0, 1)) }}
                                                         </div>
@@ -1049,7 +1049,7 @@
                                     @else
 
                                         <div
-                                            class="border-l-2 border-amber-400 bg-amber-50/40 px-3 py-2"
+                                            class="border-l-2 border-amber-400 bg-amber-50/40 dark:bg-amber-900/30 px-3 py-2"
                                         >
 
                                             <div
@@ -1061,7 +1061,7 @@
                                                 >
 
                                                     <div
-                                                        class="flex size-7 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-700"
+                                                        class="flex size-7 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-700 dark:text-amber-300"
                                                     >
                                                         <svg
                                                             class="size-5"
@@ -1087,7 +1087,7 @@
                                                         </p>
 
                                                         <p
-                                                            class="mt-1 max-w-md text-xs leading-5 text-amber-700"
+                                                            class="mt-1 max-w-md text-xs leading-5 text-amber-700 dark:text-amber-300"
                                                         >
                                                             This transaction has not yet been acknowledged by the receiving office.
                                                         </p>
@@ -1115,7 +1115,7 @@
                         <div class="px-6 py-16 text-center">
 
                             <div
-                                class="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-400"
+                                class="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500"
                             >
                                 <svg
                                     class="size-7"
@@ -1132,11 +1132,11 @@
                                 </svg>
                             </div>
 
-                            <h3 class="text-base font-bold text-gray-700">
+                            <h3 class="text-base font-bold text-gray-700 dark:text-gray-200">
                                 No transaction history
                             </h3>
 
-                            <p class="mt-1 text-sm text-gray-400">
+                            <p class="mt-1 text-sm text-gray-400 dark:text-gray-500">
                                 Routing activities will appear here once available.
                             </p>
 
@@ -1178,20 +1178,20 @@
         <div class="modal-dialog modal-dialog-centered">
 
             <div
-                class="modal-content overflow-hidden rounded-2xl border-0 bg-white shadow-2xl"
+                class="modal-content overflow-hidden rounded-2xl border-0 bg-white dark:!bg-gray-800 shadow-2xl"
             >
 
                 {{-- ================================================= --}}
                 {{-- MODAL HEADER --}}
                 {{-- ================================================= --}}
                 <div
-                    class="flex items-center justify-between border-b border-gray-100 px-6 py-5"
+                    class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-6 py-5"
                 >
 
                     <div class="flex items-center gap-3">
 
                         <div
-                            class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600"
+                            class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
                         >
                             <svg
                                 class="size-5"
@@ -1212,12 +1212,12 @@
                         <div>
                             <h2
                                 id="sendModalLabel"
-                                class="text-lg font-bold text-gray-900"
+                                class="text-lg font-bold text-gray-900 dark:text-gray-100"
                             >
                                 Send Transaction
                             </h2>
 
-                            <p class="text-xs text-gray-400">
+                            <p class="text-xs text-gray-400 dark:text-gray-500">
                                 Forward this record to another office
                             </p>
                         </div>
@@ -1229,7 +1229,7 @@
                         type="button"
                         data-bs-dismiss="modal"
                         aria-label="Close"
-                        class="flex size-9 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                        class="flex size-9 items-center justify-center rounded-lg text-gray-400 dark:text-gray-500 transition hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300"
                     >
                         <svg
                             class="size-5"
@@ -1255,7 +1255,7 @@
                 @if (session()->has('message'))
 
                     <div
-                        class="mx-6 mt-5 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800"
+                        class="mx-6 mt-5 flex items-center justify-between rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 px-4 py-3 text-emerald-800"
                     >
 
                         <div class="flex items-center gap-2">
@@ -1284,7 +1284,7 @@
                         <button
                             type="button"
                             onclick="this.parentElement.remove()"
-                            class="ml-3 text-emerald-600 hover:text-emerald-800"
+                            class="ml-3 text-emerald-600 dark:text-emerald-400 hover:text-emerald-800"
                         >
                             <svg
                                 class="size-4"
@@ -1316,17 +1316,17 @@
 
                         <label
                             for="office"
-                            class="mb-1.5 block text-sm font-semibold text-gray-700"
+                            class="mb-1.5 block text-sm font-semibold text-gray-700 dark:text-gray-200"
                         >
                             Destination Office
-                            <span class="text-red-500">*</span>
+                            <span class="text-red-500 dark:text-red-400">*</span>
                         </label>
 
 
                         <select
                             wire:model.live="office"
                             id="office"
-                            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                            class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:!bg-gray-800 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                         >
                             <option value="">
                                 -- Select Office --
@@ -1341,7 +1341,7 @@
 
 
                         @error('office')
-                            <p class="mt-1.5 text-xs font-medium text-red-600">
+                            <p class="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">
                                 {{ $message }}
                             </p>
                         @enderror
@@ -1354,17 +1354,17 @@
 
                         <label
                             for="status"
-                            class="mb-1.5 block text-sm font-semibold text-gray-700"
+                            class="mb-1.5 block text-sm font-semibold text-gray-700 dark:text-gray-200"
                         >
                             Status
-                            <span class="text-red-500">*</span>
+                            <span class="text-red-500 dark:text-red-400">*</span>
                         </label>
 
 
                         <select
                             wire:model="status"
                             id="status"
-                            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                            class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:!bg-gray-800 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                         >
                             <option value="">
                                 -- Select Status --
@@ -1379,7 +1379,7 @@
 
 
                         @error('status')
-                            <p class="mt-1.5 text-xs font-medium text-red-600">
+                            <p class="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">
                                 {{ $message }}
                             </p>
                         @enderror
@@ -1395,12 +1395,12 @@
                         >
                             <label
                                 for="remarks"
-                                class="text-sm font-semibold text-gray-700"
+                                class="text-sm font-semibold text-gray-700 dark:text-gray-200"
                             >
                                 Remarks
                             </label>
 
-                            <span class="text-[11px] text-gray-400">
+                            <span class="text-[11px] text-gray-400 dark:text-gray-500">
                                 Optional
                             </span>
                         </div>
@@ -1410,13 +1410,13 @@
                             wire:model.live.debounce.300ms="remarks"
                             id="remarks"
                             rows="4"
-                            class="w-full resize-none rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-700 shadow-sm outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                            class="w-full resize-none rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 shadow-sm outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                             placeholder="Add a short note or instruction..."
                         ></textarea>
 
 
                         @error('remarks')
-                            <p class="mt-1.5 text-xs font-medium text-red-600">
+                            <p class="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">
                                 {{ $message }}
                             </p>
                         @enderror
@@ -1437,14 +1437,14 @@
                 {{-- MODAL FOOTER --}}
                 {{-- ================================================= --}}
                 <div
-                    class="flex items-center justify-end gap-3 border-t border-gray-100 bg-gray-50/60 px-6 py-4"
+                    class="flex items-center justify-end gap-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900 px-6 py-4"
                 >
 
                     <button
                         id="modalCloseBtn"
                         type="button"
                         data-bs-dismiss="modal"
-                        class="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 shadow-sm transition hover:bg-gray-50 hover:text-gray-800"
+                        class="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:!bg-gray-800 px-4 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-300 shadow-sm transition hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-100"
                     >
                         Cancel
                     </button>

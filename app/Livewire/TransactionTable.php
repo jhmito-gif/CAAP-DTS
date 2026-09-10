@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Access;
 use App\Models\Office;
 use App\Models\RecordTagging;
 use App\Models\Status;
@@ -46,8 +47,13 @@ class TransactionTable extends Component
             ->where('user_id', Auth::id())
             ->exists();
 
-        // Verify ownership, transaction involvement, or being tagged
-        if ($this->record->owner !== $userOffice && !$hasAccess && !$isTagged) {
+        // An office can be granted explicit access to a record by an admin.
+        $isGranted = Access::where('record_id', $recordId)
+            ->where('office', $userOffice)
+            ->exists();
+
+        // Verify ownership, transaction involvement, tag, or granted access
+        if ($this->record->owner !== $userOffice && !$hasAccess && !$isTagged && !$isGranted) {
             session()->flash('error', 'Unauthorized access to record.');
             return $this->redirectRoute('dashboard'); // Livewire-safe redirect
         }
