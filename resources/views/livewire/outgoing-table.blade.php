@@ -162,7 +162,7 @@
                         <thead class="sticky top-0 z-10 border-b border-gray-200 bg-gray-50/95 text-[11px] font-semibold uppercase tracking-wide text-gray-500 backdrop-blur">
                             <tr>
                                 <th class="px-4 py-3">
-                                    Reference
+                                    References
                                 </th>
 
                                 <th class="px-4 py-3">
@@ -175,6 +175,10 @@
 
                                 <th class="px-4 py-3">
                                     Date Created
+                                </th>
+
+                                <th class="px-4 py-3 text-right">
+                                    RAS Audit Trail
                                 </th>
                             </tr>
                         </thead>
@@ -205,6 +209,11 @@
                                         <span class="font-semibold text-gray-800 transition-colors group-hover:text-emerald-600">
                                             {{ $record->reference }}
                                         </span>
+                                        @if($record->origin_reference)
+                                            <p class="truncate text-xs text-gray-400" title="{{ $record->origin_reference }}">
+                                                Origin ref: {{ $record->origin_reference }}
+                                            </p>
+                                        @endif
                                     </td>
 
 
@@ -258,13 +267,42 @@
 
                                     </td>
 
+
+                                    {{-- RAS audit trail --}}
+                                    <td class="px-4 py-3 text-right">
+
+                                        <a
+                                            href="{{ route('records-pdf', $record->id) }}"
+                                            target="_blank"
+                                            onclick="event.stopPropagation()"
+                                            class="inline-flex items-center justify-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
+                                        >
+                                            <svg
+                                                class="size-3.5"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke-width="2"
+                                                stroke="currentColor"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5A3.375 3.375 0 0010.125 2.25H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+                                                />
+                                            </svg>
+
+                                            RAS
+                                        </a>
+
+                                    </td>
+
                                 </tr>
 
                             @empty
 
                                 <tr>
                                     <td
-                                        colspan="4"
+                                        colspan="5"
                                         class="px-4 py-20 text-center"
                                     >
 

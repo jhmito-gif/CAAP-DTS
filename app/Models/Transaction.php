@@ -9,6 +9,8 @@ class Transaction extends Model
 {
     protected $fillable = [
         'record_id', 
+        'internal_reference',
+        'origin_reference',
         'remarks', 
         'status', 
         'destination', 

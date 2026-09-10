@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Record extends Model
 {
     protected $fillable = [
         'reference',
+        'origin_reference',
         'subject',
         'created_by',
         'origin',
@@ -35,6 +37,26 @@ class Record extends Model
 
     /*
     |--------------------------------------------------------------------------
+    | Tagged Personnel
+    |--------------------------------------------------------------------------
+    | The people this document is about. Optional -- a record may have none.
+    */
+    public function taggings(): HasMany
+    {
+        return $this->hasMany(RecordTagging::class, 'record_id');
+    }
+
+
+    public function taggedUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'record_taggings')
+            ->withPivot(['office', 'tagged_by'])
+            ->withTimestamps();
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
     | Search
     |--------------------------------------------------------------------------
     */
@@ -47,6 +69,7 @@ class Record extends Model
         return $query->where(function ($q) use ($value) {
 
             $q->where('reference', 'like', "%{$value}%")
+                ->orWhere('origin_reference', 'like', "%{$value}%")
                 ->orWhere('subject', 'like', "%{$value}%");
 
         });

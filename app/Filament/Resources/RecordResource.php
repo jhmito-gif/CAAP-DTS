@@ -34,6 +34,8 @@ class RecordResource extends Resource
                 TextInput::make('reference')
                     ->required()
                     ->maxLength(255),
+                TextInput::make('origin_reference')
+                    ->maxLength(255),
                 TextInput::make('subject')
                     ->required()
                     ->maxLength(255),
@@ -46,6 +48,10 @@ class RecordResource extends Resource
             ->columns([
                 TextColumn::make('reference')
                     ->label('Reference')
+                    ->sortable()
+                    ->searchable(),
+                TextColumn::make('origin_reference')
+                    ->label('Origin Reference')
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('subject')

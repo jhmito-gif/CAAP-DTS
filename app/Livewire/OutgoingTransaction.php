@@ -44,8 +44,12 @@ class OutgoingTransaction extends Component
             'office' => 'required|string',
         ]);
 
+        $record = Record::findOrFail($this->recordId);
+
         $transact = Transaction::create([
             'record_id' => $this->recordId,
+            'internal_reference' => $record->reference,
+            'origin_reference' => $record->origin_reference,
             'remarks' => $this->remarks,
             'status' => $this->status,
             'destination' => $this->office,
@@ -71,20 +75,41 @@ class OutgoingTransaction extends Component
         }
     }
 
+    /**
+     * Re-render so the tagged-personnel list reflects the tagging modal.
+     */
+    #[\Livewire\Attributes\On('tags-updated')]
+    public function refreshTags(): void
+    {
+        //
+    }
+
     public function render()
     {
+        $this->record->load('taggedUsers');
+
         $this->transactions = Transaction::where('record_id', $this->recordId)
             ->orderBy('created_at', 'desc')
             ->get();
 
         $lastTransaction = $this->transactions->first();
+        $receivableTransaction = $this->transactions->first(function ($transaction) {
+            return $transaction->date_recieved === null;
+        });
+
+        $rasTransactions = Transaction::where('record_id', $this->recordId)
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get();
 
         $this->showSendButton = $lastTransaction && $lastTransaction->date_recieved !== null;
 
         return view('livewire.outgoing-transaction', [
             'transactions' => $this->transactions,
             'record' => $this->record,
+            'rasTransactions' => $rasTransactions,
             'showSendButton' => $this->showSendButton,
+            'receivableTransaction' => $receivableTransaction,
         ]);
     }
 }
