@@ -32,8 +32,13 @@ class PdfController extends Controller
                 ->where('user_id', Auth::id())
                 ->exists();
 
+            // An office granted explicit access can print it as well.
+            $isGranted = \App\Models\Access::where('record_id', $record->id)
+                ->where('office', $userOffice)
+                ->exists();
+
             // Verify if authenticated user's office matches the record's owner or has access via transactions
-            if ($record->owner !== $userOffice && !$hasAccess && !$isTagged) {
+            if ($record->owner !== $userOffice && !$hasAccess && !$isTagged && !$isGranted) {
                 return redirect()->route('dashboard')
                     ->with('error', 'Unauthorized access to record RAS.');
             }

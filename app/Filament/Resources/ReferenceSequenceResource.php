@@ -16,7 +16,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Unique;
 
 class ReferenceSequenceResource extends Resource
 {
@@ -32,6 +32,8 @@ class ReferenceSequenceResource extends Resource
 
     protected static string | \UnitEnum | null $navigationGroup = 'Settings';
 
+    protected static ?int $navigationSort = 2;
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -40,10 +42,14 @@ class ReferenceSequenceResource extends Resource
                     ->options(fn () => Office::orderBy('name')->pluck('name', 'name'))
                     ->searchable()
                     ->required()
-                    ->rules(fn ($record) => [
-                        Rule::unique('reference_sequences', 'office')
-                            ->where(fn ($query) => $query->where('year', request()->input('data.year')))
-                            ->ignore($record),
+                    ->unique(
+                        table: 'reference_sequences',
+                        column: 'office',
+                        ignoreRecord: true,
+                        modifyRuleUsing: fn (Unique $rule, callable $get) => $rule->where('year', $get('year')),
+                    )
+                    ->validationMessages([
+                        'unique' => 'This office already has a sequence for the selected year.',
                     ]),
                 TextInput::make('year')
                     ->numeric()

@@ -1,14 +1,14 @@
-<div class="w-full min-h-screen bg-gray-50/60 flex flex-col pt-6">
+<div class="w-full min-h-screen bg-gray-50/60 dark:bg-gray-900 flex flex-col pt-6">
 
     <section class="mt-2">
 
         {{-- Optional latest outgoing record --}}
         @if($latest ?? false)
             <div class="mx-auto max-w-full px-4 lg:px-8 mb-5">
-                <div class="relative flex items-center gap-4 overflow-hidden rounded-lg border border-gray-200 bg-white pl-5 pr-5 py-3 shadow-sm">
+                <div class="relative flex items-center gap-4 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 pl-5 pr-5 py-3 shadow-sm">
                     <span class="absolute inset-y-0 left-0 w-1 bg-emerald-600"></span>
 
-                    <div class="flex size-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                    <div class="flex size-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
                         <svg
                             class="size-4"
                             fill="none"
@@ -26,31 +26,31 @@
 
                     <div class="grid min-w-0 flex-1 grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-3">
                         <div>
-                            <p class="text-[11px] font-medium text-gray-400">
+                            <p class="text-[11px] font-medium text-gray-400 dark:text-gray-500">
                                 Latest record
                             </p>
 
-                            <p class="truncate text-sm font-semibold text-emerald-700">
+                            <p class="truncate text-sm font-semibold text-emerald-700 dark:text-emerald-300">
                                 {{ $latest->reference }}
                             </p>
                         </div>
 
                         <div class="min-w-0">
-                            <p class="text-[11px] font-medium text-gray-400">
+                            <p class="text-[11px] font-medium text-gray-400 dark:text-gray-500">
                                 Subject
                             </p>
 
-                            <p class="truncate text-sm text-gray-700">
+                            <p class="truncate text-sm text-gray-700 dark:text-gray-200">
                                 {{ $latest->subject }}
                             </p>
                         </div>
 
                         <div>
-                            <p class="text-[11px] font-medium text-gray-400">
+                            <p class="text-[11px] font-medium text-gray-400 dark:text-gray-500">
                                 Created
                             </p>
 
-                            <p class="text-sm text-gray-700">
+                            <p class="text-sm text-gray-700 dark:text-gray-200">
                                 {{ $latest->created_at->diffForHumans() }}
                             </p>
                         </div>
@@ -92,7 +92,7 @@
                     </button>
 
                     {{-- Total records --}}
-                    <span class="hidden text-sm text-gray-400 sm:inline">
+                    <span class="hidden text-sm text-gray-400 dark:text-gray-500 sm:inline">
                         {{ $data->total() }}
                         {{ Str::plural('record', $data->total()) }}
                     </span>
@@ -104,7 +104,7 @@
                 <div class="relative w-full sm:w-80">
 
                     <svg
-                        class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400"
+                        class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke-width="2"
@@ -120,7 +120,7 @@
                     <input
                         wire:model.live.debounce.300ms="search"
                         type="text"
-                        class="w-full rounded-lg border border-gray-300 py-2 pl-9 pr-9 text-sm text-gray-700 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        class="w-full rounded-lg border border-gray-300 dark:border-gray-700 py-2 pl-9 pr-9 text-sm text-gray-700 dark:text-gray-200 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                         placeholder="Search records..."
                     >
 
@@ -130,7 +130,7 @@
                         x-show="$wire.search && $wire.search.length > 0"
                         x-cloak
                         @click="$wire.set('search', '')"
-                        class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                         aria-label="Clear search"
                     >
                         <svg
@@ -153,13 +153,13 @@
 
 
             {{-- Table card --}}
-            <div class="relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div class="relative overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 shadow-sm">
 
                 <div class="h-[600px] overflow-y-auto">
 
-                    <table class="w-full text-left text-sm text-gray-700">
+                    <table class="w-full text-left text-sm text-gray-700 dark:text-gray-200">
 
-                        <thead class="sticky top-0 z-10 border-b border-gray-200 bg-gray-50/95 text-[11px] font-semibold uppercase tracking-wide text-gray-500 backdrop-blur">
+                        <thead class="sticky top-0 z-10 border-b border-gray-200 dark:border-gray-700 bg-gray-50/95 dark:bg-gray-900 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 backdrop-blur">
                             <tr>
                                 <th class="px-4 py-3">
                                     References
@@ -184,7 +184,7 @@
                         </thead>
 
 
-                        <tbody class="divide-y divide-gray-100">
+                        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
 
                             @forelse ($data as $record)
 
@@ -201,16 +201,16 @@
                                 <tr
                                     wire:key="outgoing-record-{{ $record->id }}"
                                     onclick="window.location='{{ route('outgoing-transactions', $record->id) }}'"
-                                    class="group cursor-pointer transition-colors duration-100 hover:bg-emerald-50/40"
+                                    class="group cursor-pointer transition-colors duration-100 hover:bg-emerald-50/40 dark:hover:bg-emerald-900/40"
                                 >
 
                                     {{-- Reference --}}
                                     <td class="px-4 py-3">
-                                        <span class="font-semibold text-gray-800 transition-colors group-hover:text-emerald-600">
+                                        <span class="font-semibold text-gray-800 dark:text-gray-100 transition-colors group-hover:text-emerald-600">
                                             {{ $record->reference }}
                                         </span>
                                         @if($record->origin_reference)
-                                            <p class="truncate text-xs text-gray-400" title="{{ $record->origin_reference }}">
+                                            <p class="truncate text-xs text-gray-400 dark:text-gray-500" title="{{ $record->origin_reference }}">
                                                 Origin ref: {{ $record->origin_reference }}
                                             </p>
                                         @endif
@@ -220,7 +220,7 @@
                                     {{-- Subject --}}
                                     <td class="max-w-[320px] px-4 py-3">
                                         <p
-                                            class="truncate text-gray-800"
+                                            class="truncate text-gray-800 dark:text-gray-100"
                                             title="{{ $record->subject }}"
                                         >
                                             {{ $record->subject }}
@@ -233,12 +233,12 @@
 
                                         <div class="flex items-center gap-2">
 
-                                            <span class="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-[10px] font-semibold uppercase text-emerald-700">
+                                            <span class="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-[10px] font-semibold uppercase text-emerald-700 dark:text-emerald-300">
                                                 {{ strtoupper(substr($record->created_by ?? '?', 0, 1)) }}
                                             </span>
 
                                             <span
-                                                class="max-w-[180px] truncate text-sm text-gray-600"
+                                                class="max-w-[180px] truncate text-sm text-gray-600 dark:text-gray-300"
                                                 title="{{ $record->created_by }}"
                                             >
                                                 {{ $record->created_by ?? 'N/A' }}
@@ -253,14 +253,14 @@
                                     <td class="px-4 py-3">
 
                                         <span
-                                            class="text-gray-600"
+                                            class="text-gray-600 dark:text-gray-300"
                                             title="{{ $date?->format('M d, Y g:i A') }}"
                                         >
                                             {{ $date?->diffForHumans() ?? 'N/A' }}
                                         </span>
 
                                         @if($isStale)
-                                            <span class="mt-0.5 block text-[11px] font-medium text-amber-500">
+                                            <span class="mt-0.5 block text-[11px] font-medium text-amber-500 dark:text-amber-400">
                                                 {{ $date->format('M d, Y') }}
                                             </span>
                                         @endif
@@ -275,7 +275,7 @@
                                             href="{{ route('records-pdf', $record->id) }}"
                                             target="_blank"
                                             onclick="event.stopPropagation()"
-                                            class="inline-flex items-center justify-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
+                                            class="inline-flex items-center justify-center gap-1.5 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:!bg-gray-800 px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300 shadow-sm transition hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/40 hover:text-emerald-700 dark:hover:text-emerald-300"
                                         >
                                             <svg
                                                 class="size-3.5"
@@ -307,7 +307,7 @@
                                     >
 
                                         <svg
-                                            class="mx-auto mb-2 size-8 text-gray-300"
+                                            class="mx-auto mb-2 size-8 text-gray-300 dark:text-gray-600"
                                             fill="none"
                                             viewBox="0 0 24 24"
                                             stroke-width="1.5"
@@ -320,7 +320,7 @@
                                             />
                                         </svg>
 
-                                        <p class="text-sm text-gray-400">
+                                        <p class="text-sm text-gray-400 dark:text-gray-500">
                                             No records found
                                         </p>
 
@@ -337,10 +337,10 @@
 
 
                 {{-- Pagination footer --}}
-                <div class="flex flex-col gap-3 border-t border-gray-200 bg-gray-50/50 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex flex-col gap-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
 
                     {{-- Record count --}}
-                    <p class="order-3 text-xs text-gray-400 sm:order-1">
+                    <p class="order-3 text-xs text-gray-400 dark:text-gray-500 sm:order-1">
                         Showing
                         {{ $data->firstItem() ?? 0 }}–{{ $data->lastItem() ?? 0 }}
                         of
@@ -355,7 +355,7 @@
                             type="button"
                             wire:click="previousPage"
                             @disabled($data->onFirstPage())
-                            class="inline-flex size-8 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+                            class="inline-flex size-8 items-center justify-center rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:!bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <svg
                                 class="size-4"
@@ -372,7 +372,7 @@
                             </svg>
                         </button>
 
-                        <span class="px-1 text-xs text-gray-500">
+                        <span class="px-1 text-xs text-gray-500 dark:text-gray-400">
                             Page {{ $data->currentPage() }}
                             of {{ $data->lastPage() }}
                         </span>
@@ -381,7 +381,7 @@
                             type="button"
                             wire:click="nextPage"
                             @disabled(!$data->hasMorePages())
-                            class="inline-flex size-8 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+                            class="inline-flex size-8 items-center justify-center rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:!bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <svg
                                 class="size-4"
@@ -404,13 +404,13 @@
                     {{-- Per page --}}
                     <div class="order-2 flex items-center gap-2 sm:order-3">
 
-                        <label class="whitespace-nowrap text-xs text-gray-500">
+                        <label class="whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
                             Per page
                         </label>
 
                         <select
                             wire:model.live="perPage"
-                            class="rounded-md border border-gray-300 bg-white py-1.5 pl-2 pr-6 text-xs text-gray-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            class="rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:!bg-gray-800 py-1.5 pl-2 pr-6 text-xs text-gray-700 dark:text-gray-200 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                         >
                             <option value="3">3</option>
                             <option value="5">5</option>

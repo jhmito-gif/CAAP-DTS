@@ -38,15 +38,15 @@
         x-transition:leave-start="opacity-100 scale-100"
         x-transition:leave-end="opacity-0 scale-95"
         @click.stop
-        class="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-xl"
+        class="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white dark:!bg-gray-800 shadow-xl"
     >
 
         <!-- Header -->
-        <div class="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+        <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-6 py-4">
 
             <div class="flex items-center gap-3">
 
-                <div class="flex size-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                <div class="flex size-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
                     <svg
                         class="size-4"
                         fill="none"
@@ -65,13 +65,13 @@
 
                 <div>
                     <h5
-                        class="text-lg font-semibold text-gray-900"
+                        class="text-lg font-semibold text-gray-900 dark:text-gray-100"
                         id="createRecordModalLabel"
                     >
                         Send Transaction
                     </h5>
 
-                    <p class="text-xs text-gray-400">
+                    <p class="text-xs text-gray-400 dark:text-gray-500">
                         Create and forward a new outgoing transaction
                     </p>
                 </div>
@@ -83,7 +83,7 @@
             <button
                 type="button"
                 @click="open = false"
-                class="rounded-lg p-1.5 text-gray-400 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-600"
+                class="rounded-lg p-1.5 text-gray-400 dark:text-gray-500 transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300"
                 aria-label="Close"
             >
                 <svg
@@ -109,12 +109,12 @@
             <div
                 x-data
                 x-init="setTimeout(() => $el.remove(), 4000)"
-                class="mx-6 mt-4 flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800 shadow-sm"
+                class="mx-6 mt-4 flex items-center justify-between rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 px-4 py-3 text-emerald-800 shadow-sm"
             >
                 <div class="flex items-center gap-2">
 
                     <svg
-                        class="size-4 shrink-0 text-emerald-600"
+                        class="size-4 shrink-0 text-emerald-600 dark:text-emerald-400"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke-width="2"
@@ -137,7 +137,7 @@
                 <button
                     type="button"
                     onclick="this.parentElement.remove()"
-                    class="ml-4 text-emerald-600 transition-colors hover:text-emerald-800 focus:outline-none"
+                    class="ml-4 text-emerald-600 dark:text-emerald-400 transition-colors hover:text-emerald-800 focus:outline-none"
                     aria-label="Dismiss"
                 >
                     <svg
@@ -171,18 +171,18 @@
 
                 <label
                     for="office"
-                    class="mb-1.5 block text-sm font-medium text-gray-700"
+                    class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200"
                 >
                     Destination Office
-                    <span class="text-red-500">*</span>
+                    <span class="text-red-500 dark:text-red-400">*</span>
                 </label>
 
                 <select
                     wire:model="office"
                     id="office"
                     class="
-                        w-full rounded-lg border border-gray-300 bg-white
-                        px-3 py-2.5 text-sm text-gray-700 shadow-sm
+                        w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:!bg-gray-800
+                        px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 shadow-sm
                         transition
                         focus:border-emerald-500
                         focus:outline-none
@@ -202,7 +202,7 @@
                 </select>
 
                 @error('office')
-                    <div class="mt-1.5 flex items-center gap-1 text-xs text-red-600">
+                    <div class="mt-1.5 flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
                         <svg
                             class="size-3.5"
                             fill="none"
@@ -231,10 +231,10 @@
 
                 <label
                     for="subject"
-                    class="mb-1.5 block text-sm font-medium text-gray-700"
+                    class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200"
                 >
                     Subject
-                    <span class="text-red-500">*</span>
+                    <span class="text-red-500 dark:text-red-400">*</span>
                 </label>
 
                 <textarea
@@ -242,8 +242,8 @@
                     id="subject"
                     rows="3"
                     class="
-                        w-full resize-none rounded-lg border border-gray-300
-                        px-3 py-2.5 text-sm text-gray-700 shadow-sm
+                        w-full resize-none rounded-lg border border-gray-300 dark:border-gray-700
+                        px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 shadow-sm
                         transition
                         placeholder:text-gray-400
                         focus:border-emerald-500
@@ -255,7 +255,7 @@
                 ></textarea>
 
                 @error('subject')
-                    <div class="mt-1.5 flex items-center gap-1 text-xs text-red-600">
+                    <div class="mt-1.5 flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
                         <svg
                             class="size-3.5"
                             fill="none"
@@ -284,18 +284,18 @@
 
                 <label
                     for="status"
-                    class="mb-1.5 block text-sm font-medium text-gray-700"
+                    class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200"
                 >
                     Status
-                    <span class="text-red-500">*</span>
+                    <span class="text-red-500 dark:text-red-400">*</span>
                 </label>
 
                 <select
                     wire:model="status"
                     id="status"
                     class="
-                        w-full rounded-lg border border-gray-300 bg-white
-                        px-3 py-2.5 text-sm text-gray-700 shadow-sm
+                        w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:!bg-gray-800
+                        px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 shadow-sm
                         transition
                         focus:border-emerald-500
                         focus:outline-none
@@ -315,7 +315,7 @@
                 </select>
 
                 @error('status')
-                    <div class="mt-1.5 flex items-center gap-1 text-xs text-red-600">
+                    <div class="mt-1.5 flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
                         <svg
                             class="size-3.5"
                             fill="none"
@@ -344,7 +344,7 @@
 
                 <label
                     for="remarks"
-                    class="mb-1.5 block text-sm font-medium text-gray-700"
+                    class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200"
                 >
                     Remarks
                 </label>
@@ -354,8 +354,8 @@
                     id="remarks"
                     rows="3"
                     class="
-                        w-full resize-none rounded-lg border border-gray-300
-                        px-3 py-2.5 text-sm text-gray-700 shadow-sm
+                        w-full resize-none rounded-lg border border-gray-300 dark:border-gray-700
+                        px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 shadow-sm
                         transition
                         placeholder:text-gray-400
                         focus:border-emerald-500
@@ -367,7 +367,7 @@
                 ></textarea>
 
                 @error('remarks')
-                    <div class="mt-1.5 flex items-center gap-1 text-xs text-red-600">
+                    <div class="mt-1.5 flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
                         <svg
                             class="size-3.5"
                             fill="none"
@@ -394,7 +394,7 @@
 
 
         <!-- Footer -->
-        <div class="flex items-center justify-end gap-3 border-t border-gray-100 bg-gray-50/50 px-6 py-4">
+        <div class="flex items-center justify-end gap-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900 px-6 py-4">
 
             <button
                 type="button"
@@ -402,10 +402,10 @@
                 wire:loading.attr="disabled"
                 wire:target="createRecord"
                 class="
-                    rounded-lg border border-gray-300 bg-white
-                    px-4 py-2 text-sm font-medium text-gray-600
+                    rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:!bg-gray-800
+                    px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300
                     shadow-sm transition-colors duration-150
-                    hover:bg-gray-50 hover:text-gray-800
+                    hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-100
                     disabled:cursor-not-allowed disabled:opacity-50
                 "
             >
