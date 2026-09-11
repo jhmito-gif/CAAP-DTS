@@ -159,6 +159,33 @@ class Record extends Model
         return $this->is_confidential && ! $this->canViewConfidentialDetails($user);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Confidential access token
+    |--------------------------------------------------------------------------
+    | A confidential record carries a hashed token. Even cleared viewers must
+    | supply it to open the RAS or its files. Storing it hashed means it can be
+    | reset (no data is ever lost) but never read back.
+    */
+    public function requiresToken(): bool
+    {
+        return $this->is_confidential && filled($this->confidential_token);
+    }
+
+    public function setConfidentialToken(?string $plain): void
+    {
+        $this->confidential_token = filled($plain) ? \Illuminate\Support\Facades\Hash::make($plain) : null;
+    }
+
+    public function checkConfidentialToken(?string $plain): bool
+    {
+        if (! $this->requiresToken()) {
+            return true;
+        }
+
+        return filled($plain) && \Illuminate\Support\Facades\Hash::check($plain, $this->confidential_token);
+    }
+
 
     /*
     |--------------------------------------------------------------------------

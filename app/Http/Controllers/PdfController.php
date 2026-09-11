@@ -47,6 +47,13 @@ class PdfController extends Controller
             // for viewers who are not cleared to see its details.
             $masked = $record->isMaskedFor(Auth::user());
 
+            // Token-gated: cleared viewers may still only open the full slip
+            // through a short-lived signed link issued after entering the token.
+            // Uncleared viewers get the redacted/watermarked slip regardless.
+            if (! $masked && $record->requiresToken() && ! request()->hasValidSignature()) {
+                $masked = true;
+            }
+
             // Load the Blade view and pass the record
             $pdf = Pdf::loadView('pdfs.record', compact('record', 'masked'))
                 ->setPaper('a4', 'portrait');

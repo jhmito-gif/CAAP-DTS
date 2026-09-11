@@ -77,6 +77,11 @@
                     </svg>
                 </button>
 
+                <!-- Chat -->
+                @auth
+                    @livewire('chat-box')
+                @endauth
+
                 <!-- Notifications -->
                 @auth
                     @livewire('notification-center')

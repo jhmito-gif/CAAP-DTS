@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AttachmentController;
+use App\Http\Controllers\ChatAttachmentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IncomingController;
 use App\Http\Controllers\OutgoingController;
@@ -112,5 +113,20 @@ Route::middleware([
         '/attachments/{attachment}/view',
         [AttachmentController::class, 'view']
     )->name('attachments.view');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Chat attachments
+    |--------------------------------------------------------------------------
+    */
+    Route::get(
+        '/chat-attachments/{attachment}/view',
+        [ChatAttachmentController::class, 'view']
+    )->name('chat-attachments.view');
+
+    Route::get(
+        '/chat-attachments/{attachment}/download',
+        [ChatAttachmentController::class, 'download']
+    )->name('chat-attachments.download');
 
 });
