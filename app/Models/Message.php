@@ -11,12 +11,15 @@ class Message extends Model
 {
     protected $fillable = [
         'conversation_id', 'user_id', 'body', 'is_token', 'record_id', 'read_at', 'expires_at',
+        'edited_at', 'deleted_for_everyone_at',
     ];
 
     protected $casts = [
         'is_token' => 'boolean',
         'read_at' => 'datetime',
         'expires_at' => 'datetime',
+        'edited_at' => 'datetime',
+        'deleted_for_everyone_at' => 'datetime',
     ];
 
     public function conversation(): BelongsTo
@@ -37,6 +40,35 @@ class Message extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(ChatAttachment::class);
+    }
+
+    /** Per-user "remove for you" rows. */
+    public function hides(): HasMany
+    {
+        return $this->hasMany(MessageHide::class);
+    }
+
+    public function isEdited(): bool
+    {
+        return $this->edited_at !== null;
+    }
+
+    public function isDeletedForEveryone(): bool
+    {
+        return $this->deleted_for_everyone_at !== null;
+    }
+
+    /** Unsend for everyone: leave a tombstone and free any attached files. */
+    public function deleteForEveryone(): void
+    {
+        $this->attachments->each->delete();
+
+        $this->forceFill([
+            'body' => '',
+            'is_token' => false,
+            'edited_at' => null,
+            'deleted_for_everyone_at' => now(),
+        ])->save();
     }
 
     public function expired(): bool

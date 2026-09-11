@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\ChatAttachment;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\MessageHide;
 use App\Models\Record;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -43,6 +44,19 @@ class ChatBox extends Component
     // Burn-after-read reveal (shown once, then gone)
     public ?string $revealed = null;
 
+    // Inline edit state
+    public ?int $editingId = null;
+    public string $editBody = '';
+
+    // Highest inbound message id already seen -- used to ring the notification
+    // sound only when something genuinely new arrives.
+    public int $lastSeenInboundId = 0;
+
+    public function mount(): void
+    {
+        $this->lastSeenInboundId = $this->maxInboundId();
+    }
+
     public function openChat(): void
     {
         $this->open = true;
@@ -52,7 +66,7 @@ class ChatBox extends Component
     public function closeChat(): void
     {
         $this->open = false;
-        $this->reset(['view', 'activeId', 'body', 'files', 'search', 'groupName', 'groupMembers', 'revealed']);
+        $this->reset(['view', 'activeId', 'body', 'files', 'search', 'groupName', 'groupMembers', 'revealed', 'editingId', 'editBody']);
         $this->view = 'list';
     }
 
@@ -76,6 +90,7 @@ class ChatBox extends Component
         $this->view = 'list';
         $this->activeId = null;
         $this->revealed = null;
+        $this->cancelEdit();
     }
 
     protected function userConversations()
@@ -156,6 +171,95 @@ class ChatBox extends Component
         $conversation->touch();
         $this->reset('body', 'files');
         $this->markRead($conversation);
+    }
+
+    /** Messages in a conversation the current user belongs to. */
+    protected function visibleMessageQuery()
+    {
+        return Message::whereHas('conversation.users', fn ($q) => $q->where('users.id', Auth::id()));
+    }
+
+    protected function findOwnMessage(?int $id): ?Message
+    {
+        return $id ? $this->visibleMessageQuery()->where('user_id', Auth::id())->find($id) : null;
+    }
+
+    // -- Edit -------------------------------------------------------------
+
+    public function startEdit(int $id): void
+    {
+        $message = $this->findOwnMessage($id);
+
+        if (! $message || $message->is_token || $message->isDeletedForEveryone()) {
+            return;
+        }
+
+        $this->editingId = $message->id;
+        $this->editBody = $message->body;
+    }
+
+    public function cancelEdit(): void
+    {
+        $this->editingId = null;
+        $this->editBody = '';
+    }
+
+    public function saveEdit(): void
+    {
+        $message = $this->findOwnMessage($this->editingId);
+        $body = trim($this->editBody);
+
+        if ($message && ! $message->is_token && ! $message->isDeletedForEveryone() && $body !== '') {
+            $message->update(['body' => $body, 'edited_at' => now()]);
+        }
+
+        $this->cancelEdit();
+    }
+
+    // -- Delete -----------------------------------------------------------
+
+    /** Unsend for everyone (own messages only): leaves a tombstone. */
+    public function deleteForEveryone(int $id): void
+    {
+        $message = $this->findOwnMessage($id);
+
+        if ($message && ! $message->isDeletedForEveryone()) {
+            $message->deleteForEveryone();
+        }
+
+        if ($this->editingId === $id) {
+            $this->cancelEdit();
+        }
+    }
+
+    /** Remove for me only (any message I can see): hidden just for this user. */
+    public function deleteForMe(int $id): void
+    {
+        $message = $this->visibleMessageQuery()->find($id);
+
+        if ($message) {
+            MessageHide::firstOrCreate(['message_id' => $message->id, 'user_id' => Auth::id()]);
+        }
+    }
+
+    // -- Notification sound ----------------------------------------------
+
+    protected function maxInboundId(): int
+    {
+        return (int) Message::whereHas('conversation.users', fn ($q) => $q->where('users.id', Auth::id()))
+            ->where('user_id', '!=', Auth::id())
+            ->max('id');
+    }
+
+    /** Polled: ring the client if a new inbound message has arrived. */
+    public function pollChat(): void
+    {
+        $max = $this->maxInboundId();
+
+        if ($max > $this->lastSeenInboundId) {
+            $this->lastSeenInboundId = $max;
+            $this->dispatch('chat-ping');
+        }
     }
 
     /**
@@ -318,7 +422,10 @@ class ChatBox extends Component
             : null;
 
         $messages = $active
-            ? $active->messages()->with(['user', 'attachments'])->get()
+            ? $active->messages()
+                ->with(['user', 'attachments'])
+                ->whereDoesntHave('hides', fn ($q) => $q->where('user_id', Auth::id()))
+                ->get()
             : collect();
 
         // Directory for starting new chats (exclude self).

@@ -4,6 +4,7 @@ use App\Livewire\ChatBox;
 use App\Models\ChatAttachment;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\MessageHide;
 use App\Models\Record;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -287,4 +288,134 @@ it('returns 410 for an expired chat file still referenced by a link', function (
     ]);
 
     $this->actingAs($a)->get(route('chat-attachments.view', $att))->assertStatus(410);
+});
+
+it('lets the author edit their own message and marks it edited', function () {
+    $a = User::factory()->create();
+    $b = User::factory()->create();
+    $conversation = Conversation::findOrCreatePm($a, $b);
+    $message = Message::create(['conversation_id' => $conversation->id, 'user_id' => $a->id, 'body' => 'orignal']);
+
+    Livewire::actingAs($a)
+        ->test(ChatBox::class)
+        ->call('openConversation', $conversation->id)
+        ->call('startEdit', $message->id)
+        ->assertSet('editingId', $message->id)
+        ->assertSet('editBody', 'orignal')
+        ->set('editBody', 'original (fixed)')
+        ->call('saveEdit')
+        ->assertSet('editingId', null);
+
+    $message->refresh();
+    expect($message->body)->toBe('original (fixed)');
+    expect($message->isEdited())->toBeTrue();
+});
+
+it('does not let a non-author edit a message', function () {
+    $a = User::factory()->create();
+    $b = User::factory()->create();
+    $conversation = Conversation::findOrCreatePm($a, $b);
+    $message = Message::create(['conversation_id' => $conversation->id, 'user_id' => $a->id, 'body' => 'hands off']);
+
+    Livewire::actingAs($b)
+        ->test(ChatBox::class)
+        ->call('openConversation', $conversation->id)
+        ->call('startEdit', $message->id)
+        ->assertSet('editingId', null);
+
+    expect($message->fresh()->body)->toBe('hands off');
+});
+
+it('unsends a message for everyone leaving a tombstone and freeing files', function () {
+    Storage::fake('local');
+    $a = User::factory()->create();
+    $b = User::factory()->create();
+    $conversation = Conversation::findOrCreatePm($a, $b);
+
+    $message = Message::create(['conversation_id' => $conversation->id, 'user_id' => $a->id, 'body' => 'secret plans']);
+    Storage::disk('local')->put('chat-attachments/x/p.png', Crypt::encryptString('img'));
+    $att = ChatAttachment::create([
+        'message_id' => $message->id, 'original_name' => 'p.png', 'path' => 'chat-attachments/x/p.png',
+        'disk' => 'local', 'mime_type' => 'image/png', 'size' => 3, 'is_encrypted' => true, 'expires_at' => now()->addDays(10),
+    ]);
+
+    Livewire::actingAs($a)
+        ->test(ChatBox::class)
+        ->call('openConversation', $conversation->id)
+        ->call('deleteForEveryone', $message->id);
+
+    $message->refresh();
+    expect($message->isDeletedForEveryone())->toBeTrue();
+    expect($message->body)->toBe('');
+    expect(ChatAttachment::find($att->id))->toBeNull();
+    Storage::disk('local')->assertMissing('chat-attachments/x/p.png');
+});
+
+it('does not let a non-author unsend for everyone', function () {
+    $a = User::factory()->create();
+    $b = User::factory()->create();
+    $conversation = Conversation::findOrCreatePm($a, $b);
+    $message = Message::create(['conversation_id' => $conversation->id, 'user_id' => $a->id, 'body' => 'mine']);
+
+    Livewire::actingAs($b)
+        ->test(ChatBox::class)
+        ->call('openConversation', $conversation->id)
+        ->call('deleteForEveryone', $message->id);
+
+    expect($message->fresh()->isDeletedForEveryone())->toBeFalse();
+});
+
+it('removes a message for me only, leaving it for others', function () {
+    $a = User::factory()->create();
+    $b = User::factory()->create();
+    $conversation = Conversation::findOrCreatePm($a, $b);
+    $message = Message::create(['conversation_id' => $conversation->id, 'user_id' => $b->id, 'body' => 'hi a']);
+
+    // a hides it for themselves
+    Livewire::actingAs($a)
+        ->test(ChatBox::class)
+        ->call('openConversation', $conversation->id)
+        ->call('deleteForMe', $message->id)
+        ->assertDontSee('hi a');
+
+    // still stored, still visible to b
+    expect(Message::find($message->id))->not->toBeNull();
+    expect(MessageHide::where('message_id', $message->id)->where('user_id', $a->id)->exists())->toBeTrue();
+
+    Livewire::actingAs($b)
+        ->test(ChatBox::class)
+        ->call('openConversation', $conversation->id)
+        ->assertSee('hi a');
+});
+
+it('rings the notification sound only for a new inbound message', function () {
+    $a = User::factory()->create();
+    $b = User::factory()->create();
+    $conversation = Conversation::findOrCreatePm($a, $b);
+
+    $component = Livewire::actingAs($a)->test(ChatBox::class);
+
+    // No new inbound yet.
+    $component->call('pollChat')->assertNotDispatched('chat-ping');
+
+    // b sends a message -> next poll should ring.
+    Message::create(['conversation_id' => $conversation->id, 'user_id' => $b->id, 'body' => 'yo']);
+    $component->call('pollChat')->assertDispatched('chat-ping');
+
+    // Nothing new -> silent again.
+    $component->call('pollChat')->assertNotDispatched('chat-ping');
+});
+
+it('does not ring for the user own outgoing message', function () {
+    $a = User::factory()->create();
+    $b = User::factory()->create();
+    $conversation = Conversation::findOrCreatePm($a, $b);
+
+    Livewire::actingAs($a)
+        ->test(ChatBox::class)
+        ->call('openConversation', $conversation->id)
+        ->set('body', 'my own words')
+        ->call('sendMessage')
+        ->call('pollChat')
+        ->assertNotDispatched('chat-ping');
 });
