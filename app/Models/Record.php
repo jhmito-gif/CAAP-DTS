@@ -16,11 +16,13 @@ class Record extends Model
         'origin',
         'owner',
         'is_urgent',
+        'is_confidential',
     ];
 
 
     protected $casts = [
         'is_urgent' => 'boolean',
+        'is_confidential' => 'boolean',
     ];
 
 
@@ -52,6 +54,109 @@ class Record extends Model
         return $this->belongsToMany(User::class, 'record_taggings')
             ->withPivot(['office', 'tagged_by'])
             ->withTimestamps();
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Attachments
+    |--------------------------------------------------------------------------
+    | Files attached to the record (e.g. the outgoing document itself).
+    */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(Attachment::class, 'record_id')->latest();
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Access
+    |--------------------------------------------------------------------------
+    | An office may view a record when it owns it, is in its routing chain,
+    | has someone tagged on it, or was granted explicit access. Mirrors the
+    | checks in TransactionTable / PdfController.
+    */
+    public function isAccessibleBy(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        $office = $user->office;
+
+        if ($this->owner === $office || $this->origin === $office) {
+            return true;
+        }
+
+        $inRouting = $this->transactions()
+            ->where(fn ($query) => $query->where('destination', $office)->orWhere('office', $office))
+            ->exists();
+
+        if ($inRouting) {
+            return true;
+        }
+
+        $isTagged = RecordTagging::where('record_id', $this->id)
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if ($isTagged) {
+            return true;
+        }
+
+        return Access::where('record_id', $this->id)
+            ->where('office', $office)
+            ->exists();
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Confidential visibility
+    |--------------------------------------------------------------------------
+    | A confidential record still flows through the routing chain (offices know
+    | it arrived), but the subject, remarks and attachments are visible only to
+    | authorised viewers: the owning office, tagged personnel, offices/people
+    | an admin granted, and admins themselves. Everyone else who can reach the
+    | record sees only that a confidential record exists.
+    */
+    public function canViewConfidentialDetails(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        $office = $user->office;
+
+        if ($this->owner === $office || $this->origin === $office) {
+            return true;
+        }
+
+        $isTagged = RecordTagging::where('record_id', $this->id)
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if ($isTagged) {
+            return true;
+        }
+
+        return Access::where('record_id', $this->id)
+            ->where('office', $office)
+            ->exists();
+    }
+
+    /**
+     * True when the record is confidential and this user is NOT cleared to see
+     * its details -- i.e. the subject/files must be masked for them.
+     */
+    public function isMaskedFor(?User $user): bool
+    {
+        return $this->is_confidential && ! $this->canViewConfidentialDetails($user);
     }
 
 
@@ -122,6 +227,9 @@ class Record extends Model
     {
         static::deleting(function ($record) {
             $record->transactions()->delete();
+
+            // Delete via the model (not a bulk query) so each file is removed.
+            $record->attachments->each->delete();
         });
     }
 }

@@ -43,8 +43,12 @@ class PdfController extends Controller
                     ->with('error', 'Unauthorized access to record RAS.');
             }
 
+            // A confidential record's subject/remarks are redacted on the slip
+            // for viewers who are not cleared to see its details.
+            $masked = $record->isMaskedFor(Auth::user());
+
             // Load the Blade view and pass the record
-            $pdf = Pdf::loadView('pdfs.record', compact('record'))
+            $pdf = Pdf::loadView('pdfs.record', compact('record', 'masked'))
                 ->setPaper('a4', 'portrait');
 
             // Stream (view) the PDF in the browser

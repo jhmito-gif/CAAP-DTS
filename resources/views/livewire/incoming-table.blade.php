@@ -99,6 +99,9 @@
 
                                     // Flags records untouched for 5+ days that aren't done
                                     $isStale = $date && !in_array($statusKey, ['completed', 'closed']) && $date->diffInDays(now()) >= 5;
+
+                                    // Confidential records routed here but not cleared for this viewer
+                                    $masked = $record && $record->isMaskedFor(auth()->user());
                                 @endphp
                                 <tr wire:key="{{ $record?->id ?? $transaction->id }}"
                                     @if($record) onclick="window.location='{{ route('show-transactions', $record->id) }}'" @endif
@@ -114,7 +117,16 @@
                                         @endif
                                     </td>
                                     <td class="max-w-[260px] px-4 py-3">
-                                        <p class="truncate text-gray-800 dark:text-gray-100" title="{{ $record?->subject }}">{{ $record?->subject ?? 'N/A' }}</p>
+                                        @if ($masked)
+                                            <p class="inline-flex items-center gap-1.5 font-semibold text-rose-600 dark:text-rose-400" title="Confidential — you are not an authorised viewer">
+                                                <svg class="size-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                                </svg>
+                                                Confidential record
+                                            </p>
+                                        @else
+                                            <p class="truncate text-gray-800 dark:text-gray-100" title="{{ $record?->subject }}">{{ $record?->subject ?? 'N/A' }}</p>
+                                        @endif
                                         <p class="truncate text-xs text-gray-400 dark:text-gray-500">{{ $transaction->office }}</p>
                                     </td>
                                     <td class="px-4 py-3">

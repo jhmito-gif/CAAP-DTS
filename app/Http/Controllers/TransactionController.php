@@ -38,4 +38,30 @@ class TransactionController extends Controller
                 : 'Urgent status removed.'
         );
     }
+
+    /**
+     * Mark/unmark a record confidential. Only the owning office or an admin
+     * may change this.
+     */
+    public function toggleConfidential($id)
+    {
+        $record = Record::findOrFail($id);
+
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $isOwner = in_array($user->office, [$record->owner, $record->origin], true);
+
+        if (! $isOwner && ! $user->isAdmin()) {
+            return back()->with('error', 'Only the originating office or an admin can change confidentiality.');
+        }
+
+        $record->is_confidential = ! $record->is_confidential;
+        $record->save();
+
+        return back()->with(
+            'message',
+            $record->is_confidential
+                ? 'Record marked as CONFIDENTIAL. Only tagged and authorised viewers can see its details.'
+                : 'Confidential flag removed.'
+        );
+    }
 }

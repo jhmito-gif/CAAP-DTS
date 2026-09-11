@@ -1,5 +1,10 @@
 <div class="min-h-screen bg-gray-50/70 dark:bg-gray-900">
 
+    @php
+        // Confidential record opened by a viewer not cleared for its details.
+        $masked = $record && $record->isMaskedFor(auth()->user());
+    @endphp
+
     <section class="py-8">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
@@ -224,6 +229,23 @@
 
                                             Urgent
 
+                                        </span>
+
+                                    @endif
+
+
+                                    {{-- Confidential Badge --}}
+                                    @if ($record->is_confidential)
+
+                                        <span class="inline-flex items-center gap-1.5 rounded-full border border-rose-300 dark:border-rose-700 bg-rose-600 px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest text-white shadow-sm">
+                                            <span class="relative flex size-2">
+                                                <span class="absolute inline-flex size-full animate-ping rounded-full bg-rose-200 opacity-60"></span>
+                                                <span class="relative inline-flex size-2 rounded-full bg-white"></span>
+                                            </span>
+                                            <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                            </svg>
+                                            Confidential
                                         </span>
 
                                     @endif
@@ -593,7 +615,16 @@
                             </dt>
 
                             <dd class="mt-1 break-words text-sm font-medium leading-5 text-gray-800 dark:text-gray-100">
-                                {{ $record->subject ?: '—' }}
+                                @if ($masked)
+                                    <span class="inline-flex items-center gap-1.5 font-semibold text-rose-600 dark:text-rose-400">
+                                        <svg class="size-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                        </svg>
+                                        Confidential — hidden from you
+                                    </span>
+                                @else
+                                    {{ $record->subject ?: '—' }}
+                                @endif
                             </dd>
 
                         </div>
@@ -770,7 +801,7 @@
 
                                 data-destination="{{ $transact->destination }}"
 
-                                data-remarks="{{ $transact->remarks }}"
+                                data-remarks="{{ $masked ? 'Confidential — hidden from you' : $transact->remarks }}"
 
                                 data-created="{{ $transact->created_at
                                     ? $transact->created_at->format('F j, Y g:i A')

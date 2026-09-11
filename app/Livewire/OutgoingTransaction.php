@@ -84,9 +84,37 @@ class OutgoingTransaction extends Component
         //
     }
 
+    /**
+     * Permanently remove an attachment (file + record). Owning office or admin
+     * only -- used to purge a confidential file.
+     */
+    public function deleteAttachment($attachmentId): void
+    {
+        $attachment = \App\Models\Attachment::where('record_id', $this->recordId)
+            ->whereKey($attachmentId)
+            ->first();
+
+        if (! $attachment) {
+            return;
+        }
+
+        $user = Auth::user();
+        $isOwner = in_array($user->office, [$this->record->owner, $this->record->origin], true);
+
+        if (! $isOwner && ! $user->isAdmin()) {
+            session()->flash('error', 'Only the originating office or an admin can remove files.');
+            return;
+        }
+
+        $name = $attachment->original_name;
+        $attachment->delete(); // model hook deletes the underlying file
+
+        session()->flash('message', "\"{$name}\" was permanently removed.");
+    }
+
     public function render()
     {
-        $this->record->load('taggedUsers');
+        $this->record->load('taggedUsers', 'attachments');
 
         $this->transactions = Transaction::where('record_id', $this->recordId)
             ->orderBy('created_at', 'desc')
