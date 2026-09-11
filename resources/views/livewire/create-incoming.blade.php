@@ -116,13 +116,7 @@
             </div>
 
             <!-- Remarks -->
-            <div>
-                <label for="remarks" class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Remarks</label>
-                <textarea wire:model="remarks" rows="3"
-                    class="w-full resize-none rounded-lg border-gray-300 dark:border-gray-700 px-4 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="Enter remarks"></textarea>
-                @error('remarks') <span class="text-sm text-red-600 dark:text-red-400">{{ $message }}</span> @enderror
-            </div>
+            <x-remarks-field model="remarks" label="Remarks" :rows="3" accent="blue" />
 
         </div>
 

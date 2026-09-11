@@ -7,6 +7,7 @@ use App\Models\Office;
 use App\Models\RecordTagging;
 use App\Models\Status;
 use App\Models\Record;
+use App\Livewire\Concerns\UnlocksConfidential;
 use Livewire\Component;
 use App\Models\Transaction;
 use Carbon\Carbon;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Auth;
 
 class TransactionTable extends Component
 {
+    use UnlocksConfidential;
+
     public $recordId;
 
     public $remarks, $status, $office; // Inputs

@@ -38,6 +38,9 @@ class CreateOutgoing extends Component
     public $viewerOffice = '';
     public $viewers = [];
 
+    /** Access token that cleared viewers must enter to open a confidential record. */
+    public $confidentialToken = '';
+
     /** Allowed uploads: office documents and images, up to 10 MB each. */
     protected array $attachmentRules = [
         'attachments.*' => 'file|max:10240|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png',
@@ -64,7 +67,10 @@ class CreateOutgoing extends Component
         'subject' => 'required|string',
         'remarks' => 'required|string',
         'status' => 'required',
-        ], $this->attachmentRules));
+        'confidentialToken' => [$this->isConfidential ? 'required' : 'nullable', 'string', 'min:4', 'max:100'],
+        ], $this->attachmentRules), [], [
+            'confidentialToken' => 'access token',
+        ]);
 
         $year = Carbon::now()->year;
         $office = $this->office;
@@ -125,6 +131,12 @@ class CreateOutgoing extends Component
             'is_confidential' => (bool) $this->isConfidential,
         ]);
 
+        // Store the access token (hashed) that gates the confidential record.
+        if ($this->isConfidential) {
+            $record->setConfidentialToken($this->confidentialToken);
+            $record->save();
+        }
+
         $transaction = Transaction::create([
             'record_id' => $record->id,
             'internal_reference' => $record->reference,
@@ -136,9 +148,15 @@ class CreateOutgoing extends Component
             'forwarded_by' => Auth::user()->name,
         ]);
 
-        // Store each uploaded file privately and record it against the record.
+        // Store each uploaded file ENCRYPTED at rest on the private disk.
         foreach ($this->attachments as $file) {
-            $path = $file->store("attachments/{$record->id}", 'local');
+            $ext = $file->getClientOriginalExtension();
+            $path = "attachments/{$record->id}/" . \Illuminate\Support\Str::random(40) . ($ext ? ".{$ext}" : '');
+
+            \Illuminate\Support\Facades\Storage::disk('local')->put(
+                $path,
+                \Illuminate\Support\Facades\Crypt::encryptString($file->get())
+            );
 
             Attachment::create([
                 'record_id' => $record->id,
@@ -150,6 +168,7 @@ class CreateOutgoing extends Component
                 'size' => $file->getSize(),
                 'uploaded_by' => Auth::user()->name,
                 'is_confidential' => (bool) $this->isConfidential,
+                'is_encrypted' => true,
             ]);
         }
 
@@ -175,7 +194,7 @@ class CreateOutgoing extends Component
             . ($taggedCount > 0 ? " {$taggedCount} " . \Illuminate\Support\Str::plural('viewer', $taggedCount) . ' authorised.' : '');
 
         session()->flash('message', $message);
-        $this->reset(['office', 'subject', 'remarks', 'status', 'attachments', 'isConfidential', 'viewers']);
+        $this->reset(['office', 'subject', 'remarks', 'status', 'attachments', 'isConfidential', 'viewers', 'confidentialToken']);
 
         $this->dispatch('recordAdded');
         $this->dispatch('close-send-modal');

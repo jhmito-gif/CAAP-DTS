@@ -8,10 +8,13 @@ use App\Models\Office;
 use App\Models\Status;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use App\Livewire\Concerns\UnlocksConfidential;
 use Livewire\Component;
 
 class OutgoingTransaction extends Component
 {
+    use UnlocksConfidential;
+
     public $recordId;
 
     public $remarks, $status, $office; // Inputs

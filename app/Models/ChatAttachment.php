@@ -2,71 +2,66 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-class Attachment extends Model
+class ChatAttachment extends Model
 {
     protected $fillable = [
-        'record_id',
-        'transaction_id',
+        'message_id',
         'original_name',
         'path',
         'disk',
         'mime_type',
         'size',
-        'uploaded_by',
-        'is_confidential',
         'is_encrypted',
+        'expires_at',
     ];
 
     protected $casts = [
         'size' => 'integer',
-        'is_confidential' => 'boolean',
         'is_encrypted' => 'boolean',
+        'expires_at' => 'datetime',
     ];
 
-    /**
-     * The file's decrypted bytes (or raw bytes for legacy plaintext files).
-     */
+    public function message(): BelongsTo
+    {
+        return $this->belongsTo(Message::class);
+    }
+
+    /** Files whose retention window has passed. */
+    public function scopeExpired(Builder $query): Builder
+    {
+        return $query->whereNotNull('expires_at')->where('expires_at', '<=', now());
+    }
+
+    public function isExpired(): bool
+    {
+        return $this->expires_at !== null && $this->expires_at->isPast();
+    }
+
+    /** Decrypted bytes (or raw bytes for legacy plaintext files). */
     public function contents(): string
     {
-        $raw = \Illuminate\Support\Facades\Storage::disk($this->disk)->get($this->path);
+        $raw = Storage::disk($this->disk)->get($this->path);
 
-        if (! $this->is_encrypted) {
-            return $raw;
-        }
-
-        return \Illuminate\Support\Facades\Crypt::decryptString($raw);
+        return $this->is_encrypted ? Crypt::decryptString($raw) : $raw;
     }
 
     /**
-     * A file is confidential when flagged itself or its record is confidential.
-     */
-    public function isConfidential(): bool
-    {
-        return $this->is_confidential || (bool) ($this->record?->is_confidential);
-    }
-
-    public function record(): BelongsTo
-    {
-        return $this->belongsTo(Record::class, 'record_id');
-    }
-
-    public function transaction(): BelongsTo
-    {
-        return $this->belongsTo(Transaction::class, 'transaction_id');
-    }
-
-    /**
-     * Delete the underlying file when the row is removed.
+     * Delete the underlying file when the row is removed, so a purge (or a
+     * cascade) never leaves orphaned bytes on disk.
      */
     protected static function booted(): void
     {
-        static::deleting(function (Attachment $attachment) {
-            Storage::disk($attachment->disk)->delete($attachment->path);
+        static::deleting(function (ChatAttachment $attachment) {
+            if ($attachment->path) {
+                Storage::disk($attachment->disk)->delete($attachment->path);
+            }
         });
     }
 
@@ -93,11 +88,6 @@ class Attachment extends Model
     public function getIsImageAttribute(): bool
     {
         return Str::startsWith((string) $this->mime_type, 'image/');
-    }
-
-    public function getIsPdfAttribute(): bool
-    {
-        return $this->mime_type === 'application/pdf';
     }
 
     public function getExtensionAttribute(): string

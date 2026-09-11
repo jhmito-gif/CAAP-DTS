@@ -175,6 +175,44 @@
         .checkbox.checked {
             background: #000;
         }
+
+        /* Diagonal restricted stamp for uncleared viewers (repeats per page). */
+        .watermark {
+            position: fixed;
+            left: -10%;
+            top: 34%;
+            width: 120%;
+            text-align: center;
+            transform: rotate(-32deg);
+            color: #e88;
+            font-size: 74px;
+            font-weight: bold;
+            letter-spacing: 10px;
+        }
+
+        .watermark .line {
+            display: block;
+            line-height: 1.9;
+            white-space: nowrap;
+        }
+
+        .watermark .sub {
+            font-size: 15px;
+            letter-spacing: 4px;
+            color: #c66;
+        }
+
+        /* Unify all filled-in values as upper case (labels keep their casing). */
+        .value,
+        .value-cell,
+        .subject,
+        .office-cell,
+        .official-cell,
+        .status-text,
+        .remarks,
+        .stack-value {
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body>
@@ -309,6 +347,10 @@
         $referenceNumber = $record->origin_reference ?: $record->reference;
         $internalReference = $record->origin_reference ? $record->reference : null;
 
+        // Originating office: show its full description, falling back to the code.
+        $originDisplay = \App\Models\Office::where('name', $record->origin)->value('description')
+            ?: ($record->origin ?? '');
+
         // -- Movement grid: pad the transactions out to the printed block count --
         $blocks = array_pad($transactions->all(), max($formRows, $transactions->count()), null);
 
@@ -316,7 +358,25 @@
         $headStatus = optional($transactions->first())->status;
         $checkedActionIndex = $resolveActionIndex($headStatus);
         $unlistedHeadStatus = $checkedActionIndex === null ? $headStatus : null;
+
+        // For an uncleared viewer, hide the requested action and any status too.
+        if ($masked) {
+            $checkedActionIndex = null;
+            $unlistedHeadStatus = null;
+        }
+
+        // Redact a value for uncleared viewers (personnel names, statuses, etc.).
+        $hide = fn ($value) => $masked ? '' : $value;
     @endphp
+
+    @if ($masked)
+        <div class="watermark">
+            <span class="line">CONFIDENTIAL</span>
+            <span class="line">CONFIDENTIAL</span>
+            <span class="line">CONFIDENTIAL</span>
+            <span class="line sub">Restricted &mdash; authorised viewers only</span>
+        </div>
+    @endif
 
     <img src="{{ public_path('img/caap-banner.png') }}" class="banner" alt="CAAP Banner">
 
@@ -336,7 +396,7 @@
 
         <tr>
             <td colspan="2" class="head-cell">Originating Office</td>
-            <td colspan="3" class="head-cell">{{ $record->origin ?? '' }}</td>
+            <td colspan="3" class="head-cell value-cell">{{ $originDisplay }}</td>
             <td class="head-cell" style="text-align: left">
                 <span class="label">Reference Number:</span><br>
                 <span class="value">{{ $referenceNumber ?? '' }}</span>
@@ -415,7 +475,7 @@
                         @endif
                     @elseif ($transaction && filled($transaction->status))
                         {{-- Later movements carry their status as plain text. --}}
-                        <div class="status-text">{{ $transaction->status }}</div>
+                        <div class="status-text">{{ $hide($transaction->status) }}</div>
                     @endif
 
                     @if ($transaction && filled($transaction->remarks))
@@ -424,9 +484,9 @@
                 </td>
             </tr>
             <tr>
-                <td class="official-cell">{{ $transaction->forwarded_by ?? '' }}</td>
+                <td class="official-cell">{{ $hide($transaction->forwarded_by ?? '') }}</td>
                 <td class="official-cell">
-                    {{ $transaction->recieved_by ?? '' }}
+                    {{ $hide($transaction->recieved_by ?? '') }}
                     @if ($transaction && $transaction->date_recieved)
                         <div class="muted">
                             Received {{ $ph($transaction->date_recieved, 'j M Y g:i A') }}

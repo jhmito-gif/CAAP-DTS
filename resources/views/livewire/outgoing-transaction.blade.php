@@ -643,6 +643,11 @@
 
                                 @else
 
+                                    @php
+                                        $filesTokenRequired = $record->requiresToken();
+                                        $filesUnlocked = ! $filesTokenRequired || $confidentialUnlocked;
+                                    @endphp
+
                                     <div class="flex flex-col gap-1.5">
 
                                         @foreach ($record->attachments as $file)
@@ -666,30 +671,49 @@
                                                 </div>
 
                                                 <div class="flex shrink-0 items-center gap-1">
-                                                    @if ($file->is_pdf || $file->is_image)
-                                                        <a
-                                                            href="{{ route('attachments.view', $file) }}"
-                                                            target="_blank"
-                                                            rel="noopener"
-                                                            title="Open"
-                                                            class="rounded-md p-1.5 text-gray-400 transition hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400"
-                                                        >
-                                                            <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                                    @if (! $filesUnlocked)
+                                                        <span class="inline-flex items-center gap-1 rounded-md bg-rose-50 dark:bg-rose-900/30 px-2 py-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400" title="Unlock the record to open files">
+                                                            <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
                                                             </svg>
-                                                        </a>
-                                                    @endif
+                                                            Locked
+                                                        </span>
+                                                    @else
+                                                        @if ($file->is_pdf || $file->is_image)
+                                                            <a
+                                                                href="{{ $filesTokenRequired ? \Illuminate\Support\Facades\URL::temporarySignedRoute('attachments.view', now()->addMinutes(5), ['attachment' => $file->id]) : route('attachments.view', $file) }}"
+                                                                target="_blank"
+                                                                rel="noopener"
+                                                                title="Open"
+                                                                class="rounded-md p-1.5 text-gray-400 transition hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400"
+                                                            >
+                                                                <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                                                </svg>
+                                                            </a>
+                                                        @endif
 
-                                                    <a
-                                                        href="{{ route('attachments.download', $file) }}"
-                                                        title="Download"
-                                                        class="rounded-md p-1.5 text-gray-400 transition hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400"
-                                                    >
-                                                        <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                                                        </svg>
-                                                    </a>
+                                                        @if ($file->isConfidential())
+                                                            <span class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-gray-400 dark:text-gray-500" title="Confidential files are view-only and cannot be downloaded">
+                                                                <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                                                </svg>
+                                                                View only
+                                                            </span>
+                                                        @else
+                                                            <a
+                                                                href="{{ $filesTokenRequired ? \Illuminate\Support\Facades\URL::temporarySignedRoute('attachments.download', now()->addMinutes(5), ['attachment' => $file->id]) : route('attachments.download', $file) }}"
+                                                                title="Download"
+                                                                class="rounded-md p-1.5 text-gray-400 transition hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400"
+                                                            >
+                                                                <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                                                </svg>
+                                                            </a>
+                                                        @endif
+                                                    @endif
 
                                                     @if ($canToggleConfidential)
                                                         <button
@@ -1550,40 +1574,7 @@
 
 
                     {{-- Remarks --}}
-                    <div>
-
-                        <div
-                            class="mb-1.5 flex items-center justify-between"
-                        >
-                            <label
-                                for="remarks"
-                                class="text-sm font-semibold text-gray-700 dark:text-gray-200"
-                            >
-                                Remarks
-                            </label>
-
-                            <span class="text-[11px] text-gray-400 dark:text-gray-500">
-                                Optional
-                            </span>
-                        </div>
-
-
-                        <textarea
-                            wire:model.live.debounce.300ms="remarks"
-                            id="remarks"
-                            rows="4"
-                            class="w-full resize-none rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 shadow-sm outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                            placeholder="Add a short note or instruction..."
-                        ></textarea>
-
-
-                        @error('remarks')
-                            <p class="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">
-                                {{ $message }}
-                            </p>
-                        @enderror
-
-                    </div>
+                    <x-remarks-field model="remarks" label="Remarks" :rows="4" :live="true" accent="blue" />
 
                     @include('partials.ras-movement-preview', [
                         'fromOffice' => Auth::user()->office,

@@ -1667,42 +1667,7 @@
 
 
                 {{-- Remarks --}}
-                <div>
-
-                    <div class="mb-1.5 flex items-center justify-between">
-
-                        <label
-                            for="sendRemarks"
-                            class="text-sm font-semibold text-gray-700 dark:text-gray-200"
-                        >
-                            Remarks
-                        </label>
-
-                        <span class="text-[11px] text-gray-400 dark:text-gray-500">
-                            Optional
-                        </span>
-
-                    </div>
-
-
-                    <textarea
-                        wire:model.live.debounce.300ms="remarks"
-                        id="sendRemarks"
-                        rows="4"
-                        class="w-full resize-none rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 shadow-sm outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                        placeholder="Add a short note or instruction..."
-                    ></textarea>
-
-
-                    @error('remarks')
-
-                        <p class="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">
-                            {{ $message }}
-                        </p>
-
-                    @enderror
-
-                </div>
+                <x-remarks-field model="remarks" label="Remarks" id="sendRemarks" :rows="4" :live="true" accent="blue" />
 
                 @include('partials.ras-movement-preview', [
                     'fromOffice' => Auth::user()->office,

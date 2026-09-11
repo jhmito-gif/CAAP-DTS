@@ -346,55 +346,7 @@
 
 
             <!-- Remarks -->
-            <div>
-
-                <label
-                    for="remarks"
-                    class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200"
-                >
-                    Remarks
-                </label>
-
-                <textarea
-                    wire:model="remarks"
-                    id="remarks"
-                    rows="3"
-                    class="
-                        w-full resize-none rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:!bg-gray-800
-                        px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 shadow-sm
-                        transition
-                        placeholder:text-gray-400
-                        focus:border-emerald-500
-                        focus:outline-none
-                        focus:ring-2
-                        focus:ring-emerald-500/20
-                    "
-                    placeholder="Enter remarks..."
-                ></textarea>
-
-                @error('remarks')
-                    <div class="mt-1.5 flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
-                        <svg
-                            class="size-3.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="2"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M12 9v3.75m9-.75a9 9 0 1 1-18
-                                   0 9 9 0 0 1 18 0Zm-9
-                                   3.75h.008v.008H12v-.008Z"
-                            />
-                        </svg>
-
-                        {{ $message }}
-                    </div>
-                @enderror
-
-            </div>
+            <x-remarks-field model="remarks" label="Remarks" :rows="3" />
 
 
             <!-- Attachments -->
@@ -524,6 +476,33 @@
 
             <!-- Confidential viewers (only when locked) -->
             @if ($isConfidential)
+                {{-- Access token: cleared viewers must enter this to open the record --}}
+                <div class="rounded-lg border border-rose-300 dark:border-rose-700 bg-rose-50/60 dark:bg-rose-900/20 p-4">
+
+                    <div class="mb-2 flex items-center gap-2">
+                        <svg class="size-4 text-rose-600 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H9v1.5H7.5v1.5H6a1.5 1.5 0 0 1-1.5-1.5v-1.629c0-.398.158-.78.44-1.062l5.616-5.615a6 6 0 1 1 8.909-4.494Z" />
+                        </svg>
+                        <p class="text-sm font-bold text-gray-900 dark:text-gray-100">Access token <span class="text-rose-500">*</span></p>
+                    </div>
+
+                    <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
+                        Cleared viewers must enter this token each time they open the record's slip or files. Share it only with them.
+                    </p>
+
+                    <input
+                        type="text"
+                        wire:model="confidentialToken"
+                        placeholder="e.g. a passphrase you share with viewers"
+                        autocomplete="off"
+                        class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:!bg-gray-800 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 shadow-sm focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                    >
+
+                    @error('confidentialToken')
+                        <p class="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <div class="rounded-lg border border-rose-300 dark:border-rose-700 bg-rose-50/60 dark:bg-rose-900/20 p-4">
 
                     <div class="mb-2 flex items-center gap-2">
