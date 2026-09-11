@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IncomingController;
 use App\Http\Controllers\OutgoingController;
@@ -80,6 +81,11 @@ Route::middleware([
         [TransactionController::class, 'toggleUrgent']
     )->name('records.toggle-urgent');
 
+    Route::patch(
+        '/records/{id}/confidential',
+        [TransactionController::class, 'toggleConfidential']
+    )->name('records.toggle-confidential');
+
 
     /*
     |--------------------------------------------------------------------------
@@ -90,5 +96,21 @@ Route::middleware([
         '/records-pdf/{id}/pdf',
         [PdfController::class, 'RASPDF']
     )->name('records-pdf');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Attachments
+    |--------------------------------------------------------------------------
+    */
+    Route::get(
+        '/attachments/{attachment}/download',
+        [AttachmentController::class, 'download']
+    )->name('attachments.download');
+
+    Route::get(
+        '/attachments/{attachment}/view',
+        [AttachmentController::class, 'view']
+    )->name('attachments.view');
 
 });

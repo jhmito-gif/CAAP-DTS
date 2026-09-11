@@ -294,8 +294,17 @@
         };
 
         // -- Header data -------------------------------------------------------
+        // Timestamps are stored in UTC; the slip must read in Philippine time.
+        $ph = function ($value, string $format): string {
+            return $value ? \Carbon\Carbon::parse($value)->setTimezone('Asia/Manila')->format($format) : '';
+        };
+
+        // Confidential redaction: hide subject/remarks from uncleared viewers.
+        $masked = $masked ?? false;
+        $confidentialMark = '*** CONFIDENTIAL ***';
+
         $transactions = $record->transactions;
-        $dateOfDocument = optional($record->created_at)->format('j F Y');
+        $dateOfDocument = $ph($record->created_at, 'j F Y');
         $receivedAt = optional($transactions->firstWhere('date_recieved', '!=', null))->date_recieved;
         $referenceNumber = $record->origin_reference ?: $record->reference;
         $internalReference = $record->origin_reference ? $record->reference : null;
@@ -340,7 +349,7 @@
         <tr>
             <td colspan="4" rowspan="2" class="subject-cell">
                 <span class="label">Subject</span>
-                <div class="subject">{{ $record->subject ?? '' }}</div>
+                <div class="subject">{{ $masked ? $confidentialMark : ($record->subject ?? '') }}</div>
             </td>
             <td colspan="2" class="stack-cell">
                 <span class="label">Date of Document:</span>
@@ -351,7 +360,7 @@
             <td colspan="2" class="stack-cell">
                 <span class="label">Date / Time Received:</span>
                 <div class="stack-value">
-                    {{ $receivedAt ? \Carbon\Carbon::parse($receivedAt)->format('j M Y g:i A') : '' }}
+                    {{ $ph($receivedAt, 'j M Y g:i A') }}
                 </div>
             </td>
         </tr>
@@ -373,8 +382,8 @@
             <tr>
                 <td rowspan="2" class="date-cell">
                     @if ($transaction)
-                        {{ optional($transaction->created_at)->format('j M Y') }}<br>
-                        {{ optional($transaction->created_at)->format('g:i A') }}
+                        {{ $ph($transaction->created_at, 'j M Y') }}<br>
+                        {{ $ph($transaction->created_at, 'g:i A') }}
                     @endif
                 </td>
                 <td class="office-cell">{{ $transaction->office ?? '' }}</td>
@@ -410,7 +419,7 @@
                     @endif
 
                     @if ($transaction && filled($transaction->remarks))
-                        <div class="remarks">{{ $transaction->remarks }}</div>
+                        <div class="remarks">{{ $masked ? $confidentialMark : $transaction->remarks }}</div>
                     @endif
                 </td>
             </tr>
@@ -420,7 +429,7 @@
                     {{ $transaction->recieved_by ?? '' }}
                     @if ($transaction && $transaction->date_recieved)
                         <div class="muted">
-                            Received {{ \Carbon\Carbon::parse($transaction->date_recieved)->format('j M Y g:i A') }}
+                            Received {{ $ph($transaction->date_recieved, 'j M Y g:i A') }}
                         </div>
                     @endif
                 </td>

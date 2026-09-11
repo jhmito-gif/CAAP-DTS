@@ -121,11 +121,26 @@
                                     Transaction Record
                                 </p>
 
-                                <h1
-                                    class="break-all text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:text-3xl"
-                                >
-                                    {{ $record->reference ?? 'N/A' }}
-                                </h1>
+                                <div class="flex flex-wrap items-center gap-2.5">
+                                    <h1
+                                        class="break-all text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:text-3xl"
+                                    >
+                                        {{ $record->reference ?? 'N/A' }}
+                                    </h1>
+
+                                    @if ($record->is_confidential)
+                                        <span class="inline-flex items-center gap-1.5 rounded-full border border-rose-300 dark:border-rose-700 bg-rose-600 px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest text-white shadow-sm">
+                                            <span class="relative flex size-2">
+                                                <span class="absolute inline-flex size-full animate-ping rounded-full bg-rose-200 opacity-60"></span>
+                                                <span class="relative inline-flex size-2 rounded-full bg-white"></span>
+                                            </span>
+                                            <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                            </svg>
+                                            Confidential
+                                        </span>
+                                    @endif
+                                </div>
 
                                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                                     View transaction details and routing history
@@ -322,6 +337,54 @@
                                 @endif
 
                             </form>
+
+
+                            {{-- Confidential toggle (owning office or admin only) --}}
+                            @php
+                                $canToggleConfidential = auth()->user()
+                                    && (in_array(auth()->user()->office, [$record->owner, $record->origin], true) || auth()->user()->isAdmin());
+                            @endphp
+
+                            @if ($canToggleConfidential)
+                                <form
+                                    action="{{ route('records.toggle-confidential', $record->id) }}"
+                                    method="POST"
+                                    class="inline-flex"
+                                >
+                                    @csrf
+                                    @method('PATCH')
+
+                                    @if ($record->is_confidential)
+                                        <button
+                                            type="submit"
+                                            onclick="return confirm('Remove the CONFIDENTIAL flag? Its details and files will become visible to the routing chain again.')"
+                                            aria-label="Remove confidential flag"
+                                            class="group relative inline-flex size-10 items-center justify-center rounded-lg border border-rose-600 bg-rose-600 text-white shadow-md ring-2 ring-rose-300 dark:ring-rose-900 transition-all duration-150 hover:-translate-y-0.5 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 active:translate-y-0"
+                                        >
+                                            <svg class="size-[18px]" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                            </svg>
+                                            <span class="pointer-events-none absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-150 group-hover:translate-y-0 group-hover:opacity-100">
+                                                Confidential
+                                            </span>
+                                        </button>
+                                    @else
+                                        <button
+                                            type="submit"
+                                            onclick="return confirm('Mark this record CONFIDENTIAL? Only tagged and authorised viewers will see its details and files.')"
+                                            aria-label="Mark confidential"
+                                            class="group relative inline-flex size-10 items-center justify-center rounded-lg border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 transition-all duration-150 hover:-translate-y-0.5 hover:border-rose-600 hover:bg-rose-600 hover:text-white dark:hover:bg-rose-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 active:translate-y-0"
+                                        >
+                                            <svg class="size-[18px]" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                            </svg>
+                                            <span class="pointer-events-none absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-150 group-hover:translate-y-0 group-hover:opacity-100">
+                                                Mark Confidential
+                                            </span>
+                                        </button>
+                                    @endif
+                                </form>
+                            @endif
 
 
                             {{-- Tag People --}}
@@ -545,6 +608,105 @@
                                                 </span>
 
                                             </span>
+                                        @endforeach
+
+                                    </div>
+
+                                @endif
+
+                            </dd>
+
+                        </div>
+
+
+                        {{-- Attachments --}}
+                        <div class="mt-3 min-w-0 border-l-2 border-emerald-300 dark:border-emerald-700 pl-3">
+
+                            <dt class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-500 dark:text-emerald-400">
+
+                                <svg class="size-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
+                                </svg>
+
+                                Attachments
+                                @if ($record->attachments->isNotEmpty())
+                                    <span class="text-emerald-400 dark:text-emerald-500">({{ $record->attachments->count() }})</span>
+                                @endif
+
+                            </dt>
+
+                            <dd class="mt-1.5">
+
+                                @if ($record->attachments->isEmpty())
+
+                                    <span class="text-sm text-gray-400 dark:text-gray-500">No files attached</span>
+
+                                @else
+
+                                    <div class="flex flex-col gap-1.5">
+
+                                        @foreach ($record->attachments as $file)
+                                            <div class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 px-3 py-2">
+
+                                                <div class="flex min-w-0 items-center gap-2.5">
+                                                    <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-emerald-50 dark:bg-emerald-900/30 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                                                        {{ $file->extension }}
+                                                    </span>
+                                                    <div class="min-w-0">
+                                                        <p class="truncate text-xs font-semibold text-gray-800 dark:text-gray-100">
+                                                            {{ $file->original_name }}
+                                                        </p>
+                                                        <p class="text-[11px] text-gray-400 dark:text-gray-500">
+                                                            {{ $file->human_size }}
+                                                            @if ($file->uploaded_by)
+                                                                &middot; {{ $file->uploaded_by }}
+                                                            @endif
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div class="flex shrink-0 items-center gap-1">
+                                                    @if ($file->is_pdf || $file->is_image)
+                                                        <a
+                                                            href="{{ route('attachments.view', $file) }}"
+                                                            target="_blank"
+                                                            rel="noopener"
+                                                            title="Open"
+                                                            class="rounded-md p-1.5 text-gray-400 transition hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400"
+                                                        >
+                                                            <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                                            </svg>
+                                                        </a>
+                                                    @endif
+
+                                                    <a
+                                                        href="{{ route('attachments.download', $file) }}"
+                                                        title="Download"
+                                                        class="rounded-md p-1.5 text-gray-400 transition hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400"
+                                                    >
+                                                        <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                                        </svg>
+                                                    </a>
+
+                                                    @if ($canToggleConfidential)
+                                                        <button
+                                                            type="button"
+                                                            wire:click="deleteAttachment({{ $file->id }})"
+                                                            wire:confirm="Permanently remove &quot;{{ $file->original_name }}&quot;? This cannot be undone."
+                                                            title="Permanently remove"
+                                                            class="rounded-md p-1.5 text-gray-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/30 dark:hover:text-rose-400"
+                                                        >
+                                                            <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                                            </svg>
+                                                        </button>
+                                                    @endif
+                                                </div>
+
+                                            </div>
                                         @endforeach
 
                                     </div>
