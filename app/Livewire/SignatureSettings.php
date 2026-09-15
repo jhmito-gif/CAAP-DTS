@@ -3,21 +3,35 @@
 namespace App\Livewire;
 
 use App\Models\EsignLog;
+use App\Models\SigningPin;
 use App\Models\UserSignature;
 use App\Support\EsignLogger;
 use App\Support\SignatureImage;
+use App\Support\SigningSession;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
 /**
- * Profile section where a user draws or uploads the signature they sign with.
+ * Profile section where a user draws or uploads the signature they sign with
+ * and sets the signing PIN that confirms each signature.
  */
 class SignatureSettings extends Component
 {
     use WithFileUploads;
 
+    /** Wrong current-password attempts allowed when setting a PIN. */
+    private const PIN_MAX_ATTEMPTS = 5;
+
     public $upload;
+
+    public string $currentPassword = '';
+
+    public string $newPin = '';
+
+    public string $newPin_confirmation = '';
 
     public function saveDrawn(string $dataUri): void
     {
@@ -53,6 +67,62 @@ class SignatureSettings extends Component
         $this->dispatch('banner-message', style: 'success', message: 'Your signature was removed.');
     }
 
+    public function savePin(SigningSession $signingSession): void
+    {
+        $user = Auth::user();
+        $key = 'esign-pin:' . $user->id;
+
+        try {
+            $this->validate([
+                'currentPassword' => 'required|string',
+                'newPin' => [
+                    'required',
+                    'digits_between:' . SigningPin::MIN_LENGTH . ',' . SigningPin::MAX_LENGTH,
+                    'confirmed',
+                    function (string $attribute, mixed $value, \Closure $fail) {
+                        if (SigningPin::isGuessable((string) $value)) {
+                            $fail('Choose a PIN that is not a repeated or sequential number.');
+                        }
+                    },
+                ],
+            ], [], [
+                'currentPassword' => 'current password',
+                'newPin' => 'signing PIN',
+            ]);
+
+            if (RateLimiter::tooManyAttempts($key, self::PIN_MAX_ATTEMPTS)) {
+                $this->addError('currentPassword', 'Too many attempts. Try again in ' . max(1, (int) ceil(RateLimiter::availableIn($key) / 60)) . ' minute(s).');
+
+                return;
+            }
+
+            if (! Hash::check($this->currentPassword, $user->password)) {
+                RateLimiter::hit($key, 600);
+
+                EsignLogger::log('profile.pin_rejected', EsignLog::FAILURE, [], ['reason' => 'wrong password']);
+
+                $this->addError('currentPassword', 'The password is incorrect.');
+
+                return;
+            }
+
+            RateLimiter::clear($key);
+
+            $saved = SigningPin::updateOrCreate(['user_id' => $user->id], ['pin' => $this->newPin]);
+
+            // A new PIN also asks for the authenticator code again on the next signature.
+            $signingSession->forget();
+
+            EsignLogger::log('profile.pin_set', EsignLog::SUCCESS, [], ['replaced' => ! $saved->wasRecentlyCreated]);
+
+            $this->resetErrorBag();
+            $this->dispatch('banner-message', style: 'success', message: 'Your signing PIN was saved.');
+        } finally {
+            // Never keep secrets in the component state.
+            $this->reset(['currentPassword', 'newPin', 'newPin_confirmation']);
+        }
+    }
+
     private function store(string $bytes, string $method): void
     {
         $png = SignatureImage::normalize($bytes);
@@ -86,6 +156,7 @@ class SignatureSettings extends Component
 
         return view('livewire.signature-settings', [
             'signature' => $user->signature()->first(),
+            'signingPin' => $user->signingPin()->first(),
             'twoFactorEnabled' => $user->hasEnabledTwoFactorAuthentication(),
         ]);
     }

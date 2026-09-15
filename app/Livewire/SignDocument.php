@@ -14,8 +14,9 @@ use Livewire\Component;
 /**
  * Signing screen for one signature request. The signer places their saved
  * signature on the PDF (pdf.js, resources/js/esign.js) and confirms with their
- * password and authenticator code. The stamp is applied server-side by
- * DocumentSigner; the browser only sends where it goes.
+ * signing PIN, plus their authenticator code the first time in a session. The
+ * stamp is applied server-side by DocumentSigner; the browser only sends where
+ * it goes.
  */
 class SignDocument extends Component
 {
@@ -33,7 +34,7 @@ class SignDocument extends Component
 
     public float $height = 0;
 
-    public string $password = '';
+    public string $pin = '';
 
     public string $code = '';
 
@@ -77,35 +78,36 @@ class SignDocument extends Component
             return;
         }
 
-        $this->validate([
-            'page' => 'required|integer|min:1',
-            'x' => 'required|numeric',
-            'y' => 'required|numeric',
-            'width' => 'required|numeric|min:40',
-            'height' => 'required|numeric|min:24',
-            'password' => 'required|string',
-            'code' => 'required|string',
-        ], [
-            'page.min' => 'Place your signature on the document first.',
-            'width.min' => 'Place your signature on the document first.',
-            'height.min' => 'Place your signature on the document first.',
-        ], [
-            'code' => 'authentication code',
-        ]);
-
         try {
+            $this->validate([
+                'page' => 'required|integer|min:1',
+                'x' => 'required|numeric',
+                'y' => 'required|numeric',
+                'width' => 'required|numeric|min:40',
+                'height' => 'required|numeric|min:24',
+                'pin' => 'required|string',
+                'code' => 'nullable|string',
+            ], [
+                'page.min' => 'Place your signature on the document first.',
+                'width.min' => 'Place your signature on the document first.',
+                'height.min' => 'Place your signature on the document first.',
+            ], [
+                'pin' => 'signing PIN',
+                'code' => 'authentication code',
+            ]);
+
             $signature = $signer->sign(
                 $signatureRequest,
                 Auth::user(),
                 ['page' => $this->page, 'x' => $this->x, 'y' => $this->y, 'width' => $this->width, 'height' => $this->height],
-                $this->password,
-                $this->code,
+                $this->pin,
+                $this->code !== '' ? $this->code : null,
                 request()->ip(),
                 request()->userAgent(),
             );
         } finally {
             // Never keep secrets in the component state.
-            $this->password = '';
+            $this->pin = '';
             $this->code = '';
         }
 
@@ -147,6 +149,7 @@ class SignDocument extends Component
             'attachment' => $signatureRequest->attachment,
             'record' => $record,
             'blocker' => $signer->blocker($signatureRequest, $user),
+            'codeRequired' => $signer->requiresCode($user),
             'tokenRequired' => $tokenRequired,
             'documentUrl' => $documentUrl,
             'signaturePreview' => $user->signature?->dataUri(),

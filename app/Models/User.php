@@ -97,6 +97,12 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasOne(UserSignature::class);
     }
 
+    /** Hashed PIN that confirms each e-signature. */
+    public function signingPin(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(SigningPin::class);
+    }
+
     // Custom Reset Password 
     public function conversations(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {

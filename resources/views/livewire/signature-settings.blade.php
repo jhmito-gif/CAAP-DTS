@@ -4,7 +4,7 @@
     </x-slot>
 
     <x-slot name="description">
-        {{ __('The signature applied when you sign documents. It is stored encrypted and only placed on a document after you confirm with your password and authenticator code.') }}
+        {{ __('The signature applied when you sign documents. It is stored encrypted and only placed on a document after you confirm with your signing PIN (and your authenticator code once per session).') }}
     </x-slot>
 
     <x-slot name="content">
@@ -135,5 +135,51 @@
 
         <x-input-error for="signature" class="mt-3" />
         <x-input-error for="upload" class="mt-3" />
+
+        {{-- Signing PIN --}}
+        <div class="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
+            <div class="flex flex-wrap items-center gap-2">
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Signing PIN') }}</p>
+
+                @if ($signingPin)
+                    <span class="rounded-full bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+                        {{ __('Set') }} {{ $signingPin->updated_at?->diffForHumans() }}
+                    </span>
+                @else
+                    <span class="rounded-full bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
+                        {{ __('Not set') }}
+                    </span>
+                @endif
+            </div>
+
+            <p class="mt-1 max-w-xl text-xs text-gray-500 dark:text-gray-400">
+                {{ __(':min–:max digits, entered each time you sign instead of your password. Your authenticator code is only asked once per session. Avoid repeated or sequential numbers.', ['min' => \App\Models\SigningPin::MIN_LENGTH, 'max' => \App\Models\SigningPin::MAX_LENGTH]) }}
+            </p>
+
+            <form wire:submit="savePin" class="mt-3 grid max-w-xl gap-3 sm:grid-cols-3">
+                <div>
+                    <x-label for="signingCurrentPassword" value="{{ __('Current password') }}" />
+                    <x-input id="signingCurrentPassword" type="password" class="mt-1 block w-full" wire:model="currentPassword" autocomplete="current-password" />
+                    <x-input-error for="currentPassword" class="mt-1" />
+                </div>
+
+                <div>
+                    <x-label for="signingNewPin" value="{{ $signingPin ? __('New PIN') : __('PIN') }}" />
+                    <x-input id="signingNewPin" type="password" inputmode="numeric" maxlength="{{ \App\Models\SigningPin::MAX_LENGTH }}" class="mt-1 block w-full tracking-widest" wire:model="newPin" autocomplete="new-password" />
+                    <x-input-error for="newPin" class="mt-1" />
+                </div>
+
+                <div>
+                    <x-label for="signingNewPinConfirmation" value="{{ __('Confirm PIN') }}" />
+                    <x-input id="signingNewPinConfirmation" type="password" inputmode="numeric" maxlength="{{ \App\Models\SigningPin::MAX_LENGTH }}" class="mt-1 block w-full tracking-widest" wire:model="newPin_confirmation" autocomplete="new-password" />
+                </div>
+
+                <div class="sm:col-span-3">
+                    <x-button type="submit" wire:loading.attr="disabled" wire:target="savePin">
+                        {{ $signingPin ? __('Change PIN') : __('Set PIN') }}
+                    </x-button>
+                </div>
+            </form>
+        </div>
     </x-slot>
 </x-action-section>

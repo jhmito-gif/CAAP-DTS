@@ -25,6 +25,7 @@ class EsignLog extends Model
         // Signing attempts
         'signature.signed' => 'Document signed',
         'signature.blocked' => 'Signing blocked',
+        'signature.pin_failed' => 'Wrong signing PIN',
         'signature.password_failed' => 'Wrong password',
         'signature.code_failed' => 'Wrong authenticator code',
         'signature.locked_out' => 'Signing locked out',
@@ -52,6 +53,8 @@ class EsignLog extends Model
         'profile.signature_saved' => 'Signature saved',
         'profile.signature_rejected' => 'Signature image rejected',
         'profile.signature_removed' => 'Signature removed',
+        'profile.pin_set' => 'Signing PIN saved',
+        'profile.pin_rejected' => 'Signing PIN not saved',
     ];
 
     protected $fillable = [
