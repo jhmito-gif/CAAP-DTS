@@ -73,6 +73,15 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // E-sign audit trail; every entry is also stored in the esign_logs table.
+        'esign' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/esign.log'),
+            'level' => 'info',
+            'days' => env('ESIGN_LOG_DAYS', 365),
+            'replace_placeholders' => true,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),

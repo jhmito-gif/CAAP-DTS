@@ -106,6 +106,12 @@ class OutgoingTransaction extends Component
             return;
         }
 
+        // Documents sent for signature keep their audit trail.
+        if ($attachment->signatureRequests()->exists()) {
+            session()->flash('error', "\"{$attachment->original_name}\" was sent for signature and cannot be removed.");
+            return;
+        }
+
         $name = $attachment->original_name;
         $attachment->delete(); // model hook deletes the underlying file
 

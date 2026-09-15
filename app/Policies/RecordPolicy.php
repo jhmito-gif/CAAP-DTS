@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Record;
+use App\Models\Signature;
 use App\Models\User;
 
 class RecordPolicy
@@ -19,6 +20,12 @@ class RecordPolicy
 
     public function delete(User $user, Record $record): bool
     {
-        return $this->update($user, $record);
+        if (! $this->update($user, $record)) {
+            return false;
+        }
+
+        // Signed documents keep their audit trail; only admins can remove them.
+        return $user->isAdmin()
+            || ! Signature::whereIn('attachment_id', $record->attachments()->select('id'))->exists();
     }
 }

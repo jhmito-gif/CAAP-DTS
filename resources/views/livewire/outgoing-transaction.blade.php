@@ -719,6 +719,33 @@
                                                         @endif
                                                     @endif
 
+                                                    {{-- E-signatures (PDF only) --}}
+                                                    @if ($file->is_pdf && $filesUnlocked)
+                                                        @php
+                                                            $signatureRequests = $file->signatureRequests;
+                                                            $signedCount = $signatureRequests->whereNotNull('signed_at')->count();
+                                                            $signatureLabel = $signatureRequests->isEmpty() ? 'Signatures' : "{$signedCount}/{$signatureRequests->count()} signed";
+                                                        @endphp
+
+                                                        @if ($canToggleConfidential)
+                                                            <button
+                                                                type="button"
+                                                                @click="$wire.dispatch('manage-signatures', { attachmentId: {{ $file->id }} })"
+                                                                title="Request and track signatures"
+                                                                class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition {{ $file->isSigningComplete() ? 'text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30' : 'text-sky-600 hover:bg-sky-50 dark:text-sky-400 dark:hover:bg-sky-900/30' }}"
+                                                            >
+                                                                <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                                                                </svg>
+                                                                {{ $signatureLabel }}
+                                                            </button>
+                                                        @elseif ($signatureRequests->isNotEmpty())
+                                                            <span class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+                                                                {{ $signatureLabel }}
+                                                            </span>
+                                                        @endif
+                                                    @endif
+
                                                     @if ($canToggleConfidential)
                                                         <button
                                                             type="button"

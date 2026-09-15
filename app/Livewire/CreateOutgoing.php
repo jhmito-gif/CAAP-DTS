@@ -12,6 +12,8 @@ use App\Models\ReferenceSequence;
 use App\Models\Transaction;
 use App\Models\Office;
 use App\Models\Status;
+use App\Models\User;
+use App\Support\SignatureRequester;
 
 class CreateOutgoing extends Component
 {
@@ -41,6 +43,10 @@ class CreateOutgoing extends Component
     /** Access token that cleared viewers must enter to open a confidential record. */
     public $confidentialToken = '';
 
+    /** Signatories asked to sign every attached PDF: office being browsed + selected personnel ids. */
+    public $signerOffice = '';
+    public $signers = [];
+
     /** Allowed uploads: office documents and images, up to 10 MB each. */
     protected array $attachmentRules = [
         'attachments.*' => 'file|max:10240|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png',
@@ -50,6 +56,13 @@ class CreateOutgoing extends Component
     {
         unset($this->attachments[$index]);
         $this->attachments = array_values($this->attachments);
+
+        $this->forgetSignersWithoutPdf();
+    }
+
+    public function updatedAttachments(): void
+    {
+        $this->forgetSignersWithoutPdf();
     }
 
     public function mount()
@@ -68,8 +81,11 @@ class CreateOutgoing extends Component
         'remarks' => 'required|string',
         'status' => 'required',
         'confidentialToken' => [$this->isConfidential ? 'required' : 'nullable', 'string', 'min:4', 'max:100'],
+        'signers' => 'array',
+        'signers.*' => 'integer|exists:users,id',
         ], $this->attachmentRules), [], [
             'confidentialToken' => 'access token',
+            'signers.*' => 'signatory',
         ]);
 
         // Next number in this office's own sequence (shared with incoming), in
@@ -106,8 +122,14 @@ class CreateOutgoing extends Component
         ReferenceSequence::advance(Auth::user()->office, $reference);
 
         // Store each uploaded file ENCRYPTED at rest on the private disk.
+        $storedPdfs = collect();
+
         foreach ($this->attachments as $file) {
-            Attachment::storeEncrypted($record, $transaction, $file, Auth::user()->name);
+            $stored = Attachment::storeEncrypted($record, $transaction, $file, Auth::user()->name);
+
+            if ($stored->is_pdf) {
+                $storedPdfs->push($stored);
+            }
         }
 
         // Confidential viewers: tag the chosen personnel so they are cleared
@@ -115,7 +137,7 @@ class CreateOutgoing extends Component
         $taggedCount = 0;
 
         if ($this->isConfidential && ! empty($this->viewers)) {
-            $viewerUsers = \App\Models\User::whereIn('id', collect($this->viewers)->map(fn ($id) => (int) $id))->get();
+            $viewerUsers = User::whereIn('id', collect($this->viewers)->map(fn ($id) => (int) $id))->get();
 
             foreach ($viewerUsers as $viewer) {
                 \App\Models\RecordTagging::firstOrCreate(
@@ -126,26 +148,68 @@ class CreateOutgoing extends Component
             }
         }
 
+        // Signatories: each is asked to sign every PDF attached to the new record.
+        $signerCount = 0;
+
+        if (! empty($this->signers) && $storedPdfs->isNotEmpty()) {
+            $requester = app(SignatureRequester::class);
+            $signerUsers = User::whereIn('id', collect($this->signers)->map(fn ($id) => (int) $id))->get();
+
+            foreach ($storedPdfs as $pdf) {
+                foreach ($signerUsers as $signer) {
+                    $requester->request($pdf, $signer, Auth::user(), 'outgoing creation');
+                }
+            }
+
+            $signerCount = $signerUsers->count();
+        }
+
         $fileCount = count($this->attachments);
         $message = ($this->isConfidential ? 'Confidential record created.' : 'Record created successfully.')
             . ($fileCount > 0 ? " {$fileCount} " . \Illuminate\Support\Str::plural('file', $fileCount) . ' attached.' : '')
-            . ($taggedCount > 0 ? " {$taggedCount} " . \Illuminate\Support\Str::plural('viewer', $taggedCount) . ' authorised.' : '');
+            . ($taggedCount > 0 ? " {$taggedCount} " . \Illuminate\Support\Str::plural('viewer', $taggedCount) . ' authorised.' : '')
+            . ($signerCount > 0 ? " Signature requested from {$signerCount} " . \Illuminate\Support\Str::plural('person', $signerCount) . '.' : '');
 
         session()->flash('message', $message);
-        $this->reset(['office', 'subject', 'remarks', 'status', 'attachments', 'isConfidential', 'viewers', 'confidentialToken']);
+        $this->reset(['office', 'subject', 'remarks', 'status', 'attachments', 'isConfidential', 'viewers', 'confidentialToken', 'signers']);
 
         $this->dispatch('recordAdded');
         $this->dispatch('close-send-modal');
     }
 
+    /**
+     * Signatories only apply to PDFs; drop the selection once none is attached.
+     */
+    private function forgetSignersWithoutPdf(): void
+    {
+        if (! $this->hasPdfAttachment()) {
+            $this->signers = [];
+        }
+    }
+
+    private function hasPdfAttachment(): bool
+    {
+        return collect($this->attachments)->contains(
+            fn ($file) => is_object($file) && method_exists($file, 'getMimeType') && $file->getMimeType() === 'application/pdf'
+        );
+    }
+
     public function render()
     {
         $viewerPersonnel = ($this->isConfidential && filled($this->viewerOffice))
-            ? \App\Models\User::where('office', $this->viewerOffice)->orderBy('name')->get()
+            ? User::where('office', $this->viewerOffice)->orderBy('name')->get()
+            : collect();
+
+        $hasPdfAttachment = $this->hasPdfAttachment();
+
+        $signerPersonnel = ($hasPdfAttachment && filled($this->signerOffice))
+            ? User::where('office', $this->signerOffice)->orderBy('name')->get()
             : collect();
 
         return view('livewire.create-outgoing', [
             'viewerPersonnel' => $viewerPersonnel,
+            'hasPdfAttachment' => $hasPdfAttachment,
+            'signerPersonnel' => $signerPersonnel,
         ]);
     }
 }
