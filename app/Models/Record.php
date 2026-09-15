@@ -264,6 +264,17 @@ class Record extends Model
     }
 
 
+    /**
+     * The originating/owning office or an admin manages the record's files
+     * (removing them, requesting signatures).
+     */
+    public function canManageAttachments(?User $user): bool
+    {
+        return $user !== null
+            && (in_array($user->office, [$this->owner, $this->origin], true) || $user->isAdmin());
+    }
+
+
     public function isIncoming(): bool
     {
         return $this->origin !== $this->owner;

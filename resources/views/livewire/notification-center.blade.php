@@ -156,13 +156,13 @@
                             </span>
 
 
-                            @if ($recordId)
+                            @if ($recordId || filled($data['url'] ?? null))
                                 <a
-                                    href="{{ route('show-transactions', $recordId) }}"
+                                    href="{{ $data['url'] ?? route('show-transactions', $recordId) }}"
                                     wire:click="markAsRead('{{ $notification->id }}')"
                                     class="inline-flex items-center gap-1 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 px-2 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 transition hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 hover:text-indigo-700 dark:hover:text-indigo-300"
                                 >
-                                    Open record
+                                    {{ ($data['type'] ?? null) === 'signature_requested' ? 'Sign document' : 'Open record' }}
 
                                     <svg
                                         class="size-3"

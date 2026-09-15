@@ -144,7 +144,12 @@ class ManageRecord extends Component
             }
 
             // Delete via the model (not a bulk query) so each file is removed.
-            $record->attachments()->whereIn('id', $this->removeAttachmentIds)->get()->each->delete();
+            // Files sent for signature keep their audit trail and are never removed here.
+            $record->attachments()
+                ->whereIn('id', $this->removeAttachmentIds)
+                ->whereDoesntHave('signatureRequests')
+                ->get()
+                ->each->delete();
 
             foreach ($this->newAttachments as $file) {
                 Attachment::storeEncrypted($record, $first, $file, Auth::user()->name);

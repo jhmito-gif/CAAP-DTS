@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attachment;
+use App\Models\EsignLog;
+use App\Support\EsignLogger;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -48,6 +50,8 @@ class AttachmentController extends Controller
 
         abort_if($attachment->isConfidential(), 403, 'Confidential files are view-only and cannot be downloaded.');
 
+        $this->logSignatureDocumentAccess($attachment, 'document.downloaded');
+
         return response($attachment->contents(), 200, [
             'Content-Type' => $attachment->mime_type ?: 'application/octet-stream',
             'Content-Disposition' => 'attachment; filename="' . addslashes($attachment->original_name) . '"',
@@ -62,9 +66,25 @@ class AttachmentController extends Controller
     {
         $this->authorizeAccess($attachment);
 
+        $this->logSignatureDocumentAccess($attachment, 'document.viewed');
+
         return response($attachment->contents(), 200, [
             'Content-Type' => $attachment->mime_type ?: 'application/octet-stream',
             'Content-Disposition' => 'inline; filename="' . addslashes($attachment->original_name) . '"',
+        ]);
+    }
+
+    /**
+     * Documents sent for signature have their access recorded in the e-sign log.
+     */
+    private function logSignatureDocumentAccess(Attachment $attachment, string $event): void
+    {
+        if (! $attachment->signatureRequests()->exists()) {
+            return;
+        }
+
+        EsignLogger::log($event, EsignLog::INFO, ['attachment' => $attachment], [
+            'signed_versions' => $attachment->signatures()->count(),
         ]);
     }
 }

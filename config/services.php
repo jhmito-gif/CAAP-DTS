@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    // Node runs resources/node/stamp-signature.mjs to stamp e-signatures on PDFs.
+    'node' => [
+        'binary' => env('NODE_BINARY', 'node'),
+    ],
+
 ];

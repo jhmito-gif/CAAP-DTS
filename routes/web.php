@@ -116,6 +116,21 @@ Route::middleware([
 
     /*
     |--------------------------------------------------------------------------
+    | E-signatures
+    |--------------------------------------------------------------------------
+    */
+    Route::get(
+        '/sign/{signatureRequest}',
+        [\App\Http\Controllers\SignatureController::class, 'sign']
+    )->name('esign.sign');
+
+    Route::get(
+        '/verify-signature',
+        [\App\Http\Controllers\SignatureController::class, 'verify']
+    )->name('esign.verify');
+
+    /*
+    |--------------------------------------------------------------------------
     | Chat attachments
     |--------------------------------------------------------------------------
     */

@@ -91,6 +91,12 @@ class User extends Authenticatable implements FilamentUser
         return $this->role === self::ROLE_ADMIN;
     }
 
+    /** Saved e-signature image. */
+    public function signature(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(UserSignature::class);
+    }
+
     // Custom Reset Password 
     public function conversations(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
