@@ -309,7 +309,7 @@
 
                                 <button
                                     type="button"
-                                    wire:click="markAsReceived({{ $receivableTransaction->id }})"
+                                    @click="$wire.dispatch('receive-transaction', { transactionId: {{ $receivableTransaction->id }} })"
                                     wire:loading.attr="disabled"
                                     wire:target="markAsReceived({{ $receivableTransaction->id }})"
                                     aria-label="Mark this record as received"
@@ -820,6 +820,8 @@
                                 }}"
 
                                 data-received-by="{{ $transact->recieved_by ?? '' }}"
+
+                                data-received-reference="{{ $transact->received_reference ?? '' }}"
                             >
 
 
@@ -1326,6 +1328,15 @@
                                 <div class="grid gap-2 sm:grid-cols-2">
 
                                     <div class="rounded-lg bg-white/70 dark:bg-gray-800 p-3">
+
+                                        <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-600/70 dark:text-emerald-400">
+                                            Reference ID
+                                        </p>
+
+                                        <p
+                                            id="detailReceivedReference"
+                                            class="mb-3 mt-1 text-sm font-bold text-emerald-900 dark:text-emerald-200"
+                                        ></p>
 
                                         <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-600/70 dark:text-emerald-400">
                                             Received Date
@@ -1865,7 +1876,7 @@
 
                     historyItem.classList.remove(
                         'border-blue-500',
-                        'bg-blue-50/70 dark:bg-blue-900/30'
+                        'bg-blue-50/70', 'dark:bg-blue-900/30'
                     );
 
                     historyItem.classList.add(
@@ -1882,7 +1893,7 @@
 
             item.classList.add(
                 'border-blue-500',
-                'bg-blue-50/70 dark:bg-blue-900/30'
+                'bg-blue-50/70', 'dark:bg-blue-900/30'
             );
 
 
@@ -2012,8 +2023,8 @@
                 statusBadge.textContent = 'Received';
 
                 statusBadge.classList.add(
-                    'bg-emerald-50 dark:bg-emerald-900/30',
-                    'text-emerald-700 dark:text-emerald-300'
+                    'bg-emerald-50', 'dark:bg-emerald-900/30',
+                    'text-emerald-700', 'dark:text-emerald-300'
                 );
 
             } else {
@@ -2021,8 +2032,8 @@
                 statusBadge.textContent = 'Pending';
 
                 statusBadge.classList.add(
-                    'bg-amber-50 dark:bg-amber-900/30',
-                    'text-amber-700 dark:text-amber-300'
+                    'bg-amber-50', 'dark:bg-amber-900/30',
+                    'text-amber-700', 'dark:text-amber-300'
                 );
 
             }
@@ -2046,6 +2057,16 @@
 
                 receivedBy.textContent =
                     data.receivedBy || 'N/A';
+
+                const receivedReference =
+                    document.getElementById(
+                        'detailReceivedReference'
+                    );
+
+                if (receivedReference) {
+                    receivedReference.textContent =
+                        data.receivedReference || 'Not recorded';
+                }
 
                 receiverInitial.textContent =
                     firstLetter(data.receivedBy);

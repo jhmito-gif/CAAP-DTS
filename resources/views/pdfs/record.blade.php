@@ -5,7 +5,8 @@
     <title>Routing Action Slip</title>
     <style>
         @page {
-            margin: 22px 28px;
+            /* The larger bottom margin holds the form footer (App\Support\RasFormFooter). */
+            margin: 22px 28px 76px;
         }
 
         body {
@@ -18,7 +19,7 @@
 
         .banner {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             width: 100%;
         }
 
@@ -69,7 +70,7 @@
         }
 
         .stack-cell {
-            height: 34px;
+            height: 30px;
         }
 
         .stack-value {
@@ -79,7 +80,7 @@
         }
 
         .subject-cell {
-            height: 96px;
+            height: 88px;
         }
 
         .subject {
@@ -110,23 +111,32 @@
             vertical-align: middle;
         }
 
+        /* Movement rows are sized so all eight blocks and the footer fit one A4 page. */
         .office-cell {
             font-size: 11px;
             font-weight: bold;
-            height: 34px;
+            height: 26px;
             text-align: center;
             vertical-align: middle;
         }
 
         .official-cell {
             font-size: 8px;
-            height: 34px;
+            height: 26px;
             text-align: center;
             vertical-align: middle;
         }
 
         .remarks-cell {
-            height: 68px;
+            height: 52px;
+        }
+
+        .ras td.date-cell,
+        .ras td.office-cell,
+        .ras td.official-cell,
+        .ras td.remarks-cell {
+            padding-bottom: 3px;
+            padding-top: 3px;
         }
 
         .muted {
@@ -213,9 +223,11 @@
         .stack-value {
             text-transform: uppercase;
         }
+
     </style>
 </head>
 <body>
+
     @php
         /*
         |----------------------------------------------------------------------
@@ -398,7 +410,21 @@
             <td colspan="2" class="head-cell">Originating Office</td>
             <td colspan="3" class="head-cell value-cell">{{ $originDisplay }}</td>
             <td class="head-cell" style="text-align: left">
+                @php
+                    // Each receiving office's own reference ID, newest movement first,
+                    // stacked above the original number as on the paper slip.
+                    $receivedReferences = $transactions
+                        ->pluck('received_reference')
+                        ->filter()
+                        ->reverse()
+                        ->reject(fn ($value) => in_array($value, [$referenceNumber, $internalReference], true))
+                        ->unique()
+                        ->values();
+                @endphp
                 <span class="label">Reference Number:</span><br>
+                @foreach ($receivedReferences as $receivedReference)
+                    <span class="value">{{ $receivedReference }}</span><br>
+                @endforeach
                 <span class="value">{{ $referenceNumber ?? '' }}</span>
                 @if ($internalReference)
                     <br><span class="muted">Internal Tracking Number: {{ $internalReference }}</span>

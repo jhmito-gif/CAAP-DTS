@@ -58,6 +58,9 @@ class PdfController extends Controller
             $pdf = Pdf::loadView('pdfs.record', compact('record', 'masked'))
                 ->setPaper('a4', 'portrait');
 
+            // Form footer (CAAP-ODG-CCS-001 r2, "Page X of Y") on every page.
+            \App\Support\RasFormFooter::apply($pdf);
+
             // Stream (view) the PDF in the browser
             return $pdf->stream('record-' . $record->id . '.pdf');
         }

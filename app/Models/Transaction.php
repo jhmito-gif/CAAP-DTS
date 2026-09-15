@@ -19,6 +19,7 @@ class Transaction extends Model
         'forwarded_by', 
         'office', 
         'service',
+        'received_reference',
     ];
 
     public function scopeSearch($query, $value)

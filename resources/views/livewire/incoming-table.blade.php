@@ -115,6 +115,11 @@
                                                 Origin ref: {{ $record->origin_reference }}
                                             </p>
                                         @endif
+                                        @if($transaction->received_reference)
+                                            <p class="truncate text-xs font-medium text-emerald-600 dark:text-emerald-400" title="{{ $transaction->received_reference }}">
+                                                Received as: {{ $transaction->received_reference }}
+                                            </p>
+                                        @endif
                                     </td>
                                     <td class="max-w-[260px] px-4 py-3">
                                         @if ($masked)
