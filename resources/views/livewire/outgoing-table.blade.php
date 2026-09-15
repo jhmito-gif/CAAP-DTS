@@ -178,7 +178,7 @@
                                 </th>
 
                                 <th class="px-4 py-3 text-right">
-                                    RAS Audit Trail
+                                    Actions
                                 </th>
                             </tr>
                         </thead>
@@ -268,8 +268,10 @@
                                     </td>
 
 
-                                    {{-- RAS audit trail --}}
-                                    <td class="px-4 py-3 text-right">
+                                    {{-- Edit / delete + RAS audit trail --}}
+                                    <td class="whitespace-nowrap px-4 py-3 text-right">
+
+                                        <x-record-actions :record="$record" class="mr-1.5 align-middle" />
 
                                         <a
                                             href="{{ route('records-pdf', $record->id) }}"

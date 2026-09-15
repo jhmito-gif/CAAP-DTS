@@ -294,7 +294,7 @@
                                     </svg>
 
                                     <span
-                                        class="pointer-events-none absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-150 group-hover:translate-y-0 group-hover:opacity-100"
+                                        class="pointer-events-none absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-150 group-hover:translate-y-0 group-hover:!opacity-100"
                                     >
                                         Send
                                     </span>
@@ -356,7 +356,7 @@
                                     </svg>
 
                                     <span
-                                        class="pointer-events-none absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-150 group-hover:translate-y-0 group-hover:opacity-100"
+                                        class="pointer-events-none absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-150 group-hover:translate-y-0 group-hover:!opacity-100"
                                     >
                                         <span wire:loading.remove wire:target="markAsReceived({{ $receivableTransaction->id }})">
                                             Mark as Received
@@ -406,7 +406,7 @@
                                         </svg>
 
                                         <span
-                                            class="pointer-events-none absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-150 group-hover:translate-y-0 group-hover:opacity-100"
+                                            class="pointer-events-none absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-150 group-hover:translate-y-0 group-hover:!opacity-100"
                                         >
                                             Remove Urgent
                                         </span>
@@ -437,7 +437,7 @@
                                         </svg>
 
                                         <span
-                                            class="pointer-events-none absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-150 group-hover:translate-y-0 group-hover:opacity-100"
+                                            class="pointer-events-none absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-150 group-hover:translate-y-0 group-hover:!opacity-100"
                                         >
                                             Mark Urgent
                                         </span>
@@ -477,12 +477,16 @@
                                 </svg>
 
                                 <span
-                                    class="pointer-events-none absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-150 group-hover:translate-y-0 group-hover:opacity-100"
+                                    class="pointer-events-none absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-150 group-hover:translate-y-0 group-hover:!opacity-100"
                                 >
                                     Print RAS
                                 </span>
 
                             </a>
+
+
+                            {{-- Edit / Delete (creator until received elsewhere, or admin) --}}
+                            <x-record-actions :record="$record" variant="header" />
 
                         </div>
 
@@ -1437,6 +1441,7 @@
     {{-- SEND TRANSACTION MODAL --}}
     {{-- ========================================================= --}}
     <div
+        wire:ignore.self
         id="sendModal"
         class="fixed inset-0 z-50 hidden items-center justify-center p-4"
         role="dialog"
@@ -1446,6 +1451,7 @@
 
         {{-- Backdrop --}}
         <div
+            wire:ignore.self
             id="sendModalBackdrop"
             class="absolute inset-0 bg-gray-950/50 opacity-0 backdrop-blur-sm transition-opacity duration-200"
         ></div>
@@ -1454,6 +1460,7 @@
 
         {{-- Panel --}}
         <div
+            wire:ignore.self
             id="sendModalPanel"
             class="relative w-full max-w-lg translate-y-3 scale-95 overflow-hidden rounded-2xl bg-white dark:!bg-gray-800 opacity-0 shadow-2xl transition-all duration-200"
         >

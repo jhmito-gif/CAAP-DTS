@@ -114,6 +114,15 @@ class TransactionTable extends Component
         //
     }
 
+    /**
+     * Re-render after the record was edited in the manage-record modal.
+     */
+    #[\Livewire\Attributes\On('record-updated')]
+    public function refreshRecord(): void
+    {
+        //
+    }
+
     public function render()
     {
         $transactions = Transaction::where('record_id', $this->recordId)

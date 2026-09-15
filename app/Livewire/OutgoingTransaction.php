@@ -88,6 +88,15 @@ class OutgoingTransaction extends Component
     }
 
     /**
+     * Re-read the record after it was edited in the manage-record modal.
+     */
+    #[\Livewire\Attributes\On('record-updated')]
+    public function refreshRecord(): void
+    {
+        $this->record->refresh();
+    }
+
+    /**
      * Permanently remove an attachment (file + record). Owning office or admin
      * only -- used to purge a confidential file.
      */
