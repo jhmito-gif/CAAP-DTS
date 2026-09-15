@@ -17,28 +17,8 @@ class PdfController extends Controller
             ])->findOrFail($id);
 
 
-            $userOffice = Auth::user()->office;
-
-            // Check if user’s office is part of any related transaction
-            $hasAccess = $record->transactions()
-                ->where(function ($query) use ($userOffice) {
-                    $query->where('destination', $userOffice)
-                        ->orWhere('office', $userOffice);
-                })
-                ->exists();
-
-            // Someone tagged on this record can print it too.
-            $isTagged = \App\Models\RecordTagging::where('record_id', $record->id)
-                ->where('user_id', Auth::id())
-                ->exists();
-
-            // An office granted explicit access can print it as well.
-            $isGranted = \App\Models\Access::where('record_id', $record->id)
-                ->where('office', $userOffice)
-                ->exists();
-
-            // Verify if authenticated user's office matches the record's owner or has access via transactions
-            if ($record->owner !== $userOffice && !$hasAccess && !$isTagged && !$isGranted) {
+            // Owner or origin office, routing chain, tagged personnel or granted access.
+            if (! $record->isAccessibleBy(Auth::user())) {
                 return redirect()->route('dashboard')
                     ->with('error', 'Unauthorized access to record RAS.');
             }

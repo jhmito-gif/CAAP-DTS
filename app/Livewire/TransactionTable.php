@@ -2,9 +2,7 @@
 
 namespace App\Livewire;
 
-use App\Models\Access;
 use App\Models\Office;
-use App\Models\RecordTagging;
 use App\Models\Status;
 use App\Models\Record;
 use App\Livewire\Concerns\UnlocksConfidential;
@@ -34,29 +32,10 @@ class TransactionTable extends Component
             return $this->redirectRoute('dashboard'); // Livewire-safe redirect
         }
 
-        $userOffice = Auth::user()->office;
-
-        // Check if user’s office is part of any transaction (destination or office)
-        $hasAccess = Transaction::where('record_id', $recordId)
-            ->where(function ($query) use ($userOffice) {
-                $query->where('destination', $userOffice)
-                    ->orWhere('office', $userOffice);
-            })
-            ->exists();
-
-        // Someone tagged on this record can open it, otherwise the tag
-        // notification would link somewhere they are bounced out of.
-        $isTagged = RecordTagging::where('record_id', $recordId)
-            ->where('user_id', Auth::id())
-            ->exists();
-
-        // An office can be granted explicit access to a record by an admin.
-        $isGranted = Access::where('record_id', $recordId)
-            ->where('office', $userOffice)
-            ->exists();
-
-        // Verify ownership, transaction involvement, tag, or granted access
-        if ($this->record->owner !== $userOffice && !$hasAccess && !$isTagged && !$isGranted) {
+        // Owner or origin office, routing chain, tagged personnel or granted access.
+        // The origin office must get in: its outgoing list shows records another
+        // office logged as incoming, and those open here.
+        if (! $this->record->isAccessibleBy(Auth::user())) {
             session()->flash('error', 'Unauthorized access to record.');
             return $this->redirectRoute('dashboard'); // Livewire-safe redirect
         }
