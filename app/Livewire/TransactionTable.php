@@ -93,18 +93,6 @@ class TransactionTable extends Component
         $this->dispatch('closeModal'); 
     }
 
-    public function markAsReceived($id)
-    {
-        $transaction = Transaction::find($id);
-
-        if ($transaction && !$transaction->date_recieved) {
-            $transaction->update([
-                'recieved_by' => Auth::user()->name,
-                'date_recieved' => Carbon::now(),
-            ]);
-        }
-    }
-
     /**
      * Re-render so the tagged-personnel list reflects the tagging modal.
      */

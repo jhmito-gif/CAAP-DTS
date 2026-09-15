@@ -24,7 +24,8 @@ class ReferenceSequence extends Model
 
     /**
      * Next internal reference for an office ("{office}-{year}-0001"), shared by
-     * incoming and outgoing records.
+     * incoming and outgoing records and by the reference IDs offices assign
+     * when they receive a routed record.
      *
      * Only references carrying the office's own prefix count, so a record that
      * merely lists the office as origin/owner (another office's incoming copy,
@@ -58,13 +59,17 @@ class ReferenceSequence extends Model
         do {
             $reference = $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
             $nextNumber++;
-        } while (Record::where('reference', $reference)->exists());
+        } while (
+            Record::where('reference', $reference)->exists()
+            || Transaction::where('received_reference', $reference)->exists()
+        );
 
         return $reference;
     }
 
     /**
-     * Move the office's sequence past a reference that was just used.
+     * Move the office's sequence past a reference that was just used. Never
+     * moves it backwards -- a receiver may type an older or custom number.
      */
     public static function advance(string $office, string $reference): void
     {
@@ -75,9 +80,8 @@ class ReferenceSequence extends Model
             return;
         }
 
-        static::updateOrCreate(
-            ['office' => $office, 'year' => $year],
-            ['next_number' => intval($matches[1]) + 1]
-        );
+        $sequence = static::firstOrNew(['office' => $office, 'year' => $year]);
+        $sequence->next_number = max((int) $sequence->next_number, intval($matches[1]) + 1);
+        $sequence->save();
     }
 }

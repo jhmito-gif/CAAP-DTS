@@ -199,7 +199,7 @@
 
                                 <button
                                     type="button"
-                                    wire:click="markAsReceived({{ $receivableTransaction->id }})"
+                                    @click="$wire.dispatch('receive-transaction', { transactionId: {{ $receivableTransaction->id }} })"
                                     wire:loading.attr="disabled"
                                     wire:target="markAsReceived({{ $receivableTransaction->id }})"
                                     aria-label="Mark this record as received"
@@ -1179,6 +1179,26 @@
                                             <div
                                                 class="grid gap-2 sm:grid-cols-2"
                                             >
+
+                                                {{-- Reference ID assigned by the receiving office --}}
+                                                @if ($transact->received_reference)
+                                                    <div
+                                                        class="py-1 sm:col-span-2"
+                                                    >
+                                                        <p
+                                                            class="text-[10px] font-bold uppercase tracking-wider text-emerald-600/70 dark:text-emerald-400"
+                                                        >
+                                                            {{ $transact->destination }} Reference ID
+                                                        </p>
+
+                                                        <p
+                                                            class="mt-1 text-sm font-bold text-emerald-900 dark:text-emerald-200"
+                                                        >
+                                                            {{ $transact->received_reference }}
+                                                        </p>
+                                                    </div>
+                                                @endif
+
 
                                                 {{-- Received Date --}}
                                                 <div

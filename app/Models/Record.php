@@ -202,7 +202,9 @@ class Record extends Model
 
             $q->where('reference', 'like', "%{$value}%")
                 ->orWhere('origin_reference', 'like', "%{$value}%")
-                ->orWhere('subject', 'like', "%{$value}%");
+                ->orWhere('subject', 'like', "%{$value}%")
+                // Reference IDs the receiving offices assigned along the route.
+                ->orWhereHas('transactions', fn ($transaction) => $transaction->where('received_reference', 'like', "%{$value}%"));
 
         });
     }
