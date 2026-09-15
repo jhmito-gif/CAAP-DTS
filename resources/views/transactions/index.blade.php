@@ -6,4 +6,5 @@
     </x-slot>
 
     <livewire:transaction-table :record-id="$recordID" />
+    <livewire:manage-record :redirect-after-delete="true" />
 </x-app-layout>

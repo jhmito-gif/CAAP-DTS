@@ -247,6 +247,40 @@ class Record extends Model
 
     /*
     |--------------------------------------------------------------------------
+    | Editing / Deleting
+    |--------------------------------------------------------------------------
+    | Records store the creator's name (not an id). The creator may edit or
+    | delete a record until another office receives it -- see RecordPolicy.
+    */
+    public function isCreatedBy(?User $user): bool
+    {
+        return $user !== null && filled($this->created_by) && $this->created_by === $user->name;
+    }
+
+
+    public function isIncoming(): bool
+    {
+        return $this->origin !== $this->owner;
+    }
+
+
+    public function isReceivedElsewhere(): bool
+    {
+        return $this->transactions()
+            ->whereNotNull('date_recieved')
+            ->where('destination', '!=', $this->owner)
+            ->exists();
+    }
+
+
+    public function firstTransaction(): ?Transaction
+    {
+        return $this->transactions()->orderBy('created_at')->orderBy('id')->first();
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
     | Delete Related Transactions
     |--------------------------------------------------------------------------
     */
@@ -257,6 +291,9 @@ class Record extends Model
 
             // Delete via the model (not a bulk query) so each file is removed.
             $record->attachments->each->delete();
+
+            // Explicit access grants have no FK cascade.
+            Access::where('record_id', $record->id)->delete();
         });
     }
 }

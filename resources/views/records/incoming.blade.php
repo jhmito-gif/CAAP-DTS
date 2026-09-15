@@ -6,4 +6,5 @@
     </x-slot>
     <livewire:incoming-table/>
     <livewire:create-incoming/>
+    <livewire:manage-record/>
 </x-app-layout>

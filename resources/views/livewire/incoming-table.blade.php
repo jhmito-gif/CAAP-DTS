@@ -75,7 +75,7 @@
                                 <th class="px-4 py-3">Status</th>
                                 <th class="px-4 py-3">Routing</th>
                                 <th class="px-4 py-3">Date</th>
-                                <th class="px-4 py-3 text-right">RAS Audit Trail</th>
+                                <th class="px-4 py-3 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -158,8 +158,10 @@
                                             <span class="mt-0.5 block text-[11px] font-medium text-rose-500 dark:text-rose-400">Awaiting action</span>
                                         @endif
                                     </td>
-                                    <td class="px-4 py-3 text-right">
+                                    <td class="whitespace-nowrap px-4 py-3 text-right">
                                         @if($record)
+                                            <x-record-actions :record="$record" class="mr-1.5 align-middle" />
+
                                             <a
                                                 href="{{ route('records-pdf', $record->id) }}"
                                                 target="_blank"

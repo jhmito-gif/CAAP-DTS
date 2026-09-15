@@ -61,6 +61,33 @@ class Attachment extends Model
     }
 
     /**
+     * Store an uploaded file ENCRYPTED at rest on the private disk and record it.
+     */
+    public static function storeEncrypted(Record $record, ?Transaction $transaction, \Illuminate\Http\UploadedFile $file, string $uploadedBy): self
+    {
+        $ext = $file->getClientOriginalExtension();
+        $path = "attachments/{$record->id}/" . Str::random(40) . ($ext ? ".{$ext}" : '');
+
+        Storage::disk('local')->put(
+            $path,
+            \Illuminate\Support\Facades\Crypt::encryptString($file->get())
+        );
+
+        return static::create([
+            'record_id' => $record->id,
+            'transaction_id' => $transaction?->id,
+            'original_name' => $file->getClientOriginalName(),
+            'path' => $path,
+            'disk' => 'local',
+            'mime_type' => $file->getMimeType(),
+            'size' => $file->getSize(),
+            'uploaded_by' => $uploadedBy,
+            'is_confidential' => (bool) $record->is_confidential,
+            'is_encrypted' => true,
+        ]);
+    }
+
+    /**
      * Delete the underlying file when the row is removed.
      */
     protected static function booted(): void

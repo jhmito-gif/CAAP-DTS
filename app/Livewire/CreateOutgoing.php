@@ -8,10 +8,10 @@ use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Attachment;
 use App\Models\Record;
+use App\Models\ReferenceSequence;
 use App\Models\Transaction;
 use App\Models\Office;
 use App\Models\Status;
-use Carbon\Carbon;
 
 class CreateOutgoing extends Component
 {
@@ -61,7 +61,7 @@ class CreateOutgoing extends Component
     }
 
     public function createRecord(){
-        
+
         $this->validate(array_merge([
         'office' => 'required',
         'subject' => 'required|string',
@@ -72,54 +72,9 @@ class CreateOutgoing extends Component
             'confidentialToken' => 'access token',
         ]);
 
-        $year = Carbon::now()->year;
-        $office = $this->office;
-
-        // // Get latest record with matching office and year
-        // $latest = Record::where('origin', Auth::user()->office)
-        //     ->latest('id')
-        //     ->first();
-
-
-        // if ($latest && preg_match('/\d+/', $latest->reference, $matches)) {
-        //     $lastNumber = intval($matches[0]);
-        //     $nextNumber = $lastNumber + 1;
-        // } else {
-        //     $nextNumber = 1;
-        // }
-
-        // // Format number with leading zeroes
-        // $formattedNumber = str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
-
-        // // Create full reference
-        // $reference = Auth::user()->office."-{$formattedNumber}-{$year}";
-
-
-        $year = Carbon::now()->year;
-
-        // Get the latest record with matching office and year
-        $latest = Record::where(function ($query) {
-                $query->where('origin', Auth::user()->office)
-                      ->orWhere('owner', Auth::user()->office);
-                    })
-                    ->whereYear('created_at', $year)
-                    ->latest('id')
-                    ->first();
-
-
-        if ($latest && preg_match('/\d+$/', $latest->reference, $matches)) {
-            // Get the last numeric sequence (the counter part)
-            $lastNumber = intval($matches[0]);
-            $nextNumber = $lastNumber + 1;
-        } else {
-            $nextNumber = 1;
-        }
-
-        // Format number with leading zeroes (minimum 4 digits)
-        $formattedNumber = str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
-
-        // Create full reference in the format: Office-year-count_number
-        $reference = Auth::user()->office . "-{$year}-{$formattedNumber}";
+        // Next number in this office's own sequence (shared with incoming), in
+        // the format: Office-year-count_number
+        $reference = ReferenceSequence::nextReferenceFor(Auth::user()->office);
 
         // Save record
         $record = Record::create([
@@ -148,28 +103,11 @@ class CreateOutgoing extends Component
             'forwarded_by' => Auth::user()->name,
         ]);
 
+        ReferenceSequence::advance(Auth::user()->office, $reference);
+
         // Store each uploaded file ENCRYPTED at rest on the private disk.
         foreach ($this->attachments as $file) {
-            $ext = $file->getClientOriginalExtension();
-            $path = "attachments/{$record->id}/" . \Illuminate\Support\Str::random(40) . ($ext ? ".{$ext}" : '');
-
-            \Illuminate\Support\Facades\Storage::disk('local')->put(
-                $path,
-                \Illuminate\Support\Facades\Crypt::encryptString($file->get())
-            );
-
-            Attachment::create([
-                'record_id' => $record->id,
-                'transaction_id' => $transaction->id,
-                'original_name' => $file->getClientOriginalName(),
-                'path' => $path,
-                'disk' => 'local',
-                'mime_type' => $file->getMimeType(),
-                'size' => $file->getSize(),
-                'uploaded_by' => Auth::user()->name,
-                'is_confidential' => (bool) $this->isConfidential,
-                'is_encrypted' => true,
-            ]);
+            Attachment::storeEncrypted($record, $transaction, $file, Auth::user()->name);
         }
 
         // Confidential viewers: tag the chosen personnel so they are cleared

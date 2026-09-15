@@ -9,5 +9,6 @@
 
     <livewire:outgoing-table/>
     <livewire:create-outgoing/>
+    <livewire:manage-record/>
 
 </x-app-layout>
