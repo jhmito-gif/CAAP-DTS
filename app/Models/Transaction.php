@@ -26,10 +26,8 @@ class Transaction extends Model
     {
         if (empty($value)) return $query;
 
-        // Reuses the safe Record search scope dynamically
-        return $query->whereHas('record', function ($q) use ($value) {
-            $q->search($value);
-        });
+        // Reuses the Record search scope as a one-off subquery (not a per-row EXISTS).
+        return $query->whereIn('record_id', Record::query()->select('id')->search($value));
     }
 
     public function record(): BelongsTo

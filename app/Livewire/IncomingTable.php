@@ -43,17 +43,19 @@ class IncomingTable extends Component
         ->latest('id')
         ->first();
 
+        // Legacy rows matched on the record itself. Resolved first: an OR with a
+        // subquery makes the database scan every transaction instead of using
+        // the destination index.
+        $legacyRecordIds = Record::query()
+            ->where('reference', $userOffice)
+            ->orWhere('subject', $userOffice)
+            ->pluck('id');
+
         return view('livewire.incoming-table', [
             'data' => Transaction::search($this->search)
-                ->where(function ($query) use ($userOffice) {
+                ->where(function ($query) use ($userOffice, $legacyRecordIds) {
                     $query->where('destination', $userOffice)
-                          ->orWhereHas('record', function ($q) use ($userOffice) {
-                              // Grouping reference and subject check for the office constraint
-                              $q->where(function ($subQ) use ($userOffice) {
-                                  $subQ->where('reference', $userOffice)
-                                       ->orWhere('subject', $userOffice);
-                              });
-                          });
+                          ->when($legacyRecordIds->isNotEmpty(), fn ($q) => $q->orWhereIn('record_id', $legacyRecordIds));
                 })
                 ->orderBy('created_at', 'desc') 
                 ->paginate($this->perPage),
