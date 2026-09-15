@@ -200,7 +200,7 @@
 
                                 <tr
                                     wire:key="outgoing-record-{{ $record->id }}"
-                                    onclick="window.location='{{ route('outgoing-transactions', $record->id) }}'"
+                                    onclick="window.location='{{ $record->owner === auth()->user()->office ? route('outgoing-transactions', $record->id) : route('show-transactions', $record->id) }}'"
                                     class="group cursor-pointer transition-colors duration-100 hover:bg-emerald-50/40 dark:hover:bg-emerald-900/40"
                                 >
 
