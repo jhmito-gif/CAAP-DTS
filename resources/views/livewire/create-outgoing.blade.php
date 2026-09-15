@@ -453,7 +453,7 @@
                     </div>
 
                     <p class="mb-2.5 text-xs text-gray-500 dark:text-gray-400">
-                        Each person picked is asked to sign every PDF attached. They are notified, can open this record, and sign with their password and authenticator code.
+                        Each person picked is asked to sign every PDF attached. They are notified, can open this record, and sign with their signing PIN.
                     </p>
 
                     <select

@@ -8,6 +8,7 @@ use App\Models\EsignLog;
 use App\Models\Record;
 use App\Models\RecordTagging;
 use App\Models\SignatureRequest;
+use App\Models\SigningPin;
 use App\Models\User;
 use App\Models\UserSignature;
 use App\Support\DocumentSigner;
@@ -52,8 +53,14 @@ function logTestSigner(): User
     ])->save();
 
     UserSignature::create(['user_id' => $user->id, 'image' => base64_encode(SignatureImage::normalize(logTestPng()))]);
+    SigningPin::create(['user_id' => $user->id, 'pin' => logTestPin()]);
 
     return $user->fresh();
+}
+
+function logTestPin(): string
+{
+    return '731946';
 }
 
 function logTestCode(User $user): string
@@ -87,7 +94,7 @@ it('logs a successful signature to the database and the esign log file', functio
     $signer = logTestSigner();
     $signatureRequest = logTestRequest($signer);
 
-    $signature = app(DocumentSigner::class)->sign($signatureRequest, $signer, $placement, 'password', logTestCode($signer), null, null);
+    $signature = app(DocumentSigner::class)->sign($signatureRequest, $signer, $placement, logTestPin(), logTestCode($signer), null, null);
 
     $entry = EsignLog::where('event', 'signature.signed')->sole();
 
@@ -98,43 +105,45 @@ it('logs a successful signature to the database and the esign log file', functio
         ->and($entry->signature_id)->toBe($signature->id)
         ->and($entry->context['verification_code'])->toBe($signature->verification_code)
         ->and($entry->context['signed_sha256'])->toBe($signature->signed_sha256)
-        ->and($entry->context['document'])->toBe('memo.pdf');
+        ->and($entry->context['document'])->toBe('memo.pdf')
+        ->and($entry->context['two_factor'])->toBe('code');
 
     Log::shouldHaveReceived('channel')->with('esign');
 });
 
-it('logs wrong passwords, wrong codes and the lockout without storing the secrets', function () use ($placement) {
+it('logs wrong PINs, wrong codes and the lockout without storing the secrets', function () use ($placement) {
     $signer = logTestSigner();
     $signatureRequest = logTestRequest($signer);
     $service = app(DocumentSigner::class);
 
-    $attempt = function (string $password, string $code) use ($service, $signatureRequest, $signer, $placement) {
+    $attempt = function (string $pin, ?string $code) use ($service, $signatureRequest, $signer, $placement) {
         try {
-            $service->sign($signatureRequest, $signer, $placement, $password, $code, null, null);
+            $service->sign($signatureRequest, $signer, $placement, $pin, $code, null, null);
         } catch (ValidationException) {
             //
         }
     };
 
-    $attempt('wrong-password', '123456');
+    $attempt('582047', '123456');
 
     foreach (range(1, DocumentSigner::MAX_ATTEMPTS - 1) as $i) {
-        $attempt('password', '000000');
+        $attempt(logTestPin(), '999999');
     }
 
-    $attempt('password', logTestCode($signer));
+    $attempt(logTestPin(), logTestCode($signer));
 
-    expect(EsignLog::where('event', 'signature.password_failed')->count())->toBe(1)
+    expect(EsignLog::where('event', 'signature.pin_failed')->count())->toBe(1)
         ->and(EsignLog::where('event', 'signature.code_failed')->count())->toBe(DocumentSigner::MAX_ATTEMPTS - 1)
         ->and(EsignLog::where('event', 'signature.locked_out')->count())->toBe(1)
         ->and(EsignLog::where('outcome', EsignLog::FAILURE)->count())->toBe(DocumentSigner::MAX_ATTEMPTS + 1);
 
-    // Only the logged details (timestamps would contain "000000" microseconds).
+    // Only the logged details (timestamps could contain digit runs).
     $logged = EsignLog::all(['context', 'user_agent', 'ip_address'])->toJson();
 
-    expect($logged)->not->toContain('wrong-password')
-        ->and($logged)->not->toContain('000000')
-        ->and($logged)->not->toContain('password":');
+    expect($logged)->not->toContain('582047')
+        ->and($logged)->not->toContain('999999')
+        ->and($logged)->not->toContain(logTestPin())
+        ->and($logged)->not->toContain('pin":');
 });
 
 it('keeps the integrity-failure entry even though the signing transaction rolls back', function () use ($placement) {
@@ -147,7 +156,7 @@ it('keeps the integrity-failure entry even though the signing transaction rolls 
     );
 
     try {
-        app(DocumentSigner::class)->sign($signatureRequest, $signer, $placement, 'password', logTestCode($signer), null, null);
+        app(DocumentSigner::class)->sign($signatureRequest, $signer, $placement, logTestPin(), logTestCode($signer), null, null);
     } catch (ValidationException) {
         //
     }
@@ -205,11 +214,22 @@ it('logs verification checks and signature profile changes', function () {
 
     Livewire::test(SignatureSettings::class)
         ->call('saveDrawn', 'data:image/png;base64,' . base64_encode(logTestPng()))
-        ->call('remove');
+        ->call('remove')
+        ->set('currentPassword', 'not-my-password')->set('newPin', '582931')->set('newPin_confirmation', '582931')
+        ->call('savePin')
+        ->set('currentPassword', 'password')->set('newPin', '582931')->set('newPin_confirmation', '582931')
+        ->call('savePin');
 
     expect(EsignLog::where('event', 'verify.code_lookup')->where('outcome', EsignLog::FAILURE)->exists())->toBeTrue()
         ->and(EsignLog::where('event', 'profile.signature_saved')->sole()->context['method'])->toBe('drawn')
-        ->and(EsignLog::where('event', 'profile.signature_removed')->exists())->toBeTrue();
+        ->and(EsignLog::where('event', 'profile.signature_removed')->exists())->toBeTrue()
+        ->and(EsignLog::where('event', 'profile.pin_rejected')->sole()->outcome)->toBe(EsignLog::FAILURE)
+        ->and(EsignLog::where('event', 'profile.pin_set')->sole()->context['replaced'])->toBeTrue();
+
+    $logged = EsignLog::all(['context', 'user_agent', 'ip_address'])->toJson();
+
+    expect($logged)->not->toContain('582931')
+        ->and($logged)->not->toContain('not-my-password');
 });
 
 it('keeps the e-sign log append-only', function () {

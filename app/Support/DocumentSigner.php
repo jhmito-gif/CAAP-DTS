@@ -10,7 +10,6 @@ use App\Models\User;
 use App\Notifications\DocumentSigned;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -20,10 +19,11 @@ use Laravel\Fortify\Fortify;
 
 /**
  * Applies a signatory's e-signature to the current version of a document:
- * re-verifies the signer (password + authenticator code), checks the stored
- * file has not been altered since it was uploaded or last signed, stamps the
- * signature server-side, stores the new version encrypted and writes the
- * audit row. Every attempt, successful or not, goes to the e-sign log.
+ * re-verifies the signer (signing PIN every time, authenticator code once per
+ * session), checks the stored file has not been altered since it was uploaded
+ * or last signed, stamps the signature server-side, stores the new version
+ * encrypted and writes the audit row. Every attempt, successful or not, goes
+ * to the e-sign log.
  */
 class DocumentSigner
 {
@@ -35,6 +35,7 @@ class DocumentSigner
     public function __construct(
         protected PdfSignatureStamper $stamper,
         protected TwoFactorAuthenticationProvider $twoFactor,
+        protected SigningSession $signingSession,
     ) {
     }
 
@@ -53,16 +54,27 @@ class DocumentSigner
             ! $request->record?->isAccessibleBy($user) => 'You no longer have access to this record.',
             ! $user->hasEnabledTwoFactorAuthentication() => 'Turn on two-factor authentication in your profile before signing.',
             ! $user->signature => 'Save your signature in your profile before signing.',
+            ! $user->signingPin => 'Set a signing PIN in your profile before signing.',
             default => null,
         };
     }
 
     /**
+     * Whether the next signature needs the authenticator code (not yet
+     * confirmed in this session).
+     */
+    public function requiresCode(User $user): bool
+    {
+        return ! $this->signingSession->isConfirmed($user);
+    }
+
+    /**
      * @param  array{page: int, x: float, y: float, width: float, height: float}  $placement  PDF points, origin bottom-left
+     * @param  string|null  $code  authenticator code; only needed when requiresCode() is true
      *
      * @throws ValidationException when verification fails or the document cannot be signed
      */
-    public function sign(SignatureRequest $request, User $user, array $placement, string $password, string $code, ?string $ip, ?string $userAgent): Signature
+    public function sign(SignatureRequest $request, User $user, array $placement, string $pin, ?string $code, ?string $ip, ?string $userAgent): Signature
     {
         $subjects = ['user' => $user, 'request' => $request];
 
@@ -72,7 +84,7 @@ class DocumentSigner
             throw ValidationException::withMessages(['signature' => $blocker]);
         }
 
-        $this->verifySigner($user, $password, $code, $subjects);
+        $twoFactor = $this->verifySigner($user, $pin, $code, $subjects);
 
         // Set when the transaction refuses to sign, and logged after it rolls back
         // (a log row written inside the transaction would be rolled back too).
@@ -169,6 +181,7 @@ class DocumentSigner
             'source_sha256' => $signature->source_sha256,
             'signed_sha256' => $signature->signed_sha256,
             'completed' => (bool) $signature->attachment?->fresh()?->isSigningComplete(),
+            'two_factor' => $twoFactor,
         ]);
 
         $requester = $request->requester;
@@ -181,46 +194,72 @@ class DocumentSigner
     }
 
     /**
-     * Password + authenticator code, with a lockout after repeated failures.
-     * Recovery codes are deliberately not accepted for signing.
+     * Signing PIN every time; authenticator code unless already confirmed in
+     * this session. Lockout after repeated failures. Recovery codes are
+     * deliberately not accepted for signing.
      *
      * @param  array<string, mixed>  $subjects  for the e-sign log
+     * @return string how two-factor was satisfied: 'code' or 'session'
      */
-    protected function verifySigner(User $user, string $password, string $code, array $subjects): void
+    protected function verifySigner(User $user, string $pin, ?string $code, array $subjects): string
     {
         $key = 'esign:' . $user->id;
 
         if (RateLimiter::tooManyAttempts($key, self::MAX_ATTEMPTS)) {
+            $this->signingSession->forget();
+
             EsignLogger::log('signature.locked_out', EsignLog::FAILURE, $subjects, [
                 'retry_in_seconds' => RateLimiter::availableIn($key),
             ]);
 
             throw ValidationException::withMessages([
-                'code' => 'Too many failed attempts. Try again in ' . max(1, (int) ceil(RateLimiter::availableIn($key) / 60)) . ' minute(s).',
+                'pin' => 'Too many failed attempts. Try again in ' . max(1, (int) ceil(RateLimiter::availableIn($key) / 60)) . ' minute(s).',
             ]);
         }
 
-        if (! Hash::check($password, $user->password)) {
-            RateLimiter::hit($key, self::LOCKOUT_SECONDS);
-
-            EsignLogger::log('signature.password_failed', EsignLog::FAILURE, $subjects, ['attempts' => RateLimiter::attempts($key)]);
-
-            throw ValidationException::withMessages(['password' => 'The password is incorrect.']);
+        if (! $user->signingPin?->matches($pin)) {
+            $this->failVerification($key, 'signature.pin_failed', $subjects, ['pin' => 'The signing PIN is incorrect.']);
         }
 
-        $valid = $this->twoFactor->verify(
-            Fortify::currentEncrypter()->decrypt($user->two_factor_secret),
-            preg_replace('/\s+/', '', $code)
-        );
+        if ($this->signingSession->isConfirmed($user)) {
+            RateLimiter::clear($key);
 
-        if (! $valid) {
-            RateLimiter::hit($key, self::LOCKOUT_SECONDS);
+            return 'session';
+        }
 
-            EsignLogger::log('signature.code_failed', EsignLog::FAILURE, $subjects, ['attempts' => RateLimiter::attempts($key)]);
+        $code = preg_replace('/\s+/', '', (string) $code);
 
-            throw ValidationException::withMessages(['code' => 'The authentication code is invalid.']);
+        if ($code === '') {
+            throw ValidationException::withMessages(['code' => 'Enter the code from your authenticator app.']);
+        }
+
+        if (! $this->twoFactor->verify(Fortify::currentEncrypter()->decrypt($user->two_factor_secret), $code)) {
+            $this->failVerification($key, 'signature.code_failed', $subjects, ['code' => 'The authentication code is invalid.']);
         }
 
         RateLimiter::clear($key);
+        $this->signingSession->confirm($user);
+
+        return 'code';
+    }
+
+    /**
+     * @param  array<string, mixed>  $subjects
+     * @param  array<string, string>  $messages
+     */
+    private function failVerification(string $key, string $event, array $subjects, array $messages): never
+    {
+        RateLimiter::hit($key, self::LOCKOUT_SECONDS);
+
+        $attempts = RateLimiter::attempts($key);
+
+        // Reaching the lockout also ends this session's authenticator confirmation.
+        if ($attempts >= self::MAX_ATTEMPTS) {
+            $this->signingSession->forget();
+        }
+
+        EsignLogger::log($event, EsignLog::FAILURE, $subjects, ['attempts' => $attempts]);
+
+        throw ValidationException::withMessages($messages);
     }
 }

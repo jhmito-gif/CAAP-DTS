@@ -2,11 +2,15 @@
 
 use App\Livewire\ManageSignatureRequests;
 use App\Livewire\OutgoingTransaction;
+use App\Livewire\SignatureSettings;
+use App\Livewire\SignDocument;
 use App\Livewire\VerifySignature;
 use App\Models\Attachment;
+use App\Models\EsignLog;
 use App\Models\Record;
 use App\Models\RecordTagging;
 use App\Models\SignatureRequest;
+use App\Models\SigningPin;
 use App\Models\User;
 use App\Models\UserSignature;
 use App\Notifications\SignatureRequested;
@@ -14,6 +18,7 @@ use App\Support\DocumentSigner;
 use App\Support\PdfSignatureStamper;
 use App\Support\PdfSigningException;
 use App\Support\SignatureImage;
+use App\Support\SigningSession;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -49,7 +54,12 @@ function esignSignaturePng(): string
     return ob_get_clean();
 }
 
-/** A signer with a confirmed authenticator and a saved signature. */
+function esignPin(): string
+{
+    return '482916';
+}
+
+/** A signer with a confirmed authenticator, a saved signature and a signing PIN. */
 function esignSigner(array $attributes = []): User
 {
     $user = User::factory()->create($attributes + ['name' => 'Signer Person', 'office' => 'CPO']);
@@ -64,6 +74,8 @@ function esignSigner(array $attributes = []): User
         'image' => base64_encode(SignatureImage::normalize(esignSignaturePng())),
     ]);
 
+    SigningPin::create(['user_id' => $user->id, 'pin' => esignPin()]);
+
     return $user->fresh();
 }
 
@@ -73,10 +85,10 @@ function esignCode(User $user): string
 }
 
 /** An ITD record with one uploaded PDF and a signature request for $signer. */
-function esignRequest(User $signer): SignatureRequest
+function esignRequest(User $signer, string $reference = 'ITD-2026-0100'): SignatureRequest
 {
     $record = Record::create([
-        'reference' => 'ITD-2026-0100',
+        'reference' => $reference,
         'subject' => 'Memorandum for signature',
         'created_by' => 'Owner Person',
         'origin' => 'ITD',
@@ -104,6 +116,17 @@ function esignPlacement(array $overrides = []): array
     return $overrides + ['page' => 1, 'x' => 380, 'y' => 60, 'width' => 180, 'height' => 80];
 }
 
+function esignErrors(callable $attempt): array
+{
+    try {
+        $attempt();
+    } catch (ValidationException $exception) {
+        return $exception->errors();
+    }
+
+    return [];
+}
+
 it('stamps a signature onto a PDF page and rejects placements outside it', function () {
     $stamper = app(PdfSignatureStamper::class);
     $png = SignatureImage::normalize(esignSignaturePng());
@@ -118,14 +141,14 @@ it('stamps a signature onto a PDF page and rejects placements outside it', funct
         ->toThrow(PdfSigningException::class, 'does not exist');
 });
 
-it('signs with password and authenticator code, saving a new version and an audit trail', function () {
+it('signs with signing PIN and authenticator code, saving a new version and an audit trail', function () {
     $signer = esignSigner();
     $signatureRequest = esignRequest($signer);
     $owner = User::factory()->create(['name' => 'Owner Person', 'office' => 'ITD']);
     $original = $signatureRequest->attachment->originalContents();
 
     $signature = app(DocumentSigner::class)->sign(
-        $signatureRequest, $signer, esignPlacement(), 'password', esignCode($signer), '10.0.0.8', 'Test Browser'
+        $signatureRequest, $signer, esignPlacement(), esignPin(), esignCode($signer), '10.0.0.8', 'Test Browser'
     );
 
     $attachment = $signatureRequest->attachment->fresh();
@@ -147,36 +170,117 @@ it('signs with password and authenticator code, saving a new version and an audi
     expect(Storage::disk('local')->get($signature->path))->not->toContain('%PDF');
 });
 
-it('rejects a wrong password or code and locks the signer out after repeated failures', function () {
+it('rejects a wrong PIN or code and locks the signer out after repeated failures', function () {
     $signer = esignSigner();
     $signatureRequest = esignRequest($signer);
     $service = app(DocumentSigner::class);
 
-    $errors = function (callable $attempt): array {
-        try {
-            $attempt();
-        } catch (ValidationException $exception) {
-            return $exception->errors();
-        }
+    expect(esignErrors(fn () => $service->sign($signatureRequest, $signer, esignPlacement(), '000000', esignCode($signer), null, null)))
+        ->toHaveKey('pin');
 
-        return [];
-    };
-
-    expect($errors(fn () => $service->sign($signatureRequest, $signer, esignPlacement(), 'wrong-password', '123456', null, null)))
-        ->toHaveKey('password');
+    // Correct PIN without a code: asks for the code, not counted as a failure.
+    expect(esignErrors(fn () => $service->sign($signatureRequest, $signer, esignPlacement(), esignPin(), null, null, null)))
+        ->toHaveKey('code');
 
     foreach (range(1, DocumentSigner::MAX_ATTEMPTS - 1) as $attempt) {
-        expect($errors(fn () => $service->sign($signatureRequest, $signer, esignPlacement(), 'password', '000000', null, null)))
+        expect(esignErrors(fn () => $service->sign($signatureRequest, $signer, esignPlacement(), esignPin(), '000000', null, null)))
             ->toHaveKey('code');
     }
 
-    $locked = $errors(fn () => $service->sign($signatureRequest, $signer, esignPlacement(), 'password', esignCode($signer), null, null));
+    $locked = esignErrors(fn () => $service->sign($signatureRequest, $signer, esignPlacement(), esignPin(), esignCode($signer), null, null));
 
-    expect($locked['code'][0])->toContain('Too many failed attempts')
+    expect($locked['pin'][0])->toContain('Too many failed attempts')
         ->and($signatureRequest->fresh()->signed_at)->toBeNull();
 });
 
-it('will not sign for someone else, without two-factor authentication, or without a saved signature', function () {
+it('asks for the authenticator code once per session, then only the signing PIN', function () {
+    $signer = esignSigner();
+    $first = esignRequest($signer, 'ITD-2026-0100');
+    $second = esignRequest($signer, 'ITD-2026-0102');
+    $service = app(DocumentSigner::class);
+
+    $this->actingAs($signer)->get(route('esign.sign', $first))->assertSee('Authenticator code');
+
+    $service->sign($first, $signer, esignPlacement(), esignPin(), esignCode($signer), null, null);
+
+    expect($service->requiresCode($signer))->toBeFalse();
+
+    $this->get(route('esign.sign', $second))
+        ->assertSee('Authenticator already confirmed')
+        ->assertDontSee('id="esignCode"', false);
+
+    // The signing screen signs the next document with the PIN alone.
+    Livewire::test(SignDocument::class, ['signatureRequestId' => $second->id])
+        ->set('page', 1)->set('x', 380)->set('y', 60)->set('width', 180)->set('height', 80)
+        ->set('pin', esignPin())
+        ->call('sign')
+        ->assertHasNoErrors()
+        ->assertRedirect(route('show-transactions', $second->record_id));
+
+    expect($second->fresh()->signed_at)->not->toBeNull()
+        ->and(EsignLog::where('event', 'signature.signed')->orderBy('id')->get()->pluck('context.two_factor')->all())
+            ->toBe(['code', 'session']);
+
+    // A wrong PIN is still refused within a confirmed session.
+    $third = esignRequest($signer, 'ITD-2026-0103');
+
+    expect(esignErrors(fn () => $service->sign($third, $signer, esignPlacement(), '999999', null, null, null)))
+        ->toHaveKey('pin');
+});
+
+it('ends the session confirmation after the time limit, on logout and when two-factor is reset', function () {
+    $signer = esignSigner();
+    $session = app(SigningSession::class);
+
+    $session->confirm($signer);
+    $this->travel(SigningSession::MAX_HOURS)->hours();
+    $this->travel(1)->minutes();
+    expect($session->isConfirmed($signer))->toBeFalse();
+
+    $session->confirm($signer);
+    $this->actingAs($signer)->post(route('logout'));
+    expect($session->isConfirmed($signer))->toBeFalse();
+
+    $session->confirm($signer);
+    $signer->forceFill(['two_factor_secret' => Fortify::currentEncrypter()->encrypt(app(Google2FA::class)->generateSecretKey())])->save();
+    expect($session->isConfirmed($signer->fresh()))->toBeFalse();
+});
+
+it('sets a signing PIN only with the current password and refuses guessable PINs', function () {
+    $user = User::factory()->create(['office' => 'CPO']);
+
+    $this->actingAs($user);
+
+    Livewire::test(SignatureSettings::class)
+        ->set('currentPassword', 'password')->set('newPin', '123456')->set('newPin_confirmation', '123456')
+        ->call('savePin')
+        ->assertHasErrors(['newPin'])
+        ->set('currentPassword', 'wrong-password')->set('newPin', '482916')->set('newPin_confirmation', '482916')
+        ->call('savePin')
+        ->assertHasErrors(['currentPassword']);
+
+    expect($user->fresh()->signingPin)->toBeNull();
+
+    Livewire::test(SignatureSettings::class)
+        ->set('currentPassword', 'password')->set('newPin', '482916')->set('newPin_confirmation', '482916')
+        ->call('savePin')
+        ->assertHasNoErrors()
+        ->assertSet('currentPassword', '')
+        ->assertSet('newPin', '')
+        ->assertSee('Change PIN');
+
+    $pin = $user->fresh()->signingPin;
+
+    expect($pin->pin)->not->toBe('482916')
+        ->and($pin->matches('482916'))->toBeTrue()
+        ->and($pin->matches('482917'))->toBeFalse()
+        ->and($pin->toArray())->not->toHaveKey('pin')
+        ->and(SigningPin::isGuessable('111111'))->toBeTrue()
+        ->and(SigningPin::isGuessable('98765432'))->toBeTrue()
+        ->and(SigningPin::isGuessable('482916'))->toBeFalse();
+});
+
+it('will not sign for someone else, without two-factor authentication, a signing PIN or a saved signature', function () {
     $signer = esignSigner();
     $signatureRequest = esignRequest($signer);
     $service = app(DocumentSigner::class);
@@ -190,6 +294,9 @@ it('will not sign for someone else, without two-factor authentication, or withou
     expect($service->blocker($signatureRequest->fresh(), $noTwoFactor))->toContain('two-factor');
 
     $signatureRequest->update(['signer_id' => $signer->id]);
+    $signer->signingPin->delete();
+    expect($service->blocker($signatureRequest->fresh(), $signer->fresh()))->toContain('signing PIN');
+
     $signer->signature->delete();
     expect($service->blocker($signatureRequest->fresh(), $signer->fresh()))->toContain('Save your signature');
 });
@@ -200,7 +307,7 @@ it('refuses to sign a document whose stored file was altered', function () {
 
     Storage::disk('local')->put($signatureRequest->attachment->path, Crypt::encryptString(esignPdf('Tampered text.')));
 
-    expect(fn () => app(DocumentSigner::class)->sign($signatureRequest, $signer, esignPlacement(), 'password', esignCode($signer), null, null))
+    expect(fn () => app(DocumentSigner::class)->sign($signatureRequest, $signer, esignPlacement(), esignPin(), esignCode($signer), null, null))
         ->toThrow(ValidationException::class, 'integrity check');
 
     expect($signatureRequest->fresh()->signed_at)->toBeNull();
@@ -258,7 +365,7 @@ it('only opens the signing page for the assigned signer', function () {
 it('verifies a signature by code and matches a signed copy of the file', function () {
     $signer = esignSigner();
     $signatureRequest = esignRequest($signer);
-    $signature = app(DocumentSigner::class)->sign($signatureRequest, $signer, esignPlacement(), 'password', esignCode($signer), null, null);
+    $signature = app(DocumentSigner::class)->sign($signatureRequest, $signer, esignPlacement(), esignPin(), esignCode($signer), null, null);
 
     $this->actingAs($signer);
 
