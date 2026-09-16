@@ -40,6 +40,25 @@ it('shifts stored datetimes, and shifts them back', function () {
         ->toStartWith('2026-01-01 00:30:00');
 });
 
+it('leaves legacy zero dates untouched', function () {
+    $record = Record::create([
+        'reference' => 'ITD-2026-0003',
+        'subject' => 'Imported without a date',
+        'created_by' => 'ITD Person',
+        'origin' => 'ITD',
+        'owner' => 'ITD',
+    ]);
+
+    // Rows imported into MySQL can hold a zero datetime; no date function
+    // can shift one, so the migration must skip it rather than fail.
+    DB::table('records')->where('id', $record->id)->update(['created_at' => '0000-00-00 00:00:00']);
+
+    TimezoneShift::apply(8);
+
+    expect((string) DB::table('records')->where('id', $record->id)->value('created_at'))
+        ->toStartWith('0000-00-00 00:00:00');
+});
+
 it('leaves date-only columns alone', function () {
     $record = Record::create([
         'reference' => 'ITD-2026-0002',

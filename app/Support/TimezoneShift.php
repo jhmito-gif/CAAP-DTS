@@ -69,6 +69,9 @@ class TimezoneShift
 
         return DB::table($table)
             ->whereNotNull($column)
+            // Legacy MySQL rows can hold '0000-00-00 00:00:00'. No date function
+            // can shift those, so leave them exactly as they are.
+            ->where($column, '>', '1000-01-01 00:00:00')
             ->update([$column => DB::raw($expression)]);
     }
 
