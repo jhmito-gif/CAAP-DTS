@@ -20,7 +20,8 @@ class AttachmentController extends Controller
         $record = $attachment->record;
         $user = Auth::user();
 
-        abort_unless($record && $record->isAccessibleBy($user), 403, 'Unauthorized access to attachment.');
+        // Admins see every office's files in the document library.
+        abort_unless($record && ($record->isAccessibleBy($user) || $user?->isAdmin()), 403, 'Unauthorized access to attachment.');
 
         // Confidential files are only served to cleared viewers.
         abort_if(

@@ -23,6 +23,7 @@
                             ['route' => 'dashboard', 'label' => __('Dashboard'), 'icon' => 'grid'],
                             ['route' => 'incoming-record', 'label' => __('Incoming'), 'icon' => 'inbox'],
                             ['route' => 'outgoing-record', 'label' => __('Outgoing'), 'icon' => 'send'],
+                            ['route' => 'documents.index', 'label' => __('Documents'), 'icon' => 'folder'],
                         ];
                     @endphp
 
@@ -47,6 +48,11 @@
                                 @case('send')
                                     <svg class="size-4 {{ $isActive ? 'text-indigo-500 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500' }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.77 59.77 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                                    </svg>
+                                    @break
+                                @case('folder')
+                                    <svg class="size-4 {{ $isActive ? 'text-indigo-500 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500' }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
                                     </svg>
                                     @break
                             @endswitch

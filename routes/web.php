@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\ChatAttachmentController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\IncomingController;
 use App\Http\Controllers\OutgoingController;
 use App\Http\Controllers\TransactionController;
@@ -113,6 +114,26 @@ Route::middleware([
         '/attachments/{attachment}/view',
         [AttachmentController::class, 'view']
     )->name('attachments.view');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Document library
+    |--------------------------------------------------------------------------
+    */
+    Route::get(
+        '/documents',
+        [DocumentController::class, 'index']
+    )->name('documents.index');
+
+    Route::get(
+        '/documents/{document}/view',
+        [DocumentController::class, 'view']
+    )->name('documents.view');
+
+    Route::get(
+        '/documents/{document}/download',
+        [DocumentController::class, 'download']
+    )->name('documents.download');
 
     /*
     |--------------------------------------------------------------------------

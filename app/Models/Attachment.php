@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\DescribesFile;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,9 +11,12 @@ use Illuminate\Support\Str;
 
 class Attachment extends Model
 {
+    use DescribesFile;
+
     protected $fillable = [
         'record_id',
         'transaction_id',
+        'document_category_id',
         'original_name',
         'path',
         'disk',
@@ -75,6 +79,12 @@ class Attachment extends Model
         return $this->belongsTo(Transaction::class, 'transaction_id');
     }
 
+    /** Document library category, if one was set. */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(DocumentCategory::class, 'document_category_id');
+    }
+
     public function signatureRequests(): HasMany
     {
         return $this->hasMany(SignatureRequest::class);
@@ -133,40 +143,5 @@ class Attachment extends Model
 
             Storage::disk($attachment->disk)->delete($attachment->path);
         });
-    }
-
-    public function getHumanSizeAttribute(): string
-    {
-        $bytes = (int) $this->size;
-
-        if ($bytes < 1024) {
-            return $bytes . ' B';
-        }
-
-        $units = ['KB', 'MB', 'GB'];
-        $value = $bytes / 1024;
-        $i = 0;
-
-        while ($value >= 1024 && $i < count($units) - 1) {
-            $value /= 1024;
-            $i++;
-        }
-
-        return round($value, $value >= 10 ? 0 : 1) . ' ' . $units[$i];
-    }
-
-    public function getIsImageAttribute(): bool
-    {
-        return Str::startsWith((string) $this->mime_type, 'image/');
-    }
-
-    public function getIsPdfAttribute(): bool
-    {
-        return $this->mime_type === 'application/pdf';
-    }
-
-    public function getExtensionAttribute(): string
-    {
-        return strtoupper(pathinfo($this->original_name, PATHINFO_EXTENSION) ?: 'FILE');
     }
 }
