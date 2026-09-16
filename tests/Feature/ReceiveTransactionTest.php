@@ -92,18 +92,13 @@ it("accepts the office's own format without moving its sequence backwards", func
         ->and(ReferenceSequence::where('office', 'PD')->where('year', $year)->value('next_number'))->toBe(40);
 });
 
-it('requires a reference ID that the office has not used before', function () {
+it('requires a reference ID the office has not given another document', function () {
     $receiver = User::factory()->create(['name' => 'CPO Person', 'office' => 'CPO']);
     $transaction = recordRoutedTo('CPO');
 
-    Transaction::create([
-        'record_id' => $transaction->record_id,
+    // A different document already carries this number at CPO.
+    recordRoutedTo('CPO', [
         'received_reference' => 'CPO-TAKEN',
-        'remarks' => 'Earlier movement',
-        'status' => 'Pending',
-        'destination' => 'CPO',
-        'office' => 'ITD',
-        'forwarded_by' => 'ITD Person',
         'recieved_by' => 'CPO Person',
         'date_recieved' => now()->subDay(),
     ]);
@@ -152,6 +147,67 @@ it('suggests the record number when the owning office receives its own logged in
         ->assertHasNoErrors();
 
     expect($transaction->fresh()->received_reference)->toBe('ITD-2026-0005');
+});
+
+it('gives an office one number per document, reusing it when the document comes back', function () {
+    $record = null;
+
+    // CPO numbers the document on its way out of ITD.
+    $outgoing = recordRoutedTo('CPO');
+    $record = $outgoing->record;
+
+    $this->actingAs(User::factory()->create(['name' => 'CPO Person', 'office' => 'CPO']));
+
+    Livewire::test(ReceiveTransaction::class)
+        ->call('open', $outgoing->id)
+        ->assertSet('reusedReference', false)
+        ->call('receive')
+        ->assertHasNoErrors();
+
+    $cpoNumber = $outgoing->fresh()->received_reference;
+
+    $movement = fn (string $from, string $to) => Transaction::create([
+        'record_id' => $record->id,
+        'remarks' => 'Returned',
+        'status' => 'Pending',
+        'destination' => $to,
+        'office' => $from,
+        'forwarded_by' => "{$from} Person",
+    ]);
+
+    $backToItd = $movement('CPO', 'ITD');
+    $againToCpo = $movement('ITD', 'CPO');
+
+    // The originating office gets its own record number back, not a second one.
+    $this->actingAs(User::factory()->create(['name' => 'ITD Person', 'office' => 'ITD']));
+
+    Livewire::test(ReceiveTransaction::class)
+        ->call('open', $backToItd->id)
+        ->assertSet('receivedReference', $record->reference)
+        ->assertSet('reusedReference', true)
+        ->call('receive')
+        ->assertHasNoErrors();
+
+    // CPO sees the same document a second time and reuses its first number.
+    $this->actingAs(User::factory()->create(['name' => 'CPO Person', 'office' => 'CPO']));
+
+    Livewire::test(ReceiveTransaction::class)
+        ->call('open', $againToCpo->id)
+        ->assertSet('receivedReference', $cpoNumber)
+        ->assertSet('reusedReference', true)
+        ->call('receive')
+        ->assertHasNoErrors();
+
+    expect($backToItd->fresh()->received_reference)->toBe($record->reference)
+        ->and($againToCpo->fresh()->received_reference)->toBe($cpoNumber)
+        ->and(Transaction::where('record_id', $record->id)
+            ->whereNotNull('received_reference')
+            ->orderBy('id')
+            ->pluck('received_reference')
+            ->unique()
+            ->values()
+            ->all())
+        ->toBe([$cpoNumber, $record->reference]);
 });
 
 it('refuses offices outside the record and movements already received', function () {
