@@ -22,6 +22,9 @@ class ReceiveTransaction extends Component
 
     public string $receivedReference = '';
 
+    /** True when the suggestion is the number this office already gave this document. */
+    public bool $reusedReference = false;
+
     #[On('receive-transaction')]
     public function open(int $transactionId): void
     {
@@ -55,9 +58,12 @@ class ReceiveTransaction extends Component
                 'required',
                 'string',
                 'max:255',
-                // An office never gives two movements, or two records, the same number.
+                // An office never gives two different records the same number,
+                // but may reuse its own number when this document returns to it.
                 Rule::unique('transactions', 'received_reference')
-                    ->where(fn ($query) => $query->where('destination', $transaction->destination)),
+                    ->where(fn ($query) => $query
+                        ->where('destination', $transaction->destination)
+                        ->where('record_id', '!=', $transaction->record_id)),
                 Rule::unique('records', 'reference')->ignore($transaction->record_id),
             ],
         ], [
@@ -78,25 +84,40 @@ class ReceiveTransaction extends Component
         $this->dispatch('close-receive-transaction-modal');
         $this->dispatch('record-updated');
 
-        $this->reset(['transactionId', 'receivedReference']);
+        $this->reset(['transactionId', 'receivedReference', 'reusedReference']);
     }
 
     /**
-     * The owning office receiving the incoming entry it logged already has a
-     * number for the document (the record's reference); everyone else gets
-     * their office's next number.
+     * One number per office per document. If this office already numbered this
+     * record -- because it created it, or because the document passed through
+     * before -- that number comes back instead of a second one. Only an office
+     * seeing the document for the first time draws from its sequence.
      */
     private function suggestReference(Transaction $transaction): string
     {
         $record = $transaction->record;
+        $office = $transaction->destination;
+        $this->reusedReference = true;
 
-        if ($record->isIncoming()
-            && $transaction->destination === $record->owner
-            && $record->firstTransaction()?->is($transaction)) {
+        $earlier = Transaction::where('record_id', $record->id)
+            ->where('destination', $office)
+            ->whereKeyNot($transaction->id)
+            ->whereNotNull('received_reference')
+            ->orderByDesc('id')
+            ->value('received_reference');
+
+        if (filled($earlier)) {
+            return (string) $earlier;
+        }
+
+        // The office that logged the record already numbered it ("ITD-2026-0001").
+        if (filled($record->reference) && str_starts_with((string) $record->reference, "{$office}-")) {
             return (string) $record->reference;
         }
 
-        return ReferenceSequence::nextReferenceFor($transaction->destination);
+        $this->reusedReference = false;
+
+        return ReferenceSequence::nextReferenceFor($office);
     }
 
     private function receivable(?Transaction $transaction): bool

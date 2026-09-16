@@ -72,7 +72,11 @@
             @enderror
 
             <p class="mt-2 text-xs text-gray-400 dark:text-gray-500">
-                Suggested from {{ $transaction?->destination ?? 'your office' }}'s next number. Replace it if your office uses its own format (e.g. PD-07867). It is printed on the RAS.
+                @if ($reusedReference)
+                    Your office already gave this document a number, so the same one is reused &mdash; one reference ID per office per document. Replace it only if you need a different one.
+                @else
+                    Suggested from {{ $transaction?->destination ?? 'your office' }}'s next number. Replace it if your office uses its own format (e.g. PD-07867). It is printed on the RAS.
+                @endif
             </p>
 
         </div>
