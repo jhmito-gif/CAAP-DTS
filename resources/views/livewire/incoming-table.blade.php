@@ -110,14 +110,19 @@
                                         <span class="font-semibold text-gray-800 dark:text-gray-100 group-hover:text-blue-600">
                                             {{ $record?->reference ?? 'N/A' }}
                                         </span>
-                                        @if($record?->origin_reference)
+                                        @if($record?->origin_reference && $record->origin_reference !== $record->reference)
                                             <p class="truncate text-xs text-gray-400 dark:text-gray-500" title="{{ $record->origin_reference }}">
                                                 Origin ref: {{ $record->origin_reference }}
                                             </p>
                                         @endif
                                         @if($transaction->received_reference)
                                             <p class="truncate text-xs font-medium text-emerald-600 dark:text-emerald-400" title="{{ $transaction->received_reference }}">
-                                                Received as: {{ $transaction->received_reference }}
+                                                Reference ID: {{ $transaction->received_reference }}
+                                            </p>
+                                        @endif
+                                        @if($record && ($holders[$record->id] ?? null))
+                                            <p class="truncate text-xs font-medium text-violet-600 dark:text-violet-400" title="Currently with {{ $holders[$record->id] }}">
+                                                With: {{ $holders[$record->id] }}
                                             </p>
                                         @endif
                                     </td>

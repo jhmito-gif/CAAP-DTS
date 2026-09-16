@@ -63,6 +63,8 @@ class CreateIncoming extends Component
             'record_id' => $record->id,
             'internal_reference' => $record->reference,
             'origin_reference' => $record->origin_reference,
+            // The logging office's own number for the document it just booked in.
+            'received_reference' => \App\Support\OfficeReference::resolve($record, Auth::user()->office),
             'remarks' => $this->remarks,
             'status' => $this->status,
             'destination' => Auth::user()->office,

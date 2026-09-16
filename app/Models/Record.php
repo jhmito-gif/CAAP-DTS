@@ -275,6 +275,26 @@ class Record extends Model
     }
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Origin number
+    |--------------------------------------------------------------------------
+    | The originating office's number for this document: what the origin office
+    | gave it (typed when the document was logged as incoming), or -- for a
+    | document this office originated -- its own reference. Derived rather than
+    | stored, so records created before this existed read correctly and the
+    | origin_reference column keeps meaning "another office's number".
+    */
+    public function originNumber(): ?string
+    {
+        if (filled($this->origin_reference)) {
+            return $this->origin_reference;
+        }
+
+        return $this->origin === $this->owner ? $this->reference : null;
+    }
+
+
     public function isIncoming(): bool
     {
         return $this->origin !== $this->owner;

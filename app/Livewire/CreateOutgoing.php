@@ -13,6 +13,7 @@ use App\Models\Transaction;
 use App\Models\Office;
 use App\Models\Status;
 use App\Models\User;
+use App\Support\OfficeReference;
 use App\Support\SignatureRequester;
 
 class CreateOutgoing extends Component
@@ -111,7 +112,9 @@ class CreateOutgoing extends Component
         $transaction = Transaction::create([
             'record_id' => $record->id,
             'internal_reference' => $record->reference,
-            'origin_reference' => $record->origin_reference,
+            'origin_reference' => $record->originNumber(),
+            // The receiving office's own number, ready on the RAS before it arrives.
+            'received_reference' => OfficeReference::allocate($record, $this->office),
             'remarks' => $this->remarks,
             'status' => $this->status,
             'destination' => $this->office,
