@@ -209,9 +209,15 @@
                                         <span class="font-semibold text-gray-800 dark:text-gray-100 transition-colors group-hover:text-emerald-600">
                                             {{ $record->reference }}
                                         </span>
-                                        @if($record->origin_reference)
+                                        {{-- Only a genuinely different number: the office's own is already above. --}}
+                                        @if($record->origin_reference && $record->origin_reference !== $record->reference)
                                             <p class="truncate text-xs text-gray-400 dark:text-gray-500" title="{{ $record->origin_reference }}">
                                                 Origin ref: {{ $record->origin_reference }}
+                                            </p>
+                                        @endif
+                                        @if($holders[$record->id] ?? null)
+                                            <p class="truncate text-xs font-medium text-violet-600 dark:text-violet-400" title="Currently with {{ $holders[$record->id] }}">
+                                                With: {{ $holders[$record->id] }}
                                             </p>
                                         @endif
                                     </td>

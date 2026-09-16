@@ -7,7 +7,8 @@
 
     <livewire:pending-signatures :record-id="$recordID" />
     <livewire:outgoing-transaction :record-id="$recordID" />
+    <livewire:internal-trail :record-id="$recordID" />
     <livewire:manage-record :redirect-after-delete="true" />
-    <livewire:receive-transaction />
+    <livewire:assign-reference />
     <livewire:manage-signature-requests />
 </x-app-layout>

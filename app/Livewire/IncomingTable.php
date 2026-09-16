@@ -51,15 +51,22 @@ class IncomingTable extends Component
             ->orWhere('subject', $userOffice)
             ->pluck('id');
 
+        $data = Transaction::search($this->search)
+            ->where(function ($query) use ($userOffice, $legacyRecordIds) {
+                $query->where('destination', $userOffice)
+                      ->when($legacyRecordIds->isNotEmpty(), fn ($q) => $q->orWhereIn('record_id', $legacyRecordIds));
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate($this->perPage);
+
         return view('livewire.incoming-table', [
-            'data' => Transaction::search($this->search)
-                ->where(function ($query) use ($userOffice, $legacyRecordIds) {
-                    $query->where('destination', $userOffice)
-                          ->when($legacyRecordIds->isNotEmpty(), fn ($q) => $q->orWhereIn('record_id', $legacyRecordIds));
-                })
-                ->orderBy('created_at', 'desc') 
-                ->paginate($this->perPage),
-            'latest' => $latest // Pass it to the view
+            'data' => $data,
+            'latest' => $latest, // Pass it to the view
+            // Who inside this office holds each document on the page (one query).
+            'holders' => \App\Models\InternalRouting::holderNames(
+                collect($data->items())->pluck('record_id'),
+                $userOffice
+            ),
         ]);
     }
 }

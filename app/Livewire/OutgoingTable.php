@@ -30,14 +30,21 @@ class OutgoingTable extends Component
     {
         $userOffice = Auth::user()->office;
 
+        $data = Record::search($this->search)
+            ->where(function ($query) use ($userOffice) {
+                $query->where('owner', $userOffice)
+                      ->orWhere('origin', $userOffice);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate($this->perPage);
+
         return view('livewire.outgoing-table', [
-            'data' => Record::search($this->search)
-                ->where(function ($query) use ($userOffice) {
-                    $query->where('owner', $userOffice)
-                          ->orWhere('origin', $userOffice);
-                })
-                ->orderBy('created_at', 'desc')
-                ->paginate($this->perPage)
+            'data' => $data,
+            // Who inside this office holds each document on the page (one query).
+            'holders' => \App\Models\InternalRouting::holderNames(
+                collect($data->items())->pluck('id'),
+                $userOffice
+            ),
         ]);
     }
 }

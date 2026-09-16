@@ -8,11 +8,14 @@ use App\Models\Office;
 use App\Models\Status;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use App\Livewire\Concerns\ReceivesTransactions;
 use App\Livewire\Concerns\UnlocksConfidential;
+use App\Support\OfficeReference;
 use Livewire\Component;
 
 class OutgoingTransaction extends Component
 {
+    use ReceivesTransactions;
     use UnlocksConfidential;
 
     public $recordId;
@@ -52,7 +55,9 @@ class OutgoingTransaction extends Component
         $transact = Transaction::create([
             'record_id' => $this->recordId,
             'internal_reference' => $record->reference,
-            'origin_reference' => $record->origin_reference,
+            'origin_reference' => $record->originNumber(),
+            // The receiving office's own number, ready on the RAS before it arrives.
+            'received_reference' => OfficeReference::allocate($record, $this->office),
             'remarks' => $this->remarks,
             'status' => $this->status,
             'destination' => $this->office,
@@ -138,12 +143,30 @@ class OutgoingTransaction extends Component
 
         $this->showSendButton = $lastTransaction && $lastTransaction->date_recieved !== null;
 
+        // This office's own reference ID for the document, set from the header
+        // button whether or not the movement has been received yet.
+        $officeMovements = Transaction::where('record_id', $this->recordId)
+            ->where('destination', Auth::user()->office);
+
+        // Every office's reference ID, newest first, stacked above the record's
+        // own number exactly as the RAS prints them.
+        $stackedReferences = $rasTransactions
+            ->filter(fn ($transaction) => filled($transaction->received_reference))
+            ->reverse()
+            ->unique('received_reference')
+            ->reject(fn ($transaction) => $transaction->received_reference === $this->record->reference)
+            ->map(fn ($transaction) => ['office' => $transaction->destination, 'reference' => $transaction->received_reference])
+            ->values();
+
         return view('livewire.outgoing-transaction', [
             'transactions' => $this->transactions,
             'record' => $this->record,
             'rasTransactions' => $rasTransactions,
             'showSendButton' => $this->showSendButton,
             'receivableTransaction' => $receivableTransaction,
+            'canAssignReference' => (clone $officeMovements)->exists(),
+            'officeReference' => (clone $officeMovements)->whereNotNull('received_reference')->orderByDesc('id')->value('received_reference'),
+            'stackedReferences' => $stackedReferences,
         ]);
     }
 }

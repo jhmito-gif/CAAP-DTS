@@ -304,12 +304,42 @@
                             @endif
 
 
+                            {{-- Reference ID --}}
+                            @if ($canAssignReference)
+
+                                <button
+                                    type="button"
+                                    x-data
+                                    @click="$dispatch('assign-reference', { recordId: {{ $record->id }} })"
+                                    aria-label="{{ $officeReference ? 'Change your office reference ID' : 'Assign your office reference ID' }}"
+                                    class="group relative inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/30 px-3 text-indigo-600 dark:text-indigo-400 transition-all duration-150 hover:-translate-y-0.5 hover:border-indigo-600 hover:bg-indigo-600 hover:text-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active:translate-y-0"
+                                >
+                                    <svg class="size-[18px]" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6Z" />
+                                    </svg>
+
+                                    <span class="max-w-[160px] truncate text-xs font-semibold">
+                                        {{ $officeReference ?: 'Reference ID' }}
+                                    </span>
+
+                                    <span
+                                        class="pointer-events-none absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-150 group-hover:translate-y-0 group-hover:!opacity-100"
+                                    >
+                                        {{ $officeReference ? 'Change reference ID' : 'Assign reference ID' }}
+                                    </span>
+
+                                </button>
+
+                            @endif
+
+
                             {{-- Mark as Received --}}
                             @if ($receivableTransaction)
 
                                 <button
                                     type="button"
-                                    @click="$wire.dispatch('receive-transaction', { transactionId: {{ $receivableTransaction->id }} })"
+                                    wire:click="markAsReceived({{ $receivableTransaction->id }})"
                                     wire:loading.attr="disabled"
                                     wire:target="markAsReceived({{ $receivableTransaction->id }})"
                                     aria-label="Mark this record as received"
@@ -556,8 +586,27 @@
 
                                 </dt>
 
-                                <dd class="mt-1 break-all text-sm font-bold text-blue-700 dark:text-blue-300">
-                                    {{ $record->reference ?: '—' }}
+                                {{-- Each office's own number stacked above the record's, as on the RAS. --}}
+                                <dd class="mt-1 space-y-0.5">
+
+                                    @foreach ($stackedReferences as $stacked)
+                                        <p class="break-all text-sm font-bold text-blue-700 dark:text-blue-300">
+                                            {{ $stacked['reference'] }}
+                                            <span class="ml-1 text-[10px] font-semibold uppercase tracking-wide text-blue-400 dark:text-blue-500">
+                                                {{ $stacked['office'] }}
+                                            </span>
+                                        </p>
+                                    @endforeach
+
+                                    <p class="break-all text-sm font-bold text-blue-700 dark:text-blue-300">
+                                        {{ $record->reference ?: '—' }}
+                                        @if ($record->origin)
+                                            <span class="ml-1 text-[10px] font-semibold uppercase tracking-wide text-blue-400 dark:text-blue-500">
+                                                {{ $record->origin }}
+                                            </span>
+                                        @endif
+                                    </p>
+
                                 </dd>
 
                             </div>
@@ -587,7 +636,7 @@
                                 </dt>
 
                                 <dd class="mt-1 break-all text-sm font-bold text-indigo-700 dark:text-indigo-300">
-                                    {{ $record->origin_reference ?: '—' }}
+                                    {{ $record->originNumber() ?: '—' }}
                                 </dd>
 
                             </div>

@@ -356,8 +356,11 @@
         $transactions = $record->transactions;
         $dateOfDocument = $ph($record->created_at, 'j F Y');
         $receivedAt = optional($transactions->firstWhere('date_recieved', '!=', null))->date_recieved;
-        $referenceNumber = $record->origin_reference ?: $record->reference;
-        $internalReference = $record->origin_reference ? $record->reference : null;
+        // The originating office's number, falling back to this office's own for
+        // a document it originated -- never blank on the slip.
+        $originNumber = $record->originNumber();
+        $referenceNumber = $originNumber ?: $record->reference;
+        $internalReference = ($originNumber && $originNumber !== $record->reference) ? $record->reference : null;
 
         // Originating office: show its full description, falling back to the code.
         $originDisplay = \App\Models\Office::where('name', $record->origin)->value('description')
