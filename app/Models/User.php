@@ -47,6 +47,7 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'role',
+        'manages_documents',
         'office',
         'service',
         'password',
@@ -83,6 +84,7 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'manages_documents' => 'boolean',
         ];
     }
 

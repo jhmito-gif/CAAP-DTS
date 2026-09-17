@@ -28,6 +28,14 @@ class SignatureController extends Controller
     }
 
     /**
+     * Everything waiting for this person's signature, in one queue.
+     */
+    public function queue()
+    {
+        return view('esign.queue');
+    }
+
+    /**
      * Look up a signature by its verification code or check a PDF's fingerprint.
      */
     public function verify()

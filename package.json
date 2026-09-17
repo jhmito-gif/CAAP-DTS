@@ -19,7 +19,10 @@
         "vite": "^6.2.4"
     },
     "dependencies": {
+        "@hyzyla/pdfium": "^2.1.13",
+        "@napi-rs/canvas": "^1.0.9",
         "pdf-lib": "^1.17.1",
-        "pdfjs-dist": "^4.10.38"
+        "pdfjs-dist": "^4.10.38",
+        "tesseract.js": "^7.0.0"
     }
 }

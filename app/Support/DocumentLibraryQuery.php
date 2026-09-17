@@ -167,6 +167,16 @@ class DocumentLibraryQuery
 
         if (! $user->isAdmin()) {
             $query->where('documents.office', (string) $user->office);
+
+            // Folders the explorer would not show them are not listed here
+            // either -- a closed folder is closed wherever it is looked at.
+            $hidden = app(FolderAccess::class)->hiddenFolderIds($user, (string) $user->office);
+
+            if ($hidden) {
+                $query->where(fn (Builder $q) => $q
+                    ->whereNull('documents.folder_id')
+                    ->orWhereNotIn('documents.folder_id', $hidden));
+            }
         }
 
         $search = trim((string) ($filters['search'] ?? ''));

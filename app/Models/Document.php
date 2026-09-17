@@ -20,6 +20,7 @@ class Document extends Model
 
     protected $fillable = [
         'office',
+        'folder_id',
         'document_category_id',
         'title',
         'description',
@@ -42,6 +43,12 @@ class Document extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(DocumentCategory::class, 'document_category_id');
+    }
+
+    /** The folder it is filed in, if any; null means the office's root. */
+    public function folder(): BelongsTo
+    {
+        return $this->belongsTo(DocumentFolder::class, 'folder_id');
     }
 
     public function uploader(): BelongsTo
@@ -100,8 +107,18 @@ class Document extends Model
 
     protected static function booted(): void
     {
+        // Queue it to be read, so it can be found by what it says. Only the
+        // kinds that can be read -- a spreadsheet has nothing to offer here.
+        static::created(function (Document $document) {
+            if (app(\App\Support\DocumentReader::class)->readable((string) $document->mime_type)) {
+                DocumentText::queue('document', $document->id, $document->sha256);
+            }
+        });
+
         static::deleting(function (Document $document) {
             Storage::disk($document->disk)->delete($document->path);
+
+            DocumentText::where('source_type', 'document')->where('source_id', $document->id)->delete();
         });
     }
 }

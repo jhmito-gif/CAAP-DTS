@@ -28,7 +28,7 @@
     @if ($details['canSeeDocument'])
         <div>
             <dt class="{{ $label }}">Document</dt>
-            <dd class="{{ $value }} break-words">{{ $signature->attachment?->original_name }}</dd>
+            <dd class="{{ $value }} break-words">{{ $signature->attachment?->displayNameFor(auth()->user()) }}</dd>
         </div>
 
         <div>

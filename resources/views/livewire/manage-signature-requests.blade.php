@@ -40,7 +40,7 @@
 
                 @if ($attachment)
                     <p class="truncate text-xs text-gray-400 dark:text-gray-500">
-                        {{ $attachment->original_name }} &middot; {{ $attachment->record?->reference }}
+                        {{ $attachment->displayNameFor(auth()->user()) }} &middot; {{ $attachment->record?->reference }}
                     </p>
                 @endif
             </div>

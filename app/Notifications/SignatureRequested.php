@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\SignatureRequest;
+use App\Models\User;
 use Illuminate\Notifications\Notification;
 
 /**
@@ -31,15 +32,25 @@ class SignatureRequested extends Notification
     public function toArray(object $notifiable): array
     {
         $record = $this->signatureRequest->record;
-        $document = $this->signatureRequest->attachment?->original_name ?? 'a document';
+
+        // A notification is stored text: it must not name a confidential file
+        // or its subject to a recipient who is not cleared for the record.
+        $recipient = $notifiable instanceof User ? $notifiable : null;
+        $masked = (bool) $record?->isMaskedFor($recipient);
+
+        $document = $masked
+            ? 'a confidential document'
+            : ($this->signatureRequest->attachment?->original_name ?? 'a document');
 
         return [
             'type' => 'signature_requested',
             'record_id' => $record?->id,
             'signature_request_id' => $this->signatureRequest->id,
-            'url' => route('esign.sign', $this->signatureRequest),
+            // Stored as a path: an absolute link freezes the host and port the
+            // app happened to have when the notification was written.
+            'url' => route('esign.sign', $this->signatureRequest, false),
             'reference' => $record?->reference,
-            'subject' => $record?->subject,
+            'subject' => $masked ? 'Confidential — hidden from you' : $record?->subject,
             'is_urgent' => (bool) $record?->is_urgent,
             'title' => 'Your signature is requested',
             'message' => ($this->requestedBy ? "{$this->requestedBy} asked you to sign " : 'You were asked to sign ')

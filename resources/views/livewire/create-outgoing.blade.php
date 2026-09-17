@@ -501,6 +501,43 @@
                     @error('signers.*')
                         <p class="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
+
+                    {{-- Where each signature goes --}}
+                    @if (count($signers) > 0 && $pdfUploads->isNotEmpty())
+                        @php
+                            $needed = count($signers) * $pdfUploads->count();
+                            $marks = collect($placements)->filter(fn ($boxes, $key) => count($boxes) > 0
+                                && $pdfUploads->contains('key', explode('|', $key)[0]));
+                            $markedCount = $marks->count();
+                            $pagesMarked = $marks->sum(fn ($boxes) => count($boxes));
+                        @endphp
+
+                        <div class="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-sky-200 dark:border-sky-800 bg-white dark:!bg-gray-800 px-3 py-2.5">
+                            <div class="min-w-0">
+                                <p class="text-xs font-semibold text-gray-800 dark:text-gray-100">Signature position</p>
+                                <p class="text-[11px] text-gray-500 dark:text-gray-400">
+                                    {{ $markedCount }} of {{ $needed }} marked
+                                    @if ($pagesMarked > 0)
+                                        &middot; {{ $pagesMarked }} {{ \Illuminate\Support\Str::plural('page', $pagesMarked) }} in all
+                                    @endif
+                                    &middot; unmarked ones are found in the document at signing
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                x-data
+                                @click="$dispatch('open-placement-picker')"
+                                class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-sky-300 dark:border-sky-700 bg-sky-50 dark:bg-sky-900/30 px-3 py-1.5 text-xs font-semibold text-sky-700 dark:text-sky-300 transition hover:bg-sky-600 hover:text-white"
+                            >
+                                <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                                </svg>
+                                Mark on the document
+                            </button>
+                        </div>
+                    @endif
                 </div>
             @endif
 
@@ -735,4 +772,149 @@
         </div>
 
     </div>
+
+
+    {{-- ================================================================= --}}
+    {{-- Mark where each signature goes --}}
+    {{-- ================================================================= --}}
+    @if (count($signers) > 0 && $pdfUploads->isNotEmpty())
+        <div
+            {{-- Alpine owns this dialog; a Livewire re-render must not reset it
+                 mid-marking. A changed key (different files or signatories)
+                 still replaces it with fresh data. --}}
+            wire:ignore
+            wire:key="placement-picker-{{ md5($pdfUploads->pluck('key')->implode(',') . '|' . implode(',', $signers)) }}"
+            x-data="placementPicker({
+                files: @js($pdfUploads),
+                signers: @js($chosenSigners->map(fn ($person) => ['id' => $person->id, 'name' => $person->name])->values()),
+                marks: @js((object) $placements),
+            })"
+            x-on:open-placement-picker.window="open = true; $nextTick(() => render())"
+            x-on:keydown.escape.window="open = false"
+            x-show="open"
+            x-cloak
+            class="fixed inset-0 z-[60] flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="placementPickerLabel"
+        >
+            <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" @click="open = false"></div>
+
+            <div @click.stop class="relative flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white dark:!bg-gray-800 shadow-xl">
+
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 dark:border-gray-700 px-5 py-3">
+                    <div class="min-w-0">
+                        <h3 id="placementPickerLabel" class="text-sm font-bold text-gray-900 dark:text-gray-100">Mark where the signature goes</h3>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400">
+                            Pick a signatory, then click the page. Mark as many pages as the document needs; the signer can still adjust them.
+                        </p>
+                    </div>
+
+                    <button type="button" @click="open = false" aria-label="Close" class="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700">
+                        <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="flex min-h-0 flex-1 flex-col gap-3 p-4 lg:flex-row">
+
+                    {{-- Page --}}
+                    <div class="flex min-h-0 min-w-0 flex-1 flex-col">
+
+                        <div class="mb-2 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                            <template x-for="file in files" :key="file.key">
+                                <button type="button" @click="selectFile(file.key)"
+                                    :class="file.key === fileKey ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900' : 'border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300'"
+                                    class="max-w-[220px] truncate rounded-md px-2.5 py-1 font-semibold" x-text="file.name"></button>
+                            </template>
+
+                            <span class="ml-auto flex items-center gap-2">
+                                <button type="button" @click="go(-1)" :disabled="pageNumber <= 1" class="rounded-md border border-gray-200 dark:border-gray-700 px-2 py-1 font-semibold disabled:opacity-40">Prev</button>
+                                <span>Page <span x-text="pageNumber"></span> of <span x-text="pageCount || '…'"></span></span>
+                                <button type="button" @click="go(1)" :disabled="pageNumber >= pageCount" class="rounded-md border border-gray-200 dark:border-gray-700 px-2 py-1 font-semibold disabled:opacity-40">Next</button>
+                            </span>
+                        </div>
+
+                        <div wire:ignore x-ref="stage" class="relative min-h-0 flex-1 overflow-auto rounded-lg bg-gray-100 dark:bg-gray-900 p-4">
+                            <p x-show="loading" class="py-20 text-center text-sm text-gray-500">Loading document…</p>
+                            <p x-show="error" x-cloak x-text="error" class="py-20 text-center text-sm text-red-600"></p>
+
+                            <div x-show="! loading && ! error" class="relative mx-auto" :style="`width: ${canvasWidth}px`">
+                                <canvas x-ref="canvas" @click="place($event)" class="block cursor-crosshair bg-white shadow"></canvas>
+
+                                <div
+                                    x-show="boxVisible"
+                                    x-cloak
+                                    :style="boxStyle"
+                                    @pointerdown.prevent="startDrag($event, 'move')"
+                                    class="absolute flex cursor-move select-none items-center justify-center rounded border-2 border-dashed border-sky-500 bg-sky-50/50 text-[10px] font-semibold text-sky-800"
+                                >
+                                    <span x-text="(signers.find(s => s.id === signerId)?.name ?? '') + ' · p' + pageNumber"></span>
+                                    <span @pointerdown.prevent.stop="startDrag($event, 'resize')" class="absolute -bottom-1.5 -right-1.5 size-3 cursor-se-resize rounded-sm bg-sky-600"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Signatories --}}
+                    <div class="w-full shrink-0 lg:w-56">
+                        <p class="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Signatories</p>
+
+                        <div class="divide-y divide-gray-100 dark:divide-gray-700 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                            <template x-for="person in signers" :key="person.id">
+                                <button type="button" @click="signerId = person.id"
+                                    :class="person.id === signerId ? 'bg-sky-50 dark:bg-sky-900/30' : ''"
+                                    class="flex w-full items-center justify-between gap-2 px-3 py-2 text-left">
+                                    <span class="min-w-0">
+                                        <span class="block truncate text-xs font-semibold text-gray-800 dark:text-gray-100" x-text="person.name"></span>
+                                        <span class="block text-[10px]" :class="markedFor(person.id) ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'"
+                                            x-text="markedFor(person.id)
+                                                ? markedFor(person.id) + (markedFor(person.id) > 1 ? ' pages marked' : ' page marked')
+                                                : 'not marked'"></span>
+                                    </span>
+                                    <span x-show="markedFor(person.id)" class="size-1.5 shrink-0 rounded-full bg-emerald-500"></span>
+                                </button>
+                            </template>
+                        </div>
+
+                        <p class="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
+                            <span x-show="markedPages.length === 0">No page marked for this signatory yet.</span>
+                            <span x-show="markedPages.length > 0" x-cloak>
+                                Marked on page<span x-show="markedPages.length > 1">s</span>
+                                <span class="font-semibold text-gray-700 dark:text-gray-200" x-text="markedPages.join(', ')"></span>
+                            </span>
+                        </p>
+
+                        <div class="mt-2 space-y-1.5">
+                            <button type="button" x-show="mark && pageCount > 1" x-cloak @click="applyToAllPages()"
+                                class="w-full rounded-lg border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/30 px-3 py-1.5 text-[11px] font-semibold text-sky-700 dark:text-sky-300 hover:bg-sky-600 hover:text-white">
+                                Same spot on every page
+                            </button>
+
+                            <button type="button" x-show="mark" x-cloak @click="clearPage()"
+                                class="w-full rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                Clear this page
+                            </button>
+
+                            <button type="button" x-show="boxes.length > 1" x-cloak @click="clearAll()"
+                                class="w-full rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                Clear all pages
+                            </button>
+                        </div>
+
+                        <p class="mt-3 text-[11px] leading-5 text-gray-500 dark:text-gray-400">
+                            Unmarked signatories get their spot found in the document when they sign.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex justify-end border-t border-gray-100 dark:border-gray-700 px-5 py-3">
+                    <button type="button" @click="open = false" class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">
+                        Done
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

@@ -20,9 +20,11 @@ use App\Models\Office;
 use Filament\Forms;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Illuminate\Support\Facades\Hash;
 use Filament\Tables;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
@@ -83,7 +85,12 @@ class UserResource extends Resource
                 ->required()
                 ->default('USER') // Set default role
                 ->disabled(fn () => !auth()->user()->isAdmin()), // Only admin can modify
-                
+
+                Toggle::make('manages_documents')
+                ->label('Document manager')
+                ->helperText('May create and rearrange folders in their office\'s document library. Admins always can.')
+                ->disabled(fn () => !auth()->user()->isAdmin()),
+
 		TextInput::make('password')
                 ->label('Password')
                 ->password()
@@ -129,6 +136,11 @@ class UserResource extends Resource
                     ->color(fn (?string $state) => $state === User::ROLE_ADMIN ? 'success' : 'gray')
                     ->icon(fn (?string $state) => $state === User::ROLE_ADMIN ? 'heroicon-m-shield-check' : 'heroicon-m-user')
                     ->sortable(),
+                IconColumn::make('manages_documents')
+                    ->label('Documents')
+                    ->tooltip('Looks after their office\'s document library')
+                    ->boolean()
+                    ->toggleable(),
                 TextColumn::make('created_at')
                     ->label('Joined')
                     ->dateTime('M j, Y')

@@ -219,7 +219,7 @@
 
                                             <div class="min-w-0">
                                                 <p class="truncate text-xs font-semibold {{ $removing ? 'text-red-600 line-through dark:text-red-400' : 'text-gray-800 dark:text-gray-100' }}">
-                                                    {{ $file->original_name }}
+                                                    {{ $file->displayNameFor(auth()->user()) }}
                                                 </p>
                                                 <p class="text-[11px] text-gray-400 dark:text-gray-500">
                                                     {{ $removing ? 'Will be removed when you save' : $file->human_size }}

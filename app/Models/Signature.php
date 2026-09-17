@@ -27,6 +27,7 @@ class Signature extends Model
         'y',
         'width',
         'height',
+        'placements',
         'source_sha256',
         'signed_sha256',
         'verification_code',
@@ -44,6 +45,8 @@ class Signature extends Model
         'y' => 'float',
         'width' => 'float',
         'height' => 'float',
+        // Every spot this one signing act stamped; the columns above hold the first.
+        'placements' => 'array',
         'signed_at' => 'datetime',
     ];
 

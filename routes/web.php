@@ -125,6 +125,31 @@ Route::middleware([
         [DocumentController::class, 'index']
     )->name('documents.index');
 
+    // Uploads arrive a piece at a time, so a large scan survives a stall and
+    // is not at the mercy of PHP's single-request upload limits.
+    Route::post(
+        '/documents/upload/chunk',
+        [\App\Http\Controllers\ChunkedUploadController::class, 'chunk']
+    )->name('documents.upload.chunk');
+
+    Route::post(
+        '/documents/upload/finish',
+        [\App\Http\Controllers\ChunkedUploadController::class, 'finish']
+    )->name('documents.upload.finish');
+
+    // Everything known about one file, for the panel beside the viewer.
+    Route::get(
+        '/documents/info',
+        [\App\Http\Controllers\DocumentInfoController::class, 'show']
+    )->name('documents.info');
+
+    // A file's own page: an address that can be kept, shared and returned to.
+    // The floating window is a convenience on top of this, not instead of it.
+    Route::get(
+        '/files/{key}',
+        [\App\Http\Controllers\DocumentInfoController::class, 'page']
+    )->where('key', '(attachment|document|shortcut)-[0-9]+')->name('files.show');
+
     Route::get(
         '/documents/{document}/view',
         [DocumentController::class, 'view']
@@ -144,6 +169,11 @@ Route::middleware([
         '/sign/{signatureRequest}',
         [\App\Http\Controllers\SignatureController::class, 'sign']
     )->name('esign.sign');
+
+    Route::get(
+        '/signatures',
+        [\App\Http\Controllers\SignatureController::class, 'queue']
+    )->name('esign.queue');
 
     Route::get(
         '/verify-signature',

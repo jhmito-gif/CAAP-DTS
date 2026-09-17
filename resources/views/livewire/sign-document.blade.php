@@ -50,7 +50,12 @@
                     <div
                         wire:ignore
                         wire:key="esign-viewer-{{ $unlocked ? 'unlocked' : 'open' }}"
-                        x-data="esignViewer({ url: @js($documentUrl), canPlace: @js($blocker === null), signature: @js($signaturePreview) })"
+                        x-data="esignViewer({
+                            url: @js($documentUrl),
+                            canPlace: @js($blocker === null),
+                            signature: @js($signaturePreview),
+                            initial: @js(array_values($placements)),
+                        })"
                     >
                         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 dark:border-gray-700 px-4 py-2 text-xs text-gray-500 dark:text-gray-400">
                             <div class="flex items-center gap-2">
@@ -63,7 +68,10 @@
                                 </button>
                             </div>
 
-                            <p x-show="canPlace && ! rotated">Click the page to place your signature. Drag to move; use the corner to resize.</p>
+                            <p x-show="canPlace && ! rotated">
+                                Click the page to place your signature &mdash; one per page, on as many pages as needed. Drag to move; corner to resize.
+                                <button type="button" x-show="boxVisible" x-cloak @click="clearPage()" class="ml-1 font-semibold text-sky-600 underline dark:text-sky-400">clear this page</button>
+                            </p>
                             <p x-show="rotated" x-cloak class="font-semibold text-amber-600 dark:text-amber-400">This page is rotated and cannot be signed.</p>
                         </div>
 
@@ -159,9 +167,26 @@
                             It is stamped with your name, the date and a verification code. The original file is kept.
                         </p>
 
-                        @error('page') <p class="{{ $error }}">{{ $message }}</p> @enderror
-                        @error('width') <p class="{{ $error }}">{{ $message }}</p> @enderror
-                        @error('height') <p class="{{ $error }}">{{ $message }}</p> @enderror
+                        @if ($markedBy)
+                            <p class="mt-1.5 rounded-lg bg-sky-50 dark:bg-sky-900/30 px-3 py-2 text-xs text-sky-800 dark:text-sky-300">
+                                Position marked by {{ $markedBy }} on page{{ count($markedPages) > 1 ? 's' : '' }}
+                                {{ implode(', ', $markedPages) }}. Drag any of them if you need them elsewhere.
+                            </p>
+                        @endif
+
+                        @error('placements') <p class="{{ $error }}">{{ $message }}</p> @enderror
+                        @foreach ($errors->get('placements.*') as $messages)
+                            <p class="{{ $error }}">{{ $messages[0] }}</p>
+                        @endforeach
+
+                        @if (count($placements) > 0)
+                            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                Signing on page{{ count($placements) > 1 ? 's' : '' }}
+                                <span class="font-semibold text-gray-700 dark:text-gray-200">
+                                    {{ collect($placements)->pluck('page')->unique()->sort()->implode(', ') }}
+                                </span>
+                            </p>
+                        @endif
                     </div>
 
                     <div>

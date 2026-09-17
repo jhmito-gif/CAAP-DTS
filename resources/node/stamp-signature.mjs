@@ -4,8 +4,9 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
  * Stamps a visual signature onto one page of a PDF. Run by
  * App\Support\PdfSignatureStamper; nothing touches the disk.
  *
- * stdin:  JSON { pdf, signature (base64 PNG), page (1-based), x, y, width,
- *         height (PDF points, origin bottom-left), lines: string[] }
+ * stdin:  JSON { pdf, signature (base64 PNG), lines: string[],
+ *         boxes: [{ page (1-based), x, y, width, height }] in PDF points with
+ *         the origin bottom-left. One signing act may stamp several pages. }
  * stdout: the stamped PDF, base64
  * exit 2: the request itself is invalid; stderr holds a message for the user
  */
@@ -30,39 +31,44 @@ try {
 }
 
 let pages = pdf.getPages()
-let pageNumber = Number(args.page)
+let boxes = Array.isArray(args.boxes) && args.boxes.length > 0
+  ? args.boxes
+  : [{ page: args.page, x: args.x, y: args.y, width: args.width, height: args.height }]
 
-if (!Number.isInteger(pageNumber) || pageNumber < 1 || pageNumber > pages.length) {
-  reject('The selected page does not exist.')
-}
+let targets = boxes.map((box) => {
+  let pageNumber = Number(box.page)
 
-let page = pages[pageNumber - 1]
+  if (!Number.isInteger(pageNumber) || pageNumber < 1 || pageNumber > pages.length) {
+    reject('The selected page does not exist.')
+  }
 
-if (page.getRotation().angle % 360 !== 0) {
-  reject('Rotated pages cannot be signed yet.')
-}
+  let page = pages[pageNumber - 1]
 
-let [x, y, width, height] = [args.x, args.y, args.width, args.height].map(Number)
-let media = page.getMediaBox()
-let insidePage = [x, y, width, height].every(Number.isFinite)
-  && width >= 40 && height >= 24
-  && x >= media.x - 0.5 && y >= media.y - 0.5
-  && x + width <= media.x + media.width + 0.5
-  && y + height <= media.y + media.height + 0.5
+  if (page.getRotation().angle % 360 !== 0) {
+    reject('Rotated pages cannot be signed yet.')
+  }
 
-if (!insidePage) {
-  reject('The signature must be placed fully inside the page.')
-}
+  let [x, y, width, height] = [box.x, box.y, box.width, box.height].map(Number)
+  let media = page.getMediaBox()
+  let insidePage = [x, y, width, height].every(Number.isFinite)
+    && width >= 40 && height >= 24
+    && x >= media.x - 0.5 && y >= media.y - 0.5
+    && x + width <= media.x + media.width + 0.5
+    && y + height <= media.y + media.height + 0.5
+
+  if (!insidePage) {
+    reject('Every signature must be placed fully inside its page.')
+  }
+
+  return { page, x, y, width, height }
+})
 
 let image = await pdf.embedPng(Buffer.from(args.signature, 'base64'))
 let regular = await pdf.embedFont(StandardFonts.Helvetica)
 let bold = await pdf.embedFont(StandardFonts.HelveticaBold)
 
-// Text lines (name, date, verification code) sit under the signature image.
+// Text lines (name, date, verification code) sit under each signature image.
 let lines = (args.lines ?? []).map(String)
-let size = Math.min(7, Math.max(4.5, height / 11))
-let lineHeight = size * 1.3
-let textBlock = lines.length * lineHeight
 
 // The standard fonts cannot draw every character; fall back to plain ASCII.
 function drawable(font, text) {
@@ -74,7 +80,7 @@ function drawable(font, text) {
   }
 }
 
-function fit(font, text, maxWidth) {
+function fit(font, text, maxWidth, size) {
   let value = drawable(font, text)
 
   if (font.widthOfTextAtSize(value, size) <= maxWidth) {
@@ -88,29 +94,35 @@ function fit(font, text, maxWidth) {
   return value + '...'
 }
 
-let imageHeight = Math.max(1, height - textBlock)
-let scale = Math.min(width / image.width, imageHeight / image.height)
-let drawWidth = image.width * scale
-let drawHeight = image.height * scale
+for (let { page, x, y, width, height } of targets) {
+  let size = Math.min(7, Math.max(4.5, height / 11))
+  let lineHeight = size * 1.3
+  let textBlock = lines.length * lineHeight
 
-page.drawImage(image, {
-  x: x + (width - drawWidth) / 2,
-  y: y + textBlock + (imageHeight - drawHeight) / 2,
-  width: drawWidth,
-  height: drawHeight,
-})
+  let imageHeight = Math.max(1, height - textBlock)
+  let scale = Math.min(width / image.width, imageHeight / image.height)
+  let drawWidth = image.width * scale
+  let drawHeight = image.height * scale
 
-lines.forEach((line, index) => {
-  let font = index === 0 ? bold : regular
-  let text = fit(font, line, width)
-
-  page.drawText(text, {
-    x: x + (width - font.widthOfTextAtSize(text, size)) / 2,
-    y: y + textBlock - lineHeight * (index + 1) + (lineHeight - size) / 2,
-    size,
-    font,
-    color: rgb(0, 0, 0),
+  page.drawImage(image, {
+    x: x + (width - drawWidth) / 2,
+    y: y + textBlock + (imageHeight - drawHeight) / 2,
+    width: drawWidth,
+    height: drawHeight,
   })
-})
+
+  lines.forEach((line, index) => {
+    let font = index === 0 ? bold : regular
+    let text = fit(font, line, width, size)
+
+    page.drawText(text, {
+      x: x + (width - font.widthOfTextAtSize(text, size)) / 2,
+      y: y + textBlock - lineHeight * (index + 1) + (lineHeight - size) / 2,
+      size,
+      font,
+      color: rgb(0, 0, 0),
+    })
+  })
+}
 
 process.stdout.write(Buffer.from(await pdf.save()).toString('base64'))

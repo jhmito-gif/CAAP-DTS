@@ -4,9 +4,11 @@ namespace App\Livewire;
 
 use App\Models\InternalRouting;
 use App\Models\Record;
+use App\Models\SignatureRequest;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Notifications\DocumentRoutedInternally;
+use App\Support\DocumentHandling;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
@@ -49,8 +51,14 @@ class InternalTrail extends Component
         $record = $this->record();
         $user = Auth::user();
 
-        if (! $record || ! $this->canForward()) {
-            $this->banner('Only the person holding this document can pass it on.', 'danger');
+        if (! $record || ! $this->officeHandlesRecord($record)) {
+            $this->banner('This document has not been routed to your office.', 'danger');
+
+            return;
+        }
+
+        if ($blocker = DocumentHandling::passBlocker($record, $user)) {
+            $this->banner($blocker, 'danger');
 
             return;
         }
@@ -94,26 +102,47 @@ class InternalTrail extends Component
         $this->dispatch('record-updated');
     }
 
-    public function acknowledge(int $routingId): void
+    public function acknowledge(int $routingId)
     {
         $user = Auth::user();
 
         $routing = InternalRouting::where('record_id', $this->recordId)->whereKey($routingId)->first();
 
         if (! $routing || ! $routing->isPending()) {
-            return;
+            return null;
         }
 
         if ((int) $routing->to_user_id !== (int) $user->id && ! $user->isAdmin()) {
             $this->banner('Only the person it was passed to can accept it.', 'danger');
 
-            return;
+            return null;
         }
 
         $routing->update(['received_at' => now()]);
 
+        // Handed over to sign: take them straight to the signing page.
+        if ($signatureRequest = $this->pendingSignatureFor($user)) {
+            return $this->redirectRoute('esign.sign', $signatureRequest);
+        }
+
         $this->banner('Marked as accepted.');
         $this->dispatch('record-updated');
+
+        return null;
+    }
+
+    /** A document on this record still waiting for this person's signature. */
+    private function pendingSignatureFor(?User $user): ?SignatureRequest
+    {
+        if (! $user) {
+            return null;
+        }
+
+        return SignatureRequest::where('record_id', $this->recordId)
+            ->where('signer_id', $user->id)
+            ->whereNull('signed_at')
+            ->orderBy('id')
+            ->first();
     }
 
     private function record(): ?Record
@@ -141,21 +170,29 @@ class InternalTrail extends Component
             ->exists();
     }
 
+    /**
+     * The reason this person cannot pass it on right now, or null when they can.
+     * Null is also returned when the office has nothing to do with the record,
+     * in which case the panel shows no controls at all.
+     */
+    private function forwardBlocker(): ?string
+    {
+        $record = $this->record();
+
+        if (! $record || ! $this->officeHandlesRecord($record)) {
+            return null;
+        }
+
+        return DocumentHandling::passBlocker($record, Auth::user());
+    }
+
     private function canForward(): bool
     {
         $record = $this->record();
-        $user = Auth::user();
 
-        if (! $record || ! $this->officeHandlesRecord($record)) {
-            return false;
-        }
-
-        $holder = InternalRouting::holderFor($record->id, $user->office);
-
-        // Nobody has it yet: whoever received it for the office starts the chain.
-        return $holder === null
-            || (int) $holder->to_user_id === (int) $user->id
-            || $user->isAdmin();
+        return $record !== null
+            && $this->officeHandlesRecord($record)
+            && DocumentHandling::passBlocker($record, Auth::user()) === null;
     }
 
     private function banner(string $message, string $style = 'success'): void
@@ -181,6 +218,9 @@ class InternalTrail extends Component
             'entries' => $entries,
             'holder' => $holder,
             'canForward' => $canForward,
+            'forwardBlocker' => $canForward ? null : $this->forwardBlocker(),
+            // Accepting takes them to the signing page when one is waiting.
+            'awaitingSignature' => $record && $this->pendingSignatureFor($user) !== null,
             'people' => $canForward
                 ? User::where('office', $user->office)->whereKeyNot($user->id)->orderBy('name')->get()
                 : collect(),
