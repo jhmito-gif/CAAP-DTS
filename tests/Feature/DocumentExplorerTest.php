@@ -235,11 +235,14 @@ it('will not delete a folder with things still in it', function () {
 it('puts the floating viewer on the documents page', function () {
     $this->actingAs(documentManager());
 
-    $this->get(route('documents.index'))
+    $response = $this->get(route('documents.index'))
         ->assertOk()
-        // The window shell, and the script that drives it.
+        // The window shell, and the strip it minimises to.
         ->assertSee('data-viewer-window', escape: false)
-        ->assertSee('resources/js/viewer.js', escape: false);
+        ->assertSee('documentWindows()', escape: false);
+
+    // And the script that drives it, whichever name the build gave it.
+    expect($response->getContent())->toMatch('~<script[^>]+src="[^"]*viewer[^"]*\.js"~');
 });
 
 it('shows another office nothing of this one', function () {
