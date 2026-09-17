@@ -32,7 +32,6 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
             ->brandName('CAAP-DTS')
             ->brandLogo(new HtmlString(
                 '<span style="display:flex;align-items:center;gap:0.6rem;height:100%;">'
