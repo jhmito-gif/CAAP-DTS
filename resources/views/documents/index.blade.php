@@ -5,6 +5,11 @@
         </h2>
     </x-slot>
 
-    <livewire:document-library />
+    <livewire:document-explorer />
+
+    {{-- Documents open in floating windows over the explorer. --}}
+    @include('partials.document-windows')
+
+    @vite('resources/js/viewer.js')
 
 </x-app-layout>

@@ -57,6 +57,12 @@
 
         @stack('modals')
 
+        {{-- Work that outlives a page (reading documents) reports here, on
+             every screen, and keeps counting after a reload. --}}
+        @auth
+            @livewire('work-progress')
+        @endauth
+
         @livewireScripts
     </body>
 </html>

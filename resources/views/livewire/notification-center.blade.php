@@ -156,9 +156,21 @@
                             </span>
 
 
-                            @if ($recordId || filled($data['url'] ?? null))
+                            @php
+                                // Notifications written before links were stored as paths hold an
+                                // absolute URL built from APP_URL, which breaks on another host or
+                                // port. Keep only the path so the link follows the current address.
+                                $target = $data['url'] ?? ($recordId ? route('show-transactions', $recordId, false) : null);
+
+                                if (filled($target)) {
+                                    $query = parse_url($target, PHP_URL_QUERY);
+                                    $target = (parse_url($target, PHP_URL_PATH) ?: $target) . ($query ? "?{$query}" : '');
+                                }
+                            @endphp
+
+                            @if (filled($target))
                                 <a
-                                    href="{{ $data['url'] ?? route('show-transactions', $recordId) }}"
+                                    href="{{ $target }}"
                                     wire:click="markAsRead('{{ $notification->id }}')"
                                     class="inline-flex items-center gap-1 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 px-2 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 transition hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 hover:text-indigo-700 dark:hover:text-indigo-300"
                                 >

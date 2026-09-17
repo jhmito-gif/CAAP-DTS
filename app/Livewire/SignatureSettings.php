@@ -110,8 +110,10 @@ class SignatureSettings extends Component
 
             $saved = SigningPin::updateOrCreate(['user_id' => $user->id], ['pin' => $this->newPin]);
 
-            // A new PIN also asks for the authenticator code again on the next signature.
+            // A new PIN closes any signing session, asks for the authenticator
+            // code again, and forgets every remembered device.
             $signingSession->forget();
+            \App\Models\SigningDevice::forgetAll($user);
 
             EsignLogger::log('profile.pin_set', EsignLog::SUCCESS, [], ['replaced' => ! $saved->wasRecentlyCreated]);
 

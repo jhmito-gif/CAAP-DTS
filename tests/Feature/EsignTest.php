@@ -135,7 +135,7 @@ it('stamps a signature onto a PDF page and rejects placements outside it', funct
         ->toStartWith('%PDF');
 
     expect(fn () => $stamper->stamp(esignPdf(), $png, esignPlacement(['x' => 500, 'y' => 800]), ['Signer']))
-        ->toThrow(PdfSigningException::class, 'inside the page');
+        ->toThrow(PdfSigningException::class, 'inside its page');
 
     expect(fn () => $stamper->stamp(esignPdf(), $png, esignPlacement(['page' => 3]), ['Signer']))
         ->toThrow(PdfSigningException::class, 'does not exist');
@@ -211,7 +211,7 @@ it('asks for the authenticator code once per session, then only the signing PIN'
 
     // The signing screen signs the next document with the PIN alone.
     Livewire::test(SignDocument::class, ['signatureRequestId' => $second->id])
-        ->set('page', 1)->set('x', 380)->set('y', 60)->set('width', 180)->set('height', 80)
+        ->set('placements', [['page' => 1, 'x' => 380, 'y' => 60, 'width' => 180, 'height' => 80]])
         ->set('pin', esignPin())
         ->call('sign')
         ->assertHasNoErrors()

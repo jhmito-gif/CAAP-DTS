@@ -6,8 +6,10 @@ use App\Models\Attachment;
 use App\Models\EsignLog;
 use App\Models\Signature;
 use App\Models\SignatureRequest;
+use App\Models\SigningDevice;
 use App\Models\User;
 use App\Notifications\DocumentSigned;
+use App\Notifications\SigningSessionOpened;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -68,15 +70,89 @@ class DocumentSigner
         return ! $this->signingSession->isConfirmed($user);
     }
 
+    /** Why this signer cannot sign anything at all right now, or null. */
+    public function signingBlocker(User $user): ?string
+    {
+        return match (true) {
+            ! $user->hasEnabledTwoFactorAuthentication() => 'Turn on two-factor authentication in your profile before signing.',
+            ! $user->signature => 'Save your signature in your profile before signing.',
+            ! $user->signingPin => 'Set a signing PIN in your profile before signing.',
+            default => null,
+        };
+    }
+
+    /**
+     * Open a signing session: authorise once, then sign each document with a
+     * single click until the session closes. On a remembered device the
+     * authenticator code is not asked for -- the device stands in for it.
+     *
+     * @return string|null  a new remembered-device token, when one was issued
+     *
+     * @throws ValidationException when verification fails
+     */
+    public function openSession(User $user, string $pin, ?string $code, bool $remember, ?string $deviceToken, ?string $ip, ?string $userAgent): ?string
+    {
+        $subjects = ['user' => $user];
+
+        if ($reason = $this->signingBlocker($user)) {
+            EsignLogger::log('session.blocked', EsignLog::FAILURE, $subjects, ['reason' => $reason]);
+
+            throw ValidationException::withMessages(['pin' => $reason]);
+        }
+
+        $device = SigningDevice::find($user, $deviceToken);
+
+        $this->verifySigner($user, $pin, $code, $subjects, $device === null);
+
+        $this->signingSession->open($user);
+        $this->signingSession->confirm($user);
+
+        $device?->update(['last_used_at' => now(), 'ip_address' => $ip]);
+
+        $token = null;
+
+        if ($remember && ! $device) {
+            $token = SigningDevice::remember($user, $userAgent, $ip);
+
+            EsignLogger::log('session.device_remembered', EsignLog::SUCCESS, $subjects, ['days' => SigningDevice::DAYS]);
+        }
+
+        EsignLogger::log('session.opened', EsignLog::SUCCESS, $subjects, [
+            'remembered_device' => $device !== null,
+            'documents_allowed' => SigningSession::MAX_DOCUMENTS,
+        ]);
+
+        $user->notify(new SigningSessionOpened($userAgent, $ip, $device !== null || $token !== null));
+
+        return $token;
+    }
+
+    public function closeSession(User $user): void
+    {
+        if ($this->signingSession->isOpen($user)) {
+            EsignLogger::log('session.closed', EsignLog::INFO, ['user' => $user]);
+        }
+
+        $this->signingSession->close();
+    }
+
     /**
      * @param  array{page: int, x: float, y: float, width: float, height: float}  $placement  PDF points, origin bottom-left
      * @param  string|null  $code  authenticator code; only needed when requiresCode() is true
      *
      * @throws ValidationException when verification fails or the document cannot be signed
      */
-    public function sign(SignatureRequest $request, User $user, array $placement, string $pin, ?string $code, ?string $ip, ?string $userAgent): Signature
+    public function sign(SignatureRequest $request, User $user, array $placement, ?string $pin, ?string $code, ?string $ip, ?string $userAgent): Signature
     {
         $subjects = ['user' => $user, 'request' => $request];
+
+        // One box or several: a signatory may have to sign more than one page.
+        $boxes = array_is_list($placement) ? array_values($placement) : [$placement];
+        $first = $boxes[0] ?? null;
+
+        if (! $first) {
+            throw ValidationException::withMessages(['signature' => 'Place your signature on the document first.']);
+        }
 
         if ($blocker = $this->blocker($request, $user)) {
             EsignLogger::log('signature.blocked', EsignLog::FAILURE, $subjects, ['reason' => $blocker]);
@@ -84,14 +160,21 @@ class DocumentSigner
             throw ValidationException::withMessages(['signature' => $blocker]);
         }
 
-        $twoFactor = $this->verifySigner($user, $pin, $code, $subjects);
+        // An open signing session stands in for the PIN and the code; each
+        // signature is still recorded, counted and audited on its own.
+        if ($this->signingSession->isOpen($user)) {
+            $twoFactor = 'signing session';
+            $this->signingSession->recordSignature($user);
+        } else {
+            $twoFactor = $this->verifySigner($user, (string) $pin, $code, $subjects);
+        }
 
         // Set when the transaction refuses to sign, and logged after it rolls back
         // (a log row written inside the transaction would be rolled back too).
         $failure = null;
 
         try {
-            $signature = DB::transaction(function () use ($request, $user, $placement, $ip, $userAgent, &$failure) {
+            $signature = DB::transaction(function () use ($request, $user, $boxes, $first, $ip, $userAgent, &$failure) {
                 // Lock the document so concurrent signers each sign the latest version.
                 $attachment = Attachment::whereKey($request->attachment_id)->lockForUpdate()->firstOrFail();
                 $request = SignatureRequest::whereKey($request->id)->lockForUpdate()->firstOrFail();
@@ -121,14 +204,14 @@ class DocumentSigner
                 $signedAt = now();
 
                 try {
-                    $signed = $this->stamper->stamp($source, $user->signature->png(), $placement, array_values(array_filter([
+                    $signed = $this->stamper->stamp($source, $user->signature->png(), $boxes, array_values(array_filter([
                         $user->name,
                         $user->service ?: $user->office,
                         'Signed ' . $signedAt->copy()->setTimezone('Asia/Manila')->format('j M Y g:i A'),
                         'Verify: ' . $verificationCode,
                     ])));
                 } catch (PdfSigningException $exception) {
-                    $failure = ['signature.stamp_failed', ['error' => $exception->getMessage(), 'placement' => $placement]];
+                    $failure = ['signature.stamp_failed', ['error' => $exception->getMessage(), 'placements' => $boxes]];
 
                     throw ValidationException::withMessages(['signature' => $exception->getMessage()]);
                 }
@@ -141,11 +224,13 @@ class DocumentSigner
                     'user_id' => $user->id,
                     'path' => $path,
                     'size' => strlen($signed),
-                    'page' => (int) $placement['page'],
-                    'x' => (float) $placement['x'],
-                    'y' => (float) $placement['y'],
-                    'width' => (float) $placement['width'],
-                    'height' => (float) $placement['height'],
+                    // The first box on its own columns, every box in the list.
+                    'page' => (int) $first['page'],
+                    'x' => (float) $first['x'],
+                    'y' => (float) $first['y'],
+                    'width' => (float) $first['width'],
+                    'height' => (float) $first['height'],
+                    'placements' => $boxes,
                     'source_sha256' => $sourceHash,
                     'signed_sha256' => hash('sha256', $signed),
                     'verification_code' => $verificationCode,
@@ -178,6 +263,7 @@ class DocumentSigner
         EsignLogger::log('signature.signed', EsignLog::SUCCESS, $subjects + ['signature' => $signature], [
             'verification_code' => $signature->verification_code,
             'page' => $signature->page,
+            'pages_stamped' => collect($boxes)->pluck('page')->unique()->sort()->values()->all(),
             'source_sha256' => $signature->source_sha256,
             'signed_sha256' => $signature->signed_sha256,
             'completed' => (bool) $signature->attachment?->fresh()?->isSigningComplete(),
@@ -201,7 +287,7 @@ class DocumentSigner
      * @param  array<string, mixed>  $subjects  for the e-sign log
      * @return string how two-factor was satisfied: 'code' or 'session'
      */
-    protected function verifySigner(User $user, string $pin, ?string $code, array $subjects): string
+    protected function verifySigner(User $user, string $pin, ?string $code, array $subjects, bool $codeRequired = true): string
     {
         $key = 'esign:' . $user->id;
 
@@ -219,6 +305,13 @@ class DocumentSigner
 
         if (! $user->signingPin?->matches($pin)) {
             $this->failVerification($key, 'signature.pin_failed', $subjects, ['pin' => 'The signing PIN is incorrect.']);
+        }
+
+        // A remembered device has already proved the second factor.
+        if (! $codeRequired) {
+            RateLimiter::clear($key);
+
+            return 'remembered device';
         }
 
         if ($this->signingSession->isConfirmed($user)) {

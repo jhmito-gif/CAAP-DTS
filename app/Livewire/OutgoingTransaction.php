@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use App\Livewire\Concerns\ReceivesTransactions;
 use App\Livewire\Concerns\UnlocksConfidential;
+use App\Support\DocumentHandling;
 use App\Support\OfficeReference;
 use Livewire\Component;
 
@@ -51,6 +52,13 @@ class OutgoingTransaction extends Component
         ]);
 
         $record = Record::findOrFail($this->recordId);
+
+        // The person holding it releases it, once they have done what was asked.
+        if ($blocker = DocumentHandling::sendBlocker($record, Auth::user())) {
+            session()->flash('error', $blocker);
+
+            return;
+        }
 
         $transact = Transaction::create([
             'record_id' => $this->recordId,
@@ -111,13 +119,15 @@ class OutgoingTransaction extends Component
             return;
         }
 
+        // A locked confidential file is not named back to anyone, not even here.
+        $name = $attachment->displayNameFor($user, $this->confidentialUnlocked);
+
         // Documents sent for signature keep their audit trail.
         if ($attachment->signatureRequests()->exists()) {
-            session()->flash('error', "\"{$attachment->original_name}\" was sent for signature and cannot be removed.");
+            session()->flash('error', "\"{$name}\" was sent for signature and cannot be removed.");
             return;
         }
 
-        $name = $attachment->original_name;
         $attachment->delete(); // model hook deletes the underlying file
 
         session()->flash('message', "\"{$name}\" was permanently removed.");
@@ -164,6 +174,8 @@ class OutgoingTransaction extends Component
             'rasTransactions' => $rasTransactions,
             'showSendButton' => $this->showSendButton,
             'receivableTransaction' => $receivableTransaction,
+            // Once a colleague holds it, only they release it to another office.
+            'sendBlocker' => $this->showSendButton ? DocumentHandling::sendBlocker($this->record, Auth::user()) : null,
             'canAssignReference' => (clone $officeMovements)->exists(),
             'officeReference' => (clone $officeMovements)->whereNotNull('received_reference')->orderByDesc('id')->value('received_reference'),
             'stackedReferences' => $stackedReferences,

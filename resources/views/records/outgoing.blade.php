@@ -7,6 +7,9 @@
  
 
 
+    {{-- The send form lets the sender mark signature positions on the uploaded PDF. --}}
+    @vite(['resources/js/esign.js'])
+
     <livewire:outgoing-table/>
     <livewire:create-outgoing/>
     <livewire:manage-record/>

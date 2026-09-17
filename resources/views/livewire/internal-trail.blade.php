@@ -4,7 +4,7 @@
     $label = 'mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200';
 @endphp
 
-<div class="mx-auto w-full max-w-full px-4 pb-10 lg:px-8">
+<div class="mt-6">
 
     <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 shadow-sm">
 
@@ -35,6 +35,15 @@
                         @if ($holder->isPending())
                             <span class="font-normal text-violet-500 dark:text-violet-400">(not yet accepted)</span>
                         @endif
+                    </span>
+                @endif
+
+                @if ($forwardBlocker)
+                    <span class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">
+                        <svg class="size-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                        </svg>
+                        {{ $forwardBlocker }}
                     </span>
                 @endif
 
@@ -110,9 +119,10 @@
                                         wire:click="acknowledge({{ $entry->id }})"
                                         wire:loading.attr="disabled"
                                         wire:target="acknowledge({{ $entry->id }})"
+                                        title="{{ $awaitingSignature && (int) $entry->to_user_id === (int) auth()->id() ? 'Accept and open the signing page' : 'Accept this handoff' }}"
                                         class="rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 transition hover:bg-emerald-600 hover:text-white disabled:opacity-60"
                                     >
-                                        Accept
+                                        {{ $awaitingSignature && (int) $entry->to_user_id === (int) auth()->id() ? 'Accept & sign' : 'Accept' }}
                                     </button>
                                 @else
                                     <span class="rounded-full bg-amber-50 dark:bg-amber-900/30 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300">

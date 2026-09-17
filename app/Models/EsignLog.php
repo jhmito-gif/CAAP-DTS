@@ -33,6 +33,12 @@ class EsignLog extends Model
         'signature.stamp_failed' => 'Signature could not be applied',
         'signature.already_signed' => 'Already signed',
 
+        // Signing sessions
+        'session.opened' => 'Signing session opened',
+        'session.closed' => 'Signing session closed',
+        'session.blocked' => 'Signing session refused',
+        'session.device_remembered' => 'Signing device remembered',
+
         // Requests
         'request.created' => 'Signature requested',
         'request.cancelled' => 'Signature request removed',

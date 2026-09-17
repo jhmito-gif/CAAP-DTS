@@ -12,23 +12,27 @@ use Illuminate\Support\Facades\Process;
 class PdfSignatureStamper
 {
     /**
-     * @param  array{page: int, x: float, y: float, width: float, height: float}  $placement  PDF points, origin bottom-left
-     * @param  array<int, string>  $lines  Text printed under the signature; the first line is bold
+     * @param  array<int, array{page: int, x: float, y: float, width: float, height: float}>  $placements  PDF points, origin bottom-left; one signing act may stamp several pages
+     * @param  array<int, string>  $lines  Text printed under each signature; the first line is bold
      *
-     * @throws PdfSigningException when the PDF or the placement cannot be signed
+     * @throws PdfSigningException when the PDF or a placement cannot be signed
      */
-    public function stamp(string $pdf, string $signaturePng, array $placement, array $lines): string
+    public function stamp(string $pdf, string $signaturePng, array $placements, array $lines): string
     {
+        $boxes = array_map(fn (array $box) => [
+            'page' => (int) $box['page'],
+            'x' => (float) $box['x'],
+            'y' => (float) $box['y'],
+            'width' => (float) $box['width'],
+            'height' => (float) $box['height'],
+        ], array_is_list($placements) ? $placements : [$placements]);
+
         $result = Process::timeout(60)
             ->env($this->nodeEnvironment())
             ->input(json_encode([
                 'pdf' => base64_encode($pdf),
                 'signature' => base64_encode($signaturePng),
-                'page' => (int) $placement['page'],
-                'x' => (float) $placement['x'],
-                'y' => (float) $placement['y'],
-                'width' => (float) $placement['width'],
-                'height' => (float) $placement['height'],
+                'boxes' => $boxes,
                 'lines' => array_values($lines),
             ], JSON_THROW_ON_ERROR))
             ->run([config('services.node.binary', 'node'), resource_path('node/stamp-signature.mjs')]);

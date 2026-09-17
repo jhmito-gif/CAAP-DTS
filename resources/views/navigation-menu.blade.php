@@ -163,6 +163,10 @@
                                     {{ __('Manage Account') }}
                                 </div>
 
+                                <x-dropdown-link href="{{ route('esign.queue') }}">
+                                    {{ __('Documents for Signature') }}
+                                </x-dropdown-link>
+
                                 <x-dropdown-link href="{{ route('profile.show') }}">
                                     {{ __('Profile') }}
                                 </x-dropdown-link>
@@ -246,6 +250,10 @@
             </div>
 
             <div class="mt-3 space-y-1 px-2">
+                <x-responsive-nav-link href="{{ route('esign.queue') }}" :active="request()->routeIs('esign.queue')">
+                    {{ __('Documents for Signature') }}
+                </x-responsive-nav-link>
+
                 <x-responsive-nav-link href="{{ route('profile.show') }}" :active="request()->routeIs('profile.show')">
                     {{ __('Profile') }}
                 </x-responsive-nav-link>

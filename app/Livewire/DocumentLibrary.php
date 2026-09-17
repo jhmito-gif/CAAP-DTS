@@ -276,12 +276,18 @@ class DocumentLibrary extends Component
         $viewUrl = $isAttachment ? route('attachments.view', $row->id) : route('documents.view', $row->id);
         $downloadUrl = $isAttachment ? route('attachments.download', $row->id) : route('documents.download', $row->id);
 
+        // Only cleared viewers reach these rows at all, but a token-gated file
+        // stays unnamed until the token is entered on the record page -- the
+        // name alone can give a confidential file away.
+        $nameHidden = $tokenRequired;
+
         return (object) [
             'key' => "{$row->source}-{$row->id}",
             'source' => $row->source,
             'id' => (int) $row->id,
-            'title' => $row->title,
-            'original_name' => $row->original_name,
+            'title' => $nameHidden ? 'Confidential file' : $row->title,
+            'original_name' => $nameHidden ? 'Confidential file' : $row->original_name,
+            'name_hidden' => $nameHidden,
             'extension' => strtoupper(pathinfo((string) $row->original_name, PATHINFO_EXTENSION) ?: 'FILE'),
             'size' => Document::formatBytes((int) $row->size),
             'kind' => $mime === 'application/pdf' ? 'pdf' : (str_starts_with($mime, 'image/') ? 'image' : 'other'),

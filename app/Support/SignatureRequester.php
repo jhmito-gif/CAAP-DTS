@@ -20,11 +20,21 @@ class SignatureRequester
      * @param  string  $source  where the request was made, for the e-sign log
      * @return SignatureRequest|null  null when the signer was already assigned
      */
-    public function request(Attachment $attachment, User $signer, User $requester, string $source): ?SignatureRequest
+    public function request(Attachment $attachment, User $signer, User $requester, string $source, ?array $placements = null): ?SignatureRequest
     {
+        // One box or several -- a signatory may have to sign more than one page.
+        $boxes = $placements
+            ? array_values(array_is_list($placements) ? $placements : [$placements])
+            : [];
+
+        $marked = $boxes ? [
+            'placements' => $boxes,
+            'placed_by' => $requester->name,
+        ] : [];
+
         $signatureRequest = SignatureRequest::firstOrCreate(
             ['attachment_id' => $attachment->id, 'signer_id' => $signer->id],
-            ['record_id' => $attachment->record_id, 'requested_by' => $requester->id],
+            $marked + ['record_id' => $attachment->record_id, 'requested_by' => $requester->id],
         );
 
         if (! $signatureRequest->wasRecentlyCreated) {
@@ -43,6 +53,7 @@ class SignatureRequester
             'signer_name' => $signer->name,
             'signer_office' => $signer->office,
             'source' => $source,
+            'pages_marked' => $boxes ? collect($boxes)->pluck('page')->unique()->sort()->values()->all() : 'not marked',
         ]);
 
         return $signatureRequest;

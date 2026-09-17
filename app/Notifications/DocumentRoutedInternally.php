@@ -35,7 +35,7 @@ class DocumentRoutedInternally extends Notification
             'type' => 'internal_routing',
             'record_id' => $record?->id,
             'internal_routing_id' => $this->routing->id,
-            'url' => $record ? route('show-transactions', $record->id) : null,
+            'url' => $record ? route('show-transactions', $record->id, false) : null,
             'reference' => $record?->reference,
             'subject' => $record?->subject,
             'is_urgent' => (bool) $record?->is_urgent,

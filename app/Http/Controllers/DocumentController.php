@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Document;
+use App\Support\FolderAccess;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -35,7 +36,20 @@ class DocumentController extends Controller
 
     private function authorizeAccess(Document $document): void
     {
-        abort_unless($document->isAccessibleBy(Auth::user()), 403, 'You cannot open this document.');
+        $user = Auth::user();
+
+        // A document in a folder is governed by that folder: a grant can open
+        // it to another office, and a closed folder shuts it to this one.
+        if ($document->folder_id) {
+            abort_unless(
+                app(FolderAccess::class)->allows($user, $document->folder, 'view'),
+                403,
+                'You cannot open this document.'
+            );
+        } else {
+            abort_unless($document->isAccessibleBy($user), 403, 'You cannot open this document.');
+        }
+
         abort_unless(Storage::disk($document->disk)->exists($document->path), 404, 'File not found.');
     }
 

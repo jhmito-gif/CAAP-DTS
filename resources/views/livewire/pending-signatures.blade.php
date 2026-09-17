@@ -18,13 +18,17 @@
                     </div>
                 </div>
 
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                    <a href="{{ route('esign.queue') }}" class="text-xs font-semibold text-amber-800 underline hover:text-amber-900 dark:text-amber-300">
+                        All documents for signature
+                    </a>
+
                     @foreach ($signatureRequests as $signatureRequest)
                         <a
                             href="{{ route('esign.sign', $signatureRequest) }}"
                             class="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700"
                         >
-                            Sign {{ \Illuminate\Support\Str::limit($signatureRequest->attachment?->original_name ?? 'document', 32) }}
+                            Sign {{ \Illuminate\Support\Str::limit($signatureRequest->attachment?->displayNameFor(auth()->user()) ?? 'document', 32) }}
                         </a>
                     @endforeach
                 </div>

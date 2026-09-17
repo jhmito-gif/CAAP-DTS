@@ -48,6 +48,13 @@ class CreateOutgoing extends Component
     public $signerOffice = '';
     public $signers = [];
 
+    /**
+     * Where each signature goes, marked by the sender on the uploaded PDF.
+     * Keyed "{temporary file}|{signer id}"; anything unmarked is worked out
+     * from the document when it is signed.
+     */
+    public array $placements = [];
+
     /** Allowed uploads: office documents and images, up to 10 MB each. */
     protected array $attachmentRules = [
         'attachments.*' => 'file|max:10240|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png',
@@ -64,6 +71,42 @@ class CreateOutgoing extends Component
     public function updatedAttachments(): void
     {
         $this->forgetSignersWithoutPdf();
+    }
+
+    /**
+     * Called from the placement picker: every box marked for one signatory on
+     * one document, at most one per page.
+     *
+     * @param  array<int, array{page: mixed, x: mixed, y: mixed, width: mixed, height: mixed}>  $boxes
+     */
+    public function setPlacements(string $file, int $signerId, array $boxes): void
+    {
+        $clean = collect($boxes)
+            ->filter(fn ($box) => isset($box['page'], $box['x'], $box['y'], $box['width'], $box['height']))
+            ->map(fn ($box) => [
+                'page' => (int) $box['page'],
+                'x' => round((float) $box['x'], 2),
+                'y' => round((float) $box['y'], 2),
+                'width' => round((float) $box['width'], 2),
+                'height' => round((float) $box['height'], 2),
+            ])
+            ->unique('page')
+            ->sortBy('page')
+            ->values()
+            ->all();
+
+        if ($clean === []) {
+            unset($this->placements["{$file}|{$signerId}"]);
+
+            return;
+        }
+
+        $this->placements["{$file}|{$signerId}"] = $clean;
+    }
+
+    public function clearPlacements(string $file, int $signerId): void
+    {
+        unset($this->placements["{$file}|{$signerId}"]);
     }
 
     public function mount()
@@ -131,7 +174,8 @@ class CreateOutgoing extends Component
             $stored = Attachment::storeEncrypted($record, $transaction, $file, Auth::user()->name);
 
             if ($stored->is_pdf) {
-                $storedPdfs->push($stored);
+                // The temporary name is how the marked placements are keyed.
+                $storedPdfs->push(['attachment' => $stored, 'key' => $file->getFilename()]);
             }
         }
 
@@ -160,7 +204,13 @@ class CreateOutgoing extends Component
 
             foreach ($storedPdfs as $pdf) {
                 foreach ($signerUsers as $signer) {
-                    $requester->request($pdf, $signer, Auth::user(), 'outgoing creation');
+                    $requester->request(
+                        $pdf['attachment'],
+                        $signer,
+                        Auth::user(),
+                        'outgoing creation',
+                        $this->placements["{$pdf['key']}|{$signer->id}"] ?? null
+                    );
                 }
             }
 
@@ -174,7 +224,7 @@ class CreateOutgoing extends Component
             . ($signerCount > 0 ? " Signature requested from {$signerCount} " . \Illuminate\Support\Str::plural('person', $signerCount) . '.' : '');
 
         session()->flash('message', $message);
-        $this->reset(['office', 'subject', 'remarks', 'status', 'attachments', 'isConfidential', 'viewers', 'confidentialToken', 'signers']);
+        $this->reset(['office', 'subject', 'remarks', 'status', 'attachments', 'isConfidential', 'viewers', 'confidentialToken', 'signers', 'placements']);
 
         $this->dispatch('recordAdded');
         $this->dispatch('close-send-modal');
@@ -209,10 +259,29 @@ class CreateOutgoing extends Component
             ? User::where('office', $this->signerOffice)->orderBy('name')->get()
             : collect();
 
+        // The attached PDFs, previewable while still uploads, so the sender can
+        // mark where each signature goes before the record exists.
+        $pdfUploads = collect($this->attachments)
+            ->filter(fn ($file) => is_object($file) && method_exists($file, 'getMimeType') && $file->getMimeType() === 'application/pdf')
+            ->map(function ($file) {
+                try {
+                    $url = $file->temporaryUrl();
+                } catch (\Throwable) {
+                    $url = null;
+                }
+
+                return ['key' => $file->getFilename(), 'name' => $file->getClientOriginalName(), 'url' => $url];
+            })
+            ->values();
+
         return view('livewire.create-outgoing', [
             'viewerPersonnel' => $viewerPersonnel,
             'hasPdfAttachment' => $hasPdfAttachment,
             'signerPersonnel' => $signerPersonnel,
+            'pdfUploads' => $pdfUploads,
+            'chosenSigners' => User::whereIn('id', collect($this->signers)->map(fn ($id) => (int) $id))
+                ->orderBy('name')
+                ->get(['id', 'name']),
         ]);
     }
 }

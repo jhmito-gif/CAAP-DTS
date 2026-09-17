@@ -69,6 +69,36 @@ class Attachment extends Model
         return $this->is_confidential || (bool) ($this->record?->is_confidential);
     }
 
+    /**
+     * A file name gives away what the file holds ("Complaint vs Capt Cruz.pdf"),
+     * so a confidential one is named only for viewers cleared for the record,
+     * and only once they have entered its access token.
+     */
+    public function nameIsHiddenFrom(?User $user, bool $unlocked = true): bool
+    {
+        if (! $this->isConfidential()) {
+            return false;
+        }
+
+        $record = $this->record;
+
+        if (! $record || ! $record->canViewConfidentialDetails($user)) {
+            return true;
+        }
+
+        return $record->requiresToken() && ! $unlocked;
+    }
+
+    /**
+     * The file's name as this viewer may see it.
+     */
+    public function displayNameFor(?User $user, bool $unlocked = true): string
+    {
+        return $this->nameIsHiddenFrom($user, $unlocked)
+            ? 'Confidential file'
+            : (string) $this->original_name;
+    }
+
     public function record(): BelongsTo
     {
         return $this->belongsTo(Record::class, 'record_id');
@@ -137,11 +167,22 @@ class Attachment extends Model
      */
     protected static function booted(): void
     {
+        // Queue it to be read, so it can be found by what it says. The reading
+        // itself happens on a schedule -- a scan takes seconds a page. Only
+        // the kinds that can be read: a spreadsheet has nothing to offer here.
+        static::created(function (Attachment $attachment) {
+            if (app(\App\Support\DocumentReader::class)->readable((string) $attachment->mime_type)) {
+                DocumentText::queue('attachment', $attachment->id, $attachment->sha256);
+            }
+        });
+
         static::deleting(function (Attachment $attachment) {
             // Via the model so each signed version's file is removed too.
             $attachment->signatures()->get()->each->delete();
 
             Storage::disk($attachment->disk)->delete($attachment->path);
+
+            DocumentText::where('source_type', 'attachment')->where('source_id', $attachment->id)->delete();
         });
     }
 }

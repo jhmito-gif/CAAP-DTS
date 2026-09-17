@@ -13,26 +13,23 @@ use Livewire\Component;
 
 /**
  * Signing screen for one signature request. The signer places their saved
- * signature on the PDF (pdf.js, resources/js/esign.js) and confirms with their
- * signing PIN, plus their authenticator code the first time in a session. The
- * stamp is applied server-side by DocumentSigner; the browser only sends where
- * it goes.
+ * signature on the PDF (pdf.js, resources/js/esign.js) -- one spot per page,
+ * on as many pages as the document needs -- and confirms with their signing
+ * PIN, plus their authenticator code the first time in a session. The stamp is
+ * applied server-side by DocumentSigner; the browser only sends where it goes.
  */
 class SignDocument extends Component
 {
     #[Locked]
     public int $signatureRequestId;
 
-    // Placement picked in the viewer, in PDF points (origin bottom-left).
-    public int $page = 0;
-
-    public float $x = 0;
-
-    public float $y = 0;
-
-    public float $width = 0;
-
-    public float $height = 0;
+    /**
+     * Where the signature goes, in PDF points (origin bottom-left). One entry
+     * per page; pre-filled from what the sending office marked, and adjustable.
+     *
+     * @var array<int, array{page: int, x: float, y: float, width: float, height: float}>
+     */
+    public array $placements = [];
 
     public string $pin = '';
 
@@ -46,6 +43,9 @@ class SignDocument extends Component
     public function mount(int $signatureRequestId): void
     {
         $this->signatureRequestId = $signatureRequestId;
+
+        // Start from where the sending office marked it, if they did.
+        $this->placements = SignatureRequest::find($signatureRequestId)?->placements() ?? [];
     }
 
     public function unlock(): void
@@ -80,17 +80,18 @@ class SignDocument extends Component
 
         try {
             $this->validate([
-                'page' => 'required|integer|min:1',
-                'x' => 'required|numeric',
-                'y' => 'required|numeric',
-                'width' => 'required|numeric|min:40',
-                'height' => 'required|numeric|min:24',
+                'placements' => 'required|array|min:1',
+                'placements.*.page' => 'required|integer|min:1',
+                'placements.*.x' => 'required|numeric',
+                'placements.*.y' => 'required|numeric',
+                'placements.*.width' => 'required|numeric|min:40',
+                'placements.*.height' => 'required|numeric|min:24',
                 'pin' => 'required|string',
                 'code' => 'nullable|string',
             ], [
-                'page.min' => 'Place your signature on the document first.',
-                'width.min' => 'Place your signature on the document first.',
-                'height.min' => 'Place your signature on the document first.',
+                'placements.required' => 'Place your signature on the document first.',
+                'placements.*.width.min' => 'Place your signature on the document first.',
+                'placements.*.height.min' => 'Place your signature on the document first.',
             ], [
                 'pin' => 'signing PIN',
                 'code' => 'authentication code',
@@ -99,7 +100,7 @@ class SignDocument extends Component
             $signature = $signer->sign(
                 $signatureRequest,
                 Auth::user(),
-                ['page' => $this->page, 'x' => $this->x, 'y' => $this->y, 'width' => $this->width, 'height' => $this->height],
+                array_values($this->placements),
                 $this->pin,
                 $this->code !== '' ? $this->code : null,
                 request()->ip(),
@@ -111,7 +112,10 @@ class SignDocument extends Component
             $this->code = '';
         }
 
-        session()->flash('flash.banner', "Document signed. Verification code: {$signature->verification_code}");
+        $pages = collect($this->placements)->pluck('page')->unique()->count();
+
+        session()->flash('flash.banner', ($pages > 1 ? "Document signed on {$pages} pages. " : 'Document signed. ')
+            . "Verification code: {$signature->verification_code}");
         session()->flash('flash.bannerStyle', 'success');
 
         return $this->redirectRoute('show-transactions', $signatureRequest->record_id);
@@ -149,6 +153,8 @@ class SignDocument extends Component
             'attachment' => $signatureRequest->attachment,
             'record' => $record,
             'blocker' => $signer->blocker($signatureRequest, $user),
+            'markedBy' => $signatureRequest->placements() ? $signatureRequest->placed_by : null,
+            'markedPages' => $signatureRequest->markedPages(),
             'codeRequired' => $signer->requiresCode($user),
             'tokenRequired' => $tokenRequired,
             'documentUrl' => $documentUrl,

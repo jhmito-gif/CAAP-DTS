@@ -210,6 +210,51 @@ class Record extends Model
                     ->whereNotNull('record_id')
                     ->where('received_reference', 'like', "%{$value}%"));
 
+            // And by what the attached documents say: a scan read by OCR is
+            // searched here the same as a memo that carried its own text.
+            self::matchByContents($q, $value);
+        });
+    }
+
+    /**
+     * Records whose attached files contain the words searched for.
+     *
+     * A confidential record is never found this way by someone not cleared for
+     * it: they can already see that it exists, and letting the search confirm
+     * what is inside would give away exactly what the masking withholds.
+     */
+    protected static function matchByContents($query, string $value): void
+    {
+        $user = auth()->user();
+
+        $texts = DocumentText::query()
+            ->select('source_id')
+            ->where('source_type', 'attachment')
+            ->where('status', 'done');
+
+        if (\Illuminate\Support\Facades\DB::connection()->getDriverName() === 'mysql') {
+            $texts->whereRaw('MATCH(text) AGAINST (? IN NATURAL LANGUAGE MODE)', [$value]);
+        } else {
+            $texts->where('text', 'like', "%{$value}%");
+        }
+
+        $query->orWhere(function ($inner) use ($texts, $user) {
+            $inner->whereIn('id', Attachment::query()
+                ->select('record_id')
+                ->whereNotNull('record_id')
+                ->whereIn('id', $texts));
+
+            if ($user?->isAdmin()) {
+                return;
+            }
+
+            $inner->where(function ($cleared) use ($user) {
+                $cleared->where('is_confidential', false)
+                    ->orWhere('owner', $user?->office)
+                    ->orWhere('origin', $user?->office)
+                    ->orWhereIn('id', RecordTagging::query()->select('record_id')->where('user_id', $user?->id))
+                    ->orWhereIn('id', Access::query()->select('record_id')->whereNotNull('record_id')->where('office', $user?->office));
+            });
         });
     }
 
