@@ -1,0 +1,62 @@
+name: Docker Test Deployment
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: caap-dts-test-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  image:
+    name: Validate Docker image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Compose configuration
+        run: |
+          cp .env.docker.example .env.docker
+          docker compose --env-file .env.docker config --quiet
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build application and web images
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: web
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy test VM
+    if: github.event_name == 'workflow_dispatch'
+    needs: image
+    runs-on: [self-hosted, linux, x64, caap-dts-test]
+    environment: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore test environment
+        env:
+          DOCKER_ENV_FILE_B64: ${{ secrets.DOCKER_ENV_FILE_B64 }}
+        run: |
+          test -n "$DOCKER_ENV_FILE_B64"
+          printf '%s' "$DOCKER_ENV_FILE_B64" | base64 --decode > .env.docker
+          chmod 600 .env.docker
+
+      - name: Deploy containers
+        run: ./docker/deploy.sh
