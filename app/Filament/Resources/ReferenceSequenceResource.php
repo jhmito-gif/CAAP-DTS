@@ -16,6 +16,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rules\Unique;
 
 class ReferenceSequenceResource extends Resource
@@ -80,7 +81,12 @@ class ReferenceSequenceResource extends Resource
                     ->sortable(),
                 TextColumn::make('next_reference')
                     ->label('Next Internal Reference')
-                    ->searchable(),
+                    // Not a column: it is built from office, year and number
+                    // (ReferenceSequence::getNextReferenceAttribute). Searching
+                    // it directly put a column that does not exist into the
+                    // SQL, so "SPD-2026-0012" is taken apart and matched
+                    // against the parts it is made of.
+                    ->searchable(query: fn (Builder $query, string $search): Builder => self::searchReference($query, $search)),
                 TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable(),
@@ -96,6 +102,36 @@ class ReferenceSequenceResource extends Resource
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /**
+     * Match a search against the parts a reference is made of. "SPD" finds the
+     * office, "2026" the year, "SPD-2026" both, and "SPD-2026-0012" the one
+     * sequence whose next number is 12.
+     */
+    public static function searchReference(Builder $query, string $search): Builder
+    {
+        $parts = array_values(array_filter(explode('-', trim($search)), fn (string $part) => $part !== ''));
+
+        if (count($parts) <= 1) {
+            $term = $parts[0] ?? '';
+
+            return $query->where(fn (Builder $match) => $match
+                ->where('office', 'like', "%{$term}%")
+                ->orWhere('year', 'like', "%{$term}%")
+                ->when(ctype_digit($term), fn (Builder $number) => $number->orWhere('next_number', (int) $term)));
+        }
+
+        [$office, $year, $number] = array_pad($parts, 3, null);
+
+        return $query->where(function (Builder $match) use ($office, $year, $number) {
+            $match->where('office', 'like', "%{$office}%")
+                ->where('year', 'like', "%{$year}%");
+
+            if ($number !== null && ctype_digit($number)) {
+                $match->where('next_number', (int) $number);
+            }
+        });
     }
 
     public static function getRelations(): array
