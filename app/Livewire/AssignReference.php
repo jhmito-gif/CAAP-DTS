@@ -32,6 +32,12 @@ class AssignReference extends Component
     #[On('assign-reference')]
     public function open(int $recordId): void
     {
+        if (OfficeReference::centralised()) {
+            $this->banner('Office reference IDs are switched off: every record keeps its one central reference.', 'danger');
+
+            return;
+        }
+
         $record = Record::find($recordId);
 
         if (! $record || ! $record->isAccessibleBy(Auth::user())) {
@@ -56,6 +62,12 @@ class AssignReference extends Component
 
     public function save(): void
     {
+        if (OfficeReference::centralised()) {
+            $this->banner('Office reference IDs are switched off: every record keeps its one central reference.', 'danger');
+
+            return;
+        }
+
         $record = Record::find($this->recordId);
 
         if (! $record || ! $record->isAccessibleBy(Auth::user())) {

@@ -498,7 +498,9 @@
 
 
                             {{-- Tag People --}}
-                            @livewire('tag-people', ['recordId' => $record->id], key('tag-people-' . $record->id))
+                            @module('tagging')
+                                @livewire('tag-people', ['recordId' => $record->id], key('tag-people-' . $record->id))
+                            @endmodule
 
 
                             {{-- Print --}}
@@ -701,6 +703,7 @@
                         </div>
 
 
+                        @module('tagging')
                         {{-- Tagged Personnel --}}
                         <div class="mt-3 min-w-0 border-l-2 border-violet-300 dark:border-violet-700 pl-3">
 
@@ -759,6 +762,7 @@
                             </dd>
 
                         </div>
+                        @endmodule
 
                     </div>
 
@@ -888,7 +892,7 @@
 
                                 data-received-by="{{ $transact->recieved_by ?? '' }}"
 
-                                data-received-reference="{{ $transact->received_reference ?? '' }}"
+                                data-received-reference="{{ \App\Support\OfficeReference::centralised() ? '' : ($transact->received_reference ?? '') }}"
                             >
 
 

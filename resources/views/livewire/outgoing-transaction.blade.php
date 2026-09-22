@@ -436,7 +436,9 @@
 
 
                             {{-- Tag People --}}
-                            @livewire('tag-people', ['recordId' => $record->id], key('tag-people-' . $record->id))
+                            @module('tagging')
+                                @livewire('tag-people', ['recordId' => $record->id], key('tag-people-' . $record->id))
+                            @endmodule
 
 
                             {{-- Print --}}
@@ -630,6 +632,7 @@
                         </div>
 
 
+                        @module('tagging')
                         {{-- Tagged Personnel --}}
                         <div class="mt-3 min-w-0 border-l-2 border-violet-300 dark:border-violet-700 pl-3">
 
@@ -688,6 +691,7 @@
                             </dd>
 
                         </div>
+                        @endmodule
 
 
                         {{-- Attachments --}}
@@ -1279,7 +1283,7 @@
                                             >
 
                                                 {{-- Reference ID assigned by the receiving office --}}
-                                                @if ($transact->received_reference)
+                                                @if ($transact->received_reference && ! \App\Support\OfficeReference::centralised())
                                                     <div
                                                         class="py-1 sm:col-span-2"
                                                     >

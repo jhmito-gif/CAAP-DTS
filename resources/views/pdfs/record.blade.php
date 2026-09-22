@@ -416,7 +416,9 @@
                 @php
                     // Each receiving office's own reference ID, newest movement first,
                     // stacked above the original number as on the paper slip.
-                    $receivedReferences = $transactions
+                    // None while office reference IDs are switched off: then
+                    // the record's own number is the only one on the slip.
+                    $receivedReferences = \App\Support\OfficeReference::centralised() ? collect() : $transactions
                         ->pluck('received_reference')
                         ->filter()
                         ->reverse()
