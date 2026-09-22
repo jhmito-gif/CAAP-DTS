@@ -9,6 +9,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Notifications\DocumentRoutedInternally;
 use App\Support\DocumentHandling;
+use App\Support\Modules;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
@@ -131,10 +132,14 @@ class InternalTrail extends Component
         return null;
     }
 
-    /** A document on this record still waiting for this person's signature. */
+    /**
+     * A document on this record still waiting for this person's signature.
+     * None while e-signatures are switched off: accepting then just accepts,
+     * rather than sending them to a signing page that is not there.
+     */
     private function pendingSignatureFor(?User $user): ?SignatureRequest
     {
-        if (! $user) {
+        if (! $user || Modules::disabled(Modules::ESIGN)) {
             return null;
         }
 

@@ -225,6 +225,11 @@ class Record extends Model
      */
     protected static function matchByContents($query, string $value): void
     {
+        // Switched off, records are found by reference and subject alone.
+        if (\App\Support\Modules::disabled(\App\Support\Modules::DOCUMENT_READING)) {
+            return;
+        }
+
         $user = auth()->user();
 
         $texts = DocumentText::query()

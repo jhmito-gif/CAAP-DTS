@@ -23,8 +23,11 @@
                             ['route' => 'dashboard', 'label' => __('Dashboard'), 'icon' => 'grid'],
                             ['route' => 'incoming-record', 'label' => __('Incoming'), 'icon' => 'inbox'],
                             ['route' => 'outgoing-record', 'label' => __('Outgoing'), 'icon' => 'send'],
-                            ['route' => 'documents.index', 'label' => __('Documents'), 'icon' => 'folder'],
+                            ['route' => 'documents.index', 'label' => __('Documents'), 'icon' => 'folder', 'module' => \App\Support\Modules::DOCUMENTS],
                         ];
+
+                        // Optional modules an admin has switched off drop out of the menu.
+                        $navLinks = array_filter($navLinks, fn ($link) => \App\Support\Modules::enabled($link['module'] ?? 'core'));
                     @endphp
 
                     @foreach ($navLinks as $link)
@@ -85,7 +88,9 @@
 
                 <!-- Chat -->
                 @auth
-                    @livewire('chat-box')
+                    @module('chat')
+                        @livewire('chat-box')
+                    @endmodule
                 @endauth
 
                 <!-- Notifications -->
@@ -163,9 +168,11 @@
                                     {{ __('Manage Account') }}
                                 </div>
 
-                                <x-dropdown-link href="{{ route('esign.queue') }}">
-                                    {{ __('Documents for Signature') }}
-                                </x-dropdown-link>
+                                @module('esign')
+                                    <x-dropdown-link href="{{ route('esign.queue') }}">
+                                        {{ __('Documents for Signature') }}
+                                    </x-dropdown-link>
+                                @endmodule
 
                                 <x-dropdown-link href="{{ route('profile.show') }}">
                                     {{ __('Profile') }}
@@ -250,9 +257,11 @@
             </div>
 
             <div class="mt-3 space-y-1 px-2">
-                <x-responsive-nav-link href="{{ route('esign.queue') }}" :active="request()->routeIs('esign.queue')">
-                    {{ __('Documents for Signature') }}
-                </x-responsive-nav-link>
+                @module('esign')
+                    <x-responsive-nav-link href="{{ route('esign.queue') }}" :active="request()->routeIs('esign.queue')">
+                        {{ __('Documents for Signature') }}
+                    </x-responsive-nav-link>
+                @endmodule
 
                 <x-responsive-nav-link href="{{ route('profile.show') }}" :active="request()->routeIs('profile.show')">
                     {{ __('Profile') }}

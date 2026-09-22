@@ -1500,7 +1500,9 @@
             </div>
 
                     {{-- Internal routing: who inside each office is handling this --}}
-                    @livewire('internal-trail', ['recordId' => $record->id], key('internal-trail-' . $record->id))
+                    @module('internal_routing')
+                        @livewire('internal-trail', ['recordId' => $record->id], key('internal-trail-' . $record->id))
+                    @endmodule
 
                 </div>
 

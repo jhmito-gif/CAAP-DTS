@@ -40,11 +40,11 @@ class OutgoingTable extends Component
 
         return view('livewire.outgoing-table', [
             'data' => $data,
-            // Who inside this office holds each document on the page (one query).
-            'holders' => \App\Models\InternalRouting::holderNames(
-                collect($data->items())->pluck('id'),
-                $userOffice
-            ),
+            // Who inside this office holds each document on the page (one
+            // query) -- nobody, while internal routing is switched off.
+            'holders' => \App\Support\Modules::enabled(\App\Support\Modules::INTERNAL_ROUTING)
+                ? \App\Models\InternalRouting::holderNames(collect($data->items())->pluck('id'), $userOffice)
+                : collect(),
         ]);
     }
 }

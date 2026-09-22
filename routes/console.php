@@ -17,7 +17,9 @@ Schedule::command('chat:purge-attachments')->daily();
 // carries on. "Read now" in the explorer covers anything wanted sooner.
 Schedule::command('documents:read --limit=20 --retry')
     ->everyFiveMinutes()
-    ->withoutOverlapping();
+    ->withoutOverlapping()
+    // Not while an admin has reading switched off; the queue waits for it.
+    ->when(fn () => \App\Support\Modules::enabled(\App\Support\Modules::DOCUMENT_READING));
 
 // Clear away the pieces of uploads that were never finished.
 Schedule::command('documents:purge-chunks')->dailyAt('01:30');

@@ -790,8 +790,8 @@
                                                         @endif
                                                     @endif
 
-                                                    {{-- E-signatures (PDF only) --}}
-                                                    @if ($file->is_pdf && $filesUnlocked)
+                                                    {{-- E-signatures (PDF only, and only while signing is on) --}}
+                                                    @if ($file->is_pdf && $filesUnlocked && \App\Support\Modules::enabled(\App\Support\Modules::ESIGN))
                                                         @php
                                                             $signatureRequests = $file->signatureRequests;
                                                             $signedCount = $signatureRequests->whereNotNull('signed_at')->count();
@@ -1457,7 +1457,9 @@
             </div>
 
                     {{-- Internal routing: who inside each office is handling this --}}
-                    @livewire('internal-trail', ['recordId' => $record->id], key('internal-trail-' . $record->id))
+                    @module('internal_routing')
+                        @livewire('internal-trail', ['recordId' => $record->id], key('internal-trail-' . $record->id))
+                    @endmodule
 
                 </div>
 

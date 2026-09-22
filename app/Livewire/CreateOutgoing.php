@@ -13,6 +13,7 @@ use App\Models\Transaction;
 use App\Models\Office;
 use App\Models\Status;
 use App\Models\User;
+use App\Support\Modules;
 use App\Support\OfficeReference;
 use App\Support\SignatureRequester;
 
@@ -196,9 +197,11 @@ class CreateOutgoing extends Component
         }
 
         // Signatories: each is asked to sign every PDF attached to the new record.
+        // None while e-signatures are switched off -- the form does not offer
+        // them, and a request nobody could act on would only get in the way.
         $signerCount = 0;
 
-        if (! empty($this->signers) && $storedPdfs->isNotEmpty()) {
+        if (! empty($this->signers) && $storedPdfs->isNotEmpty() && Modules::enabled(Modules::ESIGN)) {
             $requester = app(SignatureRequester::class);
             $signerUsers = User::whereIn('id', collect($this->signers)->map(fn ($id) => (int) $id))->get();
 

@@ -17,15 +17,35 @@ use App\Models\User;
  */
 class DocumentHandling
 {
-    /** The person this office's copy currently sits with, if anyone. */
+    /**
+     * The person this office's copy currently sits with, if anyone.
+     *
+     * With internal routing switched off there is no panel to accept or pass
+     * a document on, so nobody is holding it: otherwise the last holder would
+     * be the only one able to send it out, for ever.
+     */
     public static function holder(Record $record, string $office): ?InternalRouting
     {
-        return blank($office) ? null : InternalRouting::holderFor($record->id, $office);
+        if (blank($office) || Modules::disabled(Modules::INTERNAL_ROUTING)) {
+            return null;
+        }
+
+        return InternalRouting::holderFor($record->id, $office);
     }
 
-    /** A document on this record still waiting for this person's signature. */
+    /**
+     * A document on this record still waiting for this person's signature.
+     *
+     * With e-signatures switched off nobody can sign, so an outstanding request
+     * no longer holds the document back -- it would never be released. The
+     * request itself is kept for when signing is switched back on.
+     */
     public static function pendingSignature(Record $record, User $user): ?SignatureRequest
     {
+        if (Modules::disabled(Modules::ESIGN)) {
+            return null;
+        }
+
         return SignatureRequest::where('record_id', $record->id)
             ->where('signer_id', $user->id)
             ->whereNull('signed_at')

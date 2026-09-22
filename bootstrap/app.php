@@ -12,7 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // ->middleware('module:esign') answers "turned off" when an admin has
+        // switched that module off (App\Support\Modules).
+        $middleware->alias([
+            'module' => \App\Http\Middleware\EnsureModuleEnabled::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
