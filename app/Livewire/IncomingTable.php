@@ -62,11 +62,11 @@ class IncomingTable extends Component
         return view('livewire.incoming-table', [
             'data' => $data,
             'latest' => $latest, // Pass it to the view
-            // Who inside this office holds each document on the page (one query).
-            'holders' => \App\Models\InternalRouting::holderNames(
-                collect($data->items())->pluck('record_id'),
-                $userOffice
-            ),
+            // Who inside this office holds each document on the page (one
+            // query) -- nobody, while internal routing is switched off.
+            'holders' => \App\Support\Modules::enabled(\App\Support\Modules::INTERNAL_ROUTING)
+                ? \App\Models\InternalRouting::holderNames(collect($data->items())->pluck('record_id'), $userOffice)
+                : collect(),
         ]);
     }
 }

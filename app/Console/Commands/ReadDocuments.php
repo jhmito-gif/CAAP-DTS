@@ -25,6 +25,12 @@ class ReadDocuments extends Command
 
     public function handle(DocumentReader $reader): int
     {
+        if (\App\Support\Modules::disabled(\App\Support\Modules::DOCUMENT_READING)) {
+            $this->warn('Reading documents is switched off (admin panel: Settings → Modules). Nothing was read.');
+
+            return self::SUCCESS;
+        }
+
         if ($this->option('queue-all')) {
             $this->info($reader->queueEverything() . ' file(s) queued.');
         }

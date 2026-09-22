@@ -43,7 +43,9 @@ class WorkProgress extends Component
      */
     private function reading(): array
     {
-        if (! Auth::check()) {
+        // Nothing to report while signed out, or while reading is switched off
+        // -- the queue does not move then, so a bar would only sit still.
+        if (! Auth::check() || \App\Support\Modules::disabled(\App\Support\Modules::DOCUMENT_READING)) {
             return ['pending' => 0, 'done' => 0, 'failed' => 0, 'total' => 0, 'percent' => 0, 'show' => false, 'finished' => false];
         }
 

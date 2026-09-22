@@ -136,10 +136,11 @@ class ChunkedUploadController extends Controller
             $document->update(['office' => $validated['office']]);
         }
 
-        // Read it now, rather than waiting for the scheduled sweep.
+        // Read it now, rather than waiting for the scheduled sweep. With reading
+        // switched off it is still queued (by the model), and read once it is on.
         $read = null;
 
-        if ($reader->readable($mime)) {
+        if ($reader->readable($mime) && \App\Support\Modules::enabled(\App\Support\Modules::DOCUMENT_READING)) {
             $row = $reader->read(DocumentText::queue('document', $document->id, $document->sha256));
 
             $read = [

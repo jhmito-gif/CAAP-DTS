@@ -25,5 +25,9 @@ class AppServiceProvider extends ServiceProvider
             config('livewire.temporary_file_upload.preview_mimes', []),
             ['pdf']
         )))]);
+
+        // @module('esign') ... @endmodule -- shows its contents only while
+        // that module is switched on (App\Support\Modules).
+        \Illuminate\Support\Facades\Blade::if('module', fn (string $module) => \App\Support\Modules::enabled($module));
     }
 }

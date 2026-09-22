@@ -436,7 +436,9 @@
 
 
                             {{-- Tag People --}}
-                            @livewire('tag-people', ['recordId' => $record->id], key('tag-people-' . $record->id))
+                            @module('tagging')
+                                @livewire('tag-people', ['recordId' => $record->id], key('tag-people-' . $record->id))
+                            @endmodule
 
 
                             {{-- Print --}}
@@ -630,6 +632,7 @@
                         </div>
 
 
+                        @module('tagging')
                         {{-- Tagged Personnel --}}
                         <div class="mt-3 min-w-0 border-l-2 border-violet-300 dark:border-violet-700 pl-3">
 
@@ -688,6 +691,7 @@
                             </dd>
 
                         </div>
+                        @endmodule
 
 
                         {{-- Attachments --}}
@@ -790,8 +794,8 @@
                                                         @endif
                                                     @endif
 
-                                                    {{-- E-signatures (PDF only) --}}
-                                                    @if ($file->is_pdf && $filesUnlocked)
+                                                    {{-- E-signatures (PDF only, and only while signing is on) --}}
+                                                    @if ($file->is_pdf && $filesUnlocked && \App\Support\Modules::enabled(\App\Support\Modules::ESIGN))
                                                         @php
                                                             $signatureRequests = $file->signatureRequests;
                                                             $signedCount = $signatureRequests->whereNotNull('signed_at')->count();
@@ -1279,7 +1283,7 @@
                                             >
 
                                                 {{-- Reference ID assigned by the receiving office --}}
-                                                @if ($transact->received_reference)
+                                                @if ($transact->received_reference && ! \App\Support\OfficeReference::centralised())
                                                     <div
                                                         class="py-1 sm:col-span-2"
                                                     >
@@ -1457,7 +1461,9 @@
             </div>
 
                     {{-- Internal routing: who inside each office is handling this --}}
-                    @livewire('internal-trail', ['recordId' => $record->id], key('internal-trail-' . $record->id))
+                    @module('internal_routing')
+                        @livewire('internal-trail', ['recordId' => $record->id], key('internal-trail-' . $record->id))
+                    @endmodule
 
                 </div>
 

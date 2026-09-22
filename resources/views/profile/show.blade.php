@@ -29,11 +29,13 @@
                 <x-section-border />
             @endif
 
-            <div class="mt-10 sm:mt-0">
-                @livewire('signature-settings')
-            </div>
+            @module('esign')
+                <div class="mt-10 sm:mt-0">
+                    @livewire('signature-settings')
+                </div>
 
-            <x-section-border />
+                <x-section-border />
+            @endmodule
 
             <div class="mt-10 sm:mt-0">
                 @livewire('profile.logout-other-browser-sessions-form')

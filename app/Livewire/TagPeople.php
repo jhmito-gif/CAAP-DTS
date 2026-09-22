@@ -7,6 +7,7 @@ use App\Models\Record;
 use App\Models\RecordTagging;
 use App\Models\User;
 use App\Notifications\RecordTagged;
+use App\Support\Modules;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -48,6 +49,10 @@ class TagPeople extends Component
 
     public function openModal(): void
     {
+        if ($this->switchedOff()) {
+            return;
+        }
+
         // Re-read on open so the picker reflects any tagging done elsewhere.
         $this->syncSelectionFromRecord();
         $this->showModal = true;
@@ -58,11 +63,29 @@ class TagPeople extends Component
         $this->showModal = false;
     }
 
+    private function switchedOff(): bool
+    {
+        if (Modules::enabled(Modules::TAGGING)) {
+            return false;
+        }
+
+        $this->showModal = false;
+        $this->dispatch('banner-message', style: 'danger', message: 'Tagging people is switched off.');
+
+        return true;
+    }
+
     /**
      * Persist the ticked people, notifying only those newly added.
      */
     public function saveTags(): void
     {
+        // Saving also removes tags, and tags are how confidential viewers and
+        // signatories are let in -- so with tagging off, nothing is saved.
+        if ($this->switchedOff()) {
+            return;
+        }
+
         $record = Record::findOrFail($this->recordId);
 
         $existing = RecordTagging::where('record_id', $record->id)

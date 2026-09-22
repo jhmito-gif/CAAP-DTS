@@ -16,6 +16,7 @@ use App\Support\DocumentOrganiser;
 use App\Support\DocumentReader;
 use App\Support\DocumentSearch;
 use App\Support\FolderAccess;
+use App\Support\Modules;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -605,6 +606,12 @@ class DocumentExplorer extends Component
      */
     public function readNow(string $key): void
     {
+        if (Modules::disabled(Modules::DOCUMENT_READING)) {
+            $this->banner('Reading documents is switched off.', 'danger');
+
+            return;
+        }
+
         [$type, $id] = $this->splitKey($key);
 
         $source = match ($type) {
@@ -654,6 +661,12 @@ class DocumentExplorer extends Component
      */
     public function readEverything(): void
     {
+        if (Modules::disabled(Modules::DOCUMENT_READING)) {
+            $this->banner('Reading documents is switched off.', 'danger');
+
+            return;
+        }
+
         if (! Auth::user()?->isAdmin() && ! Auth::user()?->manages_documents) {
             $this->banner('Only document managers can start a full read.', 'danger');
 
@@ -692,7 +705,10 @@ class DocumentExplorer extends Component
             'searching' => $searchingEverywhere,
             // How much is still waiting to be read, so a thin search result
             // can say why.
-            'unread' => $searchingEverywhere ? DocumentText::whereIn('status', ['pending', 'failed'])->count() : 0,
+            'unread' => $searchingEverywhere && Modules::enabled(Modules::DOCUMENT_READING)
+                ? DocumentText::whereIn('status', ['pending', 'failed'])->count()
+                : 0,
+            'canRead' => Modules::enabled(Modules::DOCUMENT_READING),
             'canStartReading' => (bool) ($user?->isAdmin() || $user?->manages_documents),
             'trail' => $result['trail'],
             'folder' => $result['folder'],
