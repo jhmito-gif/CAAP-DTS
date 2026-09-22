@@ -1,11 +1,18 @@
 <?php
 
 use App\Filament\Resources\ModuleSettingResource\Pages\ListModuleSettings;
+use App\Livewire\AssignReference;
 use App\Livewire\CreateOutgoing;
 use App\Livewire\DocumentExplorer;
 use App\Livewire\InternalTrail;
 use App\Livewire\OutgoingTable;
+use App\Livewire\OutgoingTransaction;
+use App\Livewire\TagPeople;
 use App\Livewire\WorkProgress;
+use App\Models\RecordTagging;
+use App\Models\ReferenceSequence;
+use App\Support\OfficeReference;
+use App\Support\SignatureRequester;
 use App\Models\Attachment;
 use App\Models\Document;
 use App\Models\DocumentText;
@@ -374,4 +381,181 @@ it('leaves notifications alone when chat is off', function () {
         ->assertSee('wire:name="notification-center"', escape: false);
 
     $this->get('/chat-attachments/1/view')->assertNotFound();
+});
+
+/*
+|--------------------------------------------------------------------------
+| Tagging people
+|--------------------------------------------------------------------------
+*/
+it('takes the tagging controls away while tagging is off', function () {
+    [$record] = moduleRecord();
+    $this->actingAs(User::factory()->create(['office' => 'ITD']));
+
+    $this->get(route('outgoing-transactions', $record->id))->assertSee('Tagged Personnel');
+
+    Modules::set(Modules::TAGGING, false);
+
+    $this->get(route('outgoing-transactions', $record->id))
+        ->assertOk()
+        ->assertDontSee('Tagged Personnel')
+        ->assertDontSee('wire:name="tag-people"', escape: false);
+});
+
+it('will not save tags while tagging is off, so nobody loses access by it', function () {
+    [$record] = moduleRecord();
+    $viewer = User::factory()->create(['office' => 'HR']);
+
+    // Someone already tagged: a cleared viewer, say.
+    RecordTagging::create(['record_id' => $record->id, 'user_id' => $viewer->id, 'office' => 'HR', 'tagged_by' => 'ITD Person']);
+
+    $this->actingAs(User::factory()->create(['office' => 'ITD']));
+    Modules::set(Modules::TAGGING, false);
+
+    // Saving with nobody ticked would normally untag them.
+    Livewire::test(TagPeople::class, ['recordId' => $record->id])
+        ->set('selected', [])
+        ->call('saveTags');
+
+    expect(RecordTagging::where('record_id', $record->id)->where('user_id', $viewer->id)->exists())->toBeTrue();
+});
+
+it('keeps a tagged viewer cleared for a confidential record while tagging is off', function () {
+    [$record] = moduleRecord();
+    $record->update(['is_confidential' => true]);
+
+    $viewer = User::factory()->create(['office' => 'HR']);
+    RecordTagging::create(['record_id' => $record->id, 'user_id' => $viewer->id, 'office' => 'HR', 'tagged_by' => 'ITD Person']);
+
+    Modules::set(Modules::TAGGING, false);
+
+    expect($record->fresh()->canViewConfidentialDetails($viewer))->toBeTrue();
+});
+
+it('still lets a signatory in to sign while tagging is off', function () {
+    [$record, $attachment] = moduleRecord();
+    $record->update(['is_confidential' => true]);
+
+    $signer = User::factory()->create(['office' => 'HR']);
+    $requester = User::factory()->create(['office' => 'ITD']);
+
+    Modules::set(Modules::TAGGING, false);
+
+    app(SignatureRequester::class)->request($attachment, $signer, $requester, 'test');
+
+    // Signing depends on the signatory being cleared, tagging or not.
+    expect($record->fresh()->canViewConfidentialDetails($signer))->toBeTrue();
+});
+
+/*
+|--------------------------------------------------------------------------
+| Office reference IDs
+|--------------------------------------------------------------------------
+*/
+it('keeps one central reference, and leaves the sequences alone, while office references are off', function () {
+    [$record] = moduleRecord();
+
+    // On: the receiving office gets a number of its own, from its sequence.
+    expect(OfficeReference::allocate($record, 'HR'))->toStartWith('HR-')
+        ->and(ReferenceSequence::where('office', 'HR')->exists())->toBeTrue();
+
+    // Off: no new number, and no office's sequence is used up for it.
+    Modules::set(Modules::OFFICE_REFERENCES, false);
+
+    expect(OfficeReference::allocate($record, 'CPO'))->toBeNull()
+        ->and(ReferenceSequence::where('office', 'CPO')->exists())->toBeFalse();
+});
+
+it('sends a record with no new office number while office references are off', function () {
+    [$record] = moduleRecord();
+
+    Transaction::where('record_id', $record->id)->update(['date_recieved' => now(), 'recieved_by' => 'ODG Person']);
+    Office::create(['name' => 'HR', 'description' => 'HR office']);
+    Status::create(['name' => 'For Action']);
+
+    Modules::set(Modules::OFFICE_REFERENCES, false);
+    $this->actingAs(User::factory()->create(['office' => 'ITD']));
+
+    Livewire::test(OutgoingTransaction::class, ['recordId' => $record->id])
+        ->set('office', 'HR')
+        ->set('status', 'For Action')
+        ->set('remarks', 'Please act')
+        ->call('sendTransaction')
+        ->assertHasNoErrors();
+
+    $sent = Transaction::where('record_id', $record->id)->where('destination', 'HR')->firstOrFail();
+
+    expect($sent->received_reference)->toBeNull()
+        // The record's own reference still travels with it.
+        ->and($sent->internal_reference)->toBe('ITD-2026-0400');
+});
+
+it('prints only the central reference on the RAS while office references are off, and keeps the others', function () {
+    [$record] = moduleRecord();
+
+    Transaction::create([
+        'record_id' => $record->id, 'internal_reference' => $record->reference, 'remarks' => 'x',
+        'status' => 'For Action', 'destination' => 'CPO', 'office' => 'ODG', 'forwarded_by' => 'ODG Person',
+        'received_reference' => 'CPO-2026-1555',
+    ]);
+
+    $slip = fn () => view('pdfs.record', [
+        'record' => $record->fresh()->load(['transactions' => fn ($q) => $q->orderBy('created_at')->orderBy('id')]),
+        'masked' => false,
+    ])->render();
+
+    expect($slip())->toContain('CPO-2026-1555')->toContain('ITD-2026-0400');
+
+    Modules::set(Modules::OFFICE_REFERENCES, false);
+
+    expect($slip())->toContain('ITD-2026-0400')->not->toContain('CPO-2026-1555');
+
+    // Hidden, not deleted: still stored, and back on the slip once on again.
+    expect(Transaction::where('received_reference', 'CPO-2026-1555')->exists())->toBeTrue();
+
+    Modules::set(Modules::OFFICE_REFERENCES, true);
+    expect($slip())->toContain('CPO-2026-1555');
+});
+
+it('takes the Reference ID button away, and refuses a new one, while office references are off', function () {
+    [$record] = moduleRecord('ODG-2026-0400');
+    $record->update(['origin' => 'ODG', 'owner' => 'ODG']);
+
+    Transaction::create([
+        'record_id' => $record->id, 'internal_reference' => $record->reference, 'remarks' => 'x',
+        'status' => 'For Action', 'destination' => 'ITD', 'office' => 'ODG', 'forwarded_by' => 'ODG Person',
+        'received_reference' => 'ITD-2026-0777',
+    ]);
+
+    $this->actingAs(User::factory()->create(['office' => 'ITD']));
+
+    $this->get(route('show-transactions', $record->id))->assertSee('ITD-2026-0777');
+
+    Modules::set(Modules::OFFICE_REFERENCES, false);
+
+    $this->get(route('show-transactions', $record->id))
+        ->assertOk()
+        ->assertDontSee('ITD-2026-0777')
+        ->assertDontSee('Assign reference ID')
+        ->assertDontSee('Change reference ID');
+
+    Livewire::test(AssignReference::class)
+        ->call('open', $record->id)
+        ->assertDispatched('banner-message')
+        ->assertNotDispatched('open-assign-reference-modal');
+});
+
+it('still finds a record by an office number given before the switch', function () {
+    [$record] = moduleRecord();
+
+    Transaction::create([
+        'record_id' => $record->id, 'internal_reference' => $record->reference, 'remarks' => 'x',
+        'status' => 'For Action', 'destination' => 'CPO', 'office' => 'ODG', 'forwarded_by' => 'ODG Person',
+        'received_reference' => 'CPO-2026-1555',
+    ]);
+
+    $this->actingAs(User::factory()->create(['office' => 'ITD']));
+    Modules::set(Modules::OFFICE_REFERENCES, false);
+
+    expect(Record::search('CPO-2026-1555')->pluck('reference'))->toContain('ITD-2026-0400');
 });

@@ -48,13 +48,29 @@ class OfficeReference
     /**
      * The number to stamp on a movement being sent to $office, with the office's
      * sequence moved past it so the next document gets a fresh number.
+     *
+     * None while office reference IDs are switched off: the record keeps its
+     * one central reference, and no office's sequence is used up for it.
      */
-    public static function allocate(Record $record, string $office): string
+    public static function allocate(Record $record, string $office): ?string
     {
+        if (static::centralised()) {
+            return null;
+        }
+
         $reference = static::resolve($record, $office);
 
         ReferenceSequence::advance($office, $reference);
 
         return $reference;
+    }
+
+    /**
+     * True while every record keeps just its own reference: offices give it no
+     * numbers of their own, and none are shown stacked on the RAS.
+     */
+    public static function centralised(): bool
+    {
+        return Modules::disabled(Modules::OFFICE_REFERENCES);
     }
 }

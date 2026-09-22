@@ -25,6 +25,14 @@ use Illuminate\Support\Facades\Schema;
  *   - Reading documents: with it off, search falls back to names, references
  *     and subjects. Files are still queued as they arrive, so turning it back
  *     on reads what came in meanwhile.
+ *   - Tagging: a tag is also how a confidential record is opened to a cleared
+ *     viewer, and how a signatory is let in to sign. With tagging off only the
+ *     tagging controls go; every tag keeps granting access, and signatories
+ *     are still let in when a signature is requested.
+ *   - Office reference IDs: with it off a record keeps its one reference.
+ *     Sending draws no new number from the receiving office's sequence, and
+ *     numbers given before are kept -- hidden, not deleted -- and search can
+ *     still find a record by one.
  *
  * Dashboard, Incoming, Outgoing, notifications and the admin panel are the
  * core of the system and cannot be switched off.
@@ -40,6 +48,10 @@ class Modules
     public const CHAT = 'chat';
 
     public const DOCUMENT_READING = 'document_reading';
+
+    public const TAGGING = 'tagging';
+
+    public const OFFICE_REFERENCES = 'office_references';
 
     private const CACHE_KEY = 'modules.enabled';
 
@@ -74,6 +86,16 @@ class Modules
             'label' => 'Reading documents for search',
             'description' => 'Reading the text out of uploaded files (OCR for scans) so they can be found by what they say.',
             'when_off' => 'Search still finds files by name, and records by reference and subject. New files are queued, and read once this is back on.',
+        ],
+        self::TAGGING => [
+            'label' => 'Tagging people',
+            'description' => 'Tagging colleagues on a record so it reaches them, with a notification.',
+            'when_off' => 'People already tagged keep their access — cleared viewers of confidential records and signatories depend on it. Tags are kept.',
+        ],
+        self::OFFICE_REFERENCES => [
+            'label' => 'Office reference IDs',
+            'description' => 'Each receiving office giving a record its own reference ID, stacked on the RAS above the original number.',
+            'when_off' => 'One central reference per record: offices keep the original number, and none is drawn from their sequences. Numbers already given are kept, and show again once this is back on.',
         ],
     ];
 

@@ -115,7 +115,7 @@
                                                 Origin ref: {{ $record->origin_reference }}
                                             </p>
                                         @endif
-                                        @if($transaction->received_reference)
+                                        @if($transaction->received_reference && ! \App\Support\OfficeReference::centralised())
                                             <p class="truncate text-xs font-medium text-emerald-600 dark:text-emerald-400" title="{{ $transaction->received_reference }}">
                                                 Reference ID: {{ $transaction->received_reference }}
                                             </p>

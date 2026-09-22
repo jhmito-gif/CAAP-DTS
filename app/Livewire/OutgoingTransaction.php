@@ -160,7 +160,9 @@ class OutgoingTransaction extends Component
 
         // Every office's reference ID, newest first, stacked above the record's
         // own number exactly as the RAS prints them.
-        $stackedReferences = $rasTransactions
+        // None while office reference IDs are switched off: the record's own
+        // number is then the only one (OfficeReference::centralised).
+        $stackedReferences = OfficeReference::centralised() ? collect() : $rasTransactions
             ->filter(fn ($transaction) => filled($transaction->received_reference))
             ->reverse()
             ->unique('received_reference')
@@ -176,8 +178,10 @@ class OutgoingTransaction extends Component
             'receivableTransaction' => $receivableTransaction,
             // Once a colleague holds it, only they release it to another office.
             'sendBlocker' => $this->showSendButton ? DocumentHandling::sendBlocker($this->record, Auth::user()) : null,
-            'canAssignReference' => (clone $officeMovements)->exists(),
-            'officeReference' => (clone $officeMovements)->whereNotNull('received_reference')->orderByDesc('id')->value('received_reference'),
+            'canAssignReference' => ! OfficeReference::centralised() && (clone $officeMovements)->exists(),
+            'officeReference' => OfficeReference::centralised()
+                ? null
+                : (clone $officeMovements)->whereNotNull('received_reference')->orderByDesc('id')->value('received_reference'),
             'stackedReferences' => $stackedReferences,
         ]);
     }
