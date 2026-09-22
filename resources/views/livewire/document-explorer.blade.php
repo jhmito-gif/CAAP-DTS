@@ -603,7 +603,7 @@
                 class="block px-3 py-1.5 text-left font-medium text-gray-700 hover:bg-indigo-50 dark:text-gray-200 dark:hover:bg-indigo-900/30">Go to the record</a>
         </template>
 
-        <template x-if="entry(menu.key)?.type === 'file'">
+        <template x-if="entry(menu.key)?.type === 'file' && {{ $canRead ? 'true' : 'false' }}">
             <button type="button" role="menuitem" @click="$wire.readNow(menu.key); menu.open = false"
                 class="block w-full px-3 py-1.5 text-left font-medium text-gray-700 hover:bg-indigo-50 dark:text-gray-200 dark:hover:bg-indigo-900/30">
                 Read for searching

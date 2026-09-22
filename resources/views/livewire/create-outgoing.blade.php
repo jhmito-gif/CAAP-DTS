@@ -435,8 +435,8 @@
             </div>
 
 
-            <!-- Signatories (only when a PDF is attached) -->
-            @if ($hasPdfAttachment)
+            <!-- Signatories (only when a PDF is attached, and signing is on) -->
+            @if ($hasPdfAttachment && \App\Support\Modules::enabled(\App\Support\Modules::ESIGN))
                 <div class="rounded-lg border border-sky-200 dark:border-sky-800 bg-sky-50/50 dark:bg-sky-900/20 p-4">
 
                     <div class="mb-2 flex items-center gap-2">

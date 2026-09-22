@@ -35,7 +35,10 @@ class DocumentSearch
             return collect();
         }
 
-        $matches = $this->matchingTexts($needle, $limit * 4);
+        // With reading switched off, only names are searched.
+        $matches = Modules::enabled(Modules::DOCUMENT_READING)
+            ? $this->matchingTexts($needle, $limit * 4)
+            : collect();
 
         // Names as well as contents: one search box, both kinds of match, with
         // a name match ranked above a passing mention in the text.

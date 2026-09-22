@@ -5,9 +5,13 @@
         </h2>
     </x-slot>
 
-    <livewire:pending-signatures :record-id="$recordID" />
+    @module('esign')
+        <livewire:pending-signatures :record-id="$recordID" />
+    @endmodule
     <livewire:outgoing-transaction :record-id="$recordID" />
     <livewire:manage-record :redirect-after-delete="true" />
     <livewire:assign-reference />
-    <livewire:manage-signature-requests />
+    @module('esign')
+        <livewire:manage-signature-requests />
+    @endmodule
 </x-app-layout>
