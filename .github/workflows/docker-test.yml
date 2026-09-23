@@ -53,9 +53,22 @@ jobs:
       - name: Restore test environment
         env:
           DOCKER_ENV_FILE_B64: ${{ secrets.DOCKER_ENV_FILE_B64 }}
+          SERVER_ENV_FILE: ${{ vars.TEST_ENV_FILE }}
         run: |
-          test -n "$DOCKER_ENV_FILE_B64"
-          printf '%s' "$DOCKER_ENV_FILE_B64" | base64 --decode > .env.docker
+          # The secret if one is set; otherwise the settings the test server is
+          # already running with. That file is the one that knows which port
+          # the stack listens on, so a deploy cannot move it by accident.
+          : "${SERVER_ENV_FILE:=/opt/caap-dts/.env.docker}"
+
+          if [ -n "${DOCKER_ENV_FILE_B64:-}" ]; then
+            printf '%s' "$DOCKER_ENV_FILE_B64" | base64 --decode > .env.docker
+          elif [ -f "$SERVER_ENV_FILE" ]; then
+            cp "$SERVER_ENV_FILE" .env.docker
+          else
+            echo "No settings found: set the DOCKER_ENV_FILE_B64 secret, or keep $SERVER_ENV_FILE on the server." >&2
+            exit 1
+          fi
+
           chmod 600 .env.docker
 
       - name: Deploy containers
