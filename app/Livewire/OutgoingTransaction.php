@@ -9,6 +9,7 @@ use App\Models\Status;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use App\Livewire\Concerns\ReceivesTransactions;
+use App\Livewire\Concerns\WatchesRecordActivity;
 use App\Livewire\Concerns\UnlocksConfidential;
 use App\Support\DocumentHandling;
 use App\Support\OfficeReference;
@@ -17,6 +18,7 @@ use Livewire\Component;
 class OutgoingTransaction extends Component
 {
     use ReceivesTransactions;
+    use WatchesRecordActivity;
     use UnlocksConfidential;
 
     public $recordId;
@@ -135,6 +137,8 @@ class OutgoingTransaction extends Component
 
     public function render()
     {
+        $this->noteActivitySeen();
+
         $this->record->load('taggedUsers', 'attachments');
 
         $this->transactions = Transaction::where('record_id', $this->recordId)
