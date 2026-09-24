@@ -1,4 +1,6 @@
-<div class="w-full min-h-screen bg-gray-50/60 dark:bg-gray-900 flex flex-col pt-6">
+{{-- Polls only while the tab is on screen, so a list left open in a background
+     tab costs the server nothing. --}}
+<div class="w-full min-h-screen bg-gray-50/60 dark:bg-gray-900 flex flex-col pt-6" wire:poll.15s.visible>
 
     <section class="mt-2">
 
@@ -96,6 +98,18 @@
                         {{ $data->total() }}
                         {{ Str::plural('record', $data->total()) }}
                     </span>
+
+                    {{-- Logged by the office while this page was open. --}}
+                    @if ($arrived > 0)
+                        <button type="button" wire:click="catchUp"
+                            class="inline-flex items-center gap-2 rounded-full border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 transition-colors hover:bg-emerald-100 dark:hover:bg-emerald-900/50">
+                            <span class="relative flex size-2">
+                                <span class="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-75"></span>
+                                <span class="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
+                            </span>
+                            {{ $arrived }} new {{ Str::plural('record', $arrived) }} added
+                        </button>
+                    @endif
 
                 </div>
 
@@ -198,10 +212,15 @@
                                     $isStale = $date && $date->diffInDays(now()) >= 5;
                                 @endphp
 
+                                @php
+                                    // Logged after this page was opened -- tinted so the eye finds it.
+                                    $justAdded = $seenId !== null && $record->id > $seenId;
+                                @endphp
+
                                 <tr
                                     wire:key="outgoing-record-{{ $record->id }}"
                                     onclick="window.location='{{ $record->owner === auth()->user()->office ? route('outgoing-transactions', $record->id) : route('show-transactions', $record->id) }}'"
-                                    class="group cursor-pointer transition-colors duration-100 hover:bg-emerald-50/40 dark:hover:bg-emerald-900/40"
+                                    class="group cursor-pointer {{ $justAdded ? 'bg-emerald-50/70 dark:bg-emerald-900/10' : '' }} transition-colors duration-100 hover:bg-emerald-50/40 dark:hover:bg-emerald-900/40"
                                 >
 
                                     {{-- Reference --}}
