@@ -1,4 +1,6 @@
-<div class="min-h-screen bg-gray-50/70 dark:bg-gray-900">
+{{-- Keeps the trail current while the page is open: pollActivity sends back
+     no HTML unless the record has actually moved. --}}
+<div class="min-h-screen bg-gray-50/70 dark:bg-gray-900" wire:poll.20s.visible="pollActivity">
 
     @php
         // Confidential record opened by a viewer not cleared for its details.
@@ -2219,6 +2221,13 @@
             }
 
 
+            /*
+             * Hold the background refresh. Sent with the next poll rather than
+             * a round trip of its own (the third argument defers it).
+             */
+            @this.set('formBusy', true, false);
+
+
             modal.classList.remove('hidden');
             modal.classList.add('flex');
 
@@ -2296,6 +2305,9 @@
                 'scale-95',
                 'translate-y-3'
             );
+
+
+            @this.set('formBusy', false, false);
 
 
             window.setTimeout(() => {
