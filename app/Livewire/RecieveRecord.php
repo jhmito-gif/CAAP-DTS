@@ -28,7 +28,7 @@ class RecieveRecord extends Component
         
         $this->validate([
         'office' => 'required|string',
-        'subject' => 'required|string',
+        'subject' => 'required|string|max:'.Record::SUBJECT_MAX,
         'reference' => 'required|string',
         ]);
 

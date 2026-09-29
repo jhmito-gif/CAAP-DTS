@@ -90,6 +90,17 @@
             text-align: left;
         }
 
+        /* The subject box is a fixed height, so a long subject steps down a
+           size rather than stretching the form out of shape. */
+        .subject-sm {
+            font-size: 9px;
+        }
+
+        .subject-xs {
+            font-size: 7.5px;
+            line-height: 1.2;
+        }
+
         .movement-heading {
             font-size: 10px;
             font-weight: bold;
@@ -438,9 +449,17 @@
         </tr>
 
         <tr>
+            @php
+                $subjectText = $masked ? $confidentialMark : ($record->subject ?? '');
+                $subjectSize = match (true) {
+                    mb_strlen($subjectText) > 600 => 'subject-xs',
+                    mb_strlen($subjectText) > 300 => 'subject-sm',
+                    default => '',
+                };
+            @endphp
             <td colspan="4" rowspan="2" class="subject-cell">
                 <span class="label">Subject</span>
-                <div class="subject">{{ $masked ? $confidentialMark : ($record->subject ?? '') }}</div>
+                <div class="subject {{ $subjectSize }}">{{ $subjectText }}</div>
             </td>
             <td colspan="2" class="stack-cell">
                 <span class="label">Date of Document:</span>

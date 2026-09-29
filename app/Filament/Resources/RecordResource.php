@@ -17,6 +17,7 @@ use App\Filament\Resources\RecordResource\Pages;
 use App\Filament\Resources\RecordResource\RelationManagers;
 use App\Models\Record;
 use Filament\Forms;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -66,9 +67,12 @@ class RecordResource extends Resource
                     ->maxLength(255),
                 TextInput::make('origin_reference')
                     ->maxLength(255),
-                TextInput::make('subject')
+                // A subject can run to a paragraph, so it gets room to show it.
+                Textarea::make('subject')
                     ->required()
-                    ->maxLength(255),
+                    ->rows(3)
+                    ->maxLength(Record::SUBJECT_MAX)
+                    ->columnSpanFull(),
             ]);
     }
 
