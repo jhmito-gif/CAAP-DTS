@@ -42,7 +42,7 @@ class CreateIncoming extends Component
             Rule::unique('records', 'origin_reference')
                 ->where(fn ($query) => $query->where('origin', $this->office)),
         ],
-        'subject' => 'required|string',
+        'subject' => 'required|string|max:'.Record::SUBJECT_MAX,
         'remarks' => 'required|string',
         'status' => 'required',
         ]);

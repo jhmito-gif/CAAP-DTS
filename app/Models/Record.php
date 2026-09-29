@@ -8,6 +8,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Record extends Model
 {
+    /**
+     * How long a subject may be. The column itself is TEXT, so this is about
+     * what a person can reasonably be asked to read on a routing slip, not a
+     * storage limit -- a whole memo pasted into the subject line helps nobody.
+     */
+    public const SUBJECT_MAX = 2000;
+
     protected $fillable = [
         'reference',
         'origin_reference',

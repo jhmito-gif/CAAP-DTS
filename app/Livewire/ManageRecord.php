@@ -86,7 +86,7 @@ class ManageRecord extends Component
         $canEditRouting = $this->canEditRouting($first);
 
         $rules = [
-            'subject' => 'required|string',
+            'subject' => 'required|string|max:'.Record::SUBJECT_MAX,
             'newAttachments.*' => 'file|max:10240|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png',
         ];
 

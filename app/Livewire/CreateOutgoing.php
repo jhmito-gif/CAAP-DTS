@@ -122,7 +122,7 @@ class CreateOutgoing extends Component
 
         $this->validate(array_merge([
         'office' => 'required',
-        'subject' => 'required|string',
+        'subject' => 'required|string|max:'.Record::SUBJECT_MAX,
         'remarks' => 'required|string',
         'status' => 'required',
         'confidentialToken' => [$this->isConfidential ? 'required' : 'nullable', 'string', 'min:4', 'max:100'],
