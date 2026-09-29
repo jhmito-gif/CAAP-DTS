@@ -67,9 +67,11 @@ jobs:
     needs: ci
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
-    # Production self-hosted runner.
+    # The production server, and only it. "self-hosted" alone would match any
+    # self-hosted runner -- including the staging VM, which would take the
+    # release and fail, leaving production on the old version.
     # Never use this runner for pull_request jobs.
-    runs-on: self-hosted
+    runs-on: [self-hosted, linux, x64, caap-dts-production]
 
     environment: production
 
