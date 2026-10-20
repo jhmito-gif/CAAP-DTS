@@ -1,0 +1,75 @@
+name: Docker Test Deployment
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: caap-dts-test-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  image:
+    name: Validate Docker image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Compose configuration
+        run: |
+          cp .env.docker.example .env.docker
+          docker compose --env-file .env.docker config --quiet
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build application and web images
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: web
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy test VM
+    if: github.event_name == 'workflow_dispatch'
+    needs: image
+    runs-on: [self-hosted, linux, x64, caap-dts-test]
+    environment: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore test environment
+        env:
+          DOCKER_ENV_FILE_B64: ${{ secrets.DOCKER_ENV_FILE_B64 }}
+          SERVER_ENV_FILE: ${{ vars.TEST_ENV_FILE }}
+        run: |
+          # The secret if one is set; otherwise the settings the test server is
+          # already running with. That file is the one that knows which port
+          # the stack listens on, so a deploy cannot move it by accident.
+          : "${SERVER_ENV_FILE:=/opt/caap-dts/.env.docker}"
+
+          if [ -n "${DOCKER_ENV_FILE_B64:-}" ]; then
+            printf '%s' "$DOCKER_ENV_FILE_B64" | base64 --decode > .env.docker
+          elif [ -f "$SERVER_ENV_FILE" ]; then
+            cp "$SERVER_ENV_FILE" .env.docker
+          else
+            echo "No settings found: set the DOCKER_ENV_FILE_B64 secret, or keep $SERVER_ENV_FILE on the server." >&2
+            exit 1
+          fi
+
+          chmod 600 .env.docker
+
+      - name: Deploy containers
+        run: ./docker/deploy.sh
