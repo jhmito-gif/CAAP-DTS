@@ -2,20 +2,38 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\TracksNewArrivals;
 use App\Models\Transaction;
 use App\Models\Record;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class IncomingTable extends Component
 {
+    use TracksNewArrivals;
     use WithPagination;
 
     public $perPage = 10;
     public $search = '';
 
     protected $listeners = ['recordAdded' => '$refresh'];
+
+    public function mount(): void
+    {
+        $this->markArrivalsSeen();
+    }
+
+    /**
+     * Movements addressed to this office. Legacy rows -- matched on the record
+     * rather than the destination -- are left out on purpose: they are old data
+     * being reconciled, not something arriving while the page is open.
+     */
+    protected function arrivalsQuery(): Builder
+    {
+        return Transaction::query()->where('destination', Auth::user()->office);
+    }
 
     // Reset pagination when searching to avoid landing on empty pages
     public function updatingSearch()
@@ -62,6 +80,9 @@ class IncomingTable extends Component
         return view('livewire.incoming-table', [
             'data' => $data,
             'latest' => $latest, // Pass it to the view
+            // What the poll has brought in since the page was opened.
+            'arrived' => $this->arrivedSinceOpened(),
+            'office' => $userOffice,
             // Who inside this office holds each document on the page (one
             // query) -- nobody, while internal routing is switched off.
             'holders' => \App\Support\Modules::enabled(\App\Support\Modules::INTERNAL_ROUTING)

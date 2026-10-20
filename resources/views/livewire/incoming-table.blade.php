@@ -1,4 +1,6 @@
-<div class="w-full min-h-screen bg-gray-50/60 dark:bg-gray-900 flex flex-col pt-6">
+{{-- Polls only while the tab is on screen, so a list left open in a background
+     tab costs the server nothing. --}}
+<div class="w-full min-h-screen bg-gray-50/60 dark:bg-gray-900 flex flex-col pt-6" wire:poll.15s.visible>
 
     <section class="mt-2">
 
@@ -43,6 +45,19 @@
                     <span class="hidden text-sm text-gray-400 dark:text-gray-500 sm:inline">
                         {{ $data->total() }} {{ Str::plural('record', $data->total()) }}
                     </span>
+
+                    {{-- Something landed while this page was open. Says so
+                         rather than sliding rows in unannounced. --}}
+                    @if ($arrived > 0)
+                        <button type="button" wire:click="catchUp"
+                            class="inline-flex items-center gap-2 rounded-full border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/30 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300 transition-colors hover:bg-amber-100 dark:hover:bg-amber-900/50">
+                            <span class="relative flex size-2">
+                                <span class="absolute inline-flex size-full animate-ping rounded-full bg-amber-500 opacity-75"></span>
+                                <span class="relative inline-flex size-2 rounded-full bg-amber-500"></span>
+                            </span>
+                            {{ $arrived }} new {{ Str::plural('record', $arrived) }} arrived
+                        </button>
+                    @endif
                 </div>
 
                 <div class="relative w-full sm:w-80">
@@ -102,14 +117,27 @@
 
                                     // Confidential records routed here but not cleared for this viewer
                                     $masked = $record && $record->isMaskedFor(auth()->user());
+
+                                    // Sent here and nobody has received it yet: the newly incoming file.
+                                    $awaiting = $transaction->destination === $office && blank($transaction->date_recieved);
+
+                                    // Landed after this page was opened -- tinted so the eye finds it.
+                                    $justArrived = $seenId !== null && $transaction->id > $seenId;
                                 @endphp
-                                <tr wire:key="{{ $record?->id ?? $transaction->id }}"
+                                <tr wire:key="tx-{{ $transaction->id }}"
                                     @if($record) onclick="window.location='{{ route('show-transactions', $record->id) }}'" @endif
-                                    class="group {{ $record ? 'cursor-pointer' : '' }} transition-colors duration-100 hover:bg-blue-50/40 dark:hover:bg-blue-900/40">
+                                    class="group {{ $record ? 'cursor-pointer' : '' }} {{ $justArrived ? 'bg-amber-50/70 dark:bg-amber-900/10' : '' }} transition-colors duration-100 hover:bg-blue-50/40 dark:hover:bg-blue-900/40">
                                     <td class="px-4 py-3">
                                         <span class="font-semibold text-gray-800 dark:text-gray-100 group-hover:text-blue-600">
                                             {{ $record?->reference ?? 'N/A' }}
                                         </span>
+                                        @if ($awaiting)
+                                            <span class="ml-1.5 inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300 align-middle"
+                                                title="Sent to your office and not yet marked as received">
+                                                <span class="size-1.5 rounded-full bg-amber-500"></span>
+                                                New
+                                            </span>
+                                        @endif
                                         @if($record?->origin_reference && $record->origin_reference !== $record->reference)
                                             <p class="truncate text-xs text-gray-400 dark:text-gray-500" title="{{ $record->origin_reference }}">
                                                 Origin ref: {{ $record->origin_reference }}

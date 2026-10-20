@@ -6,6 +6,7 @@ use App\Models\Office;
 use App\Models\Status;
 use App\Models\Record;
 use App\Livewire\Concerns\ReceivesTransactions;
+use App\Livewire\Concerns\WatchesRecordActivity;
 use App\Livewire\Concerns\UnlocksConfidential;
 use App\Support\DocumentHandling;
 use App\Support\OfficeReference;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 class TransactionTable extends Component
 {
     use ReceivesTransactions;
+    use WatchesRecordActivity;
     use UnlocksConfidential;
 
     public $recordId;
@@ -105,6 +107,8 @@ class TransactionTable extends Component
 
     public function render()
     {
+        $this->noteActivitySeen();
+
         $transactions = Transaction::where('record_id', $this->recordId)
             ->where(function ($query) {
                     $query->where('office', Auth::user()->office)

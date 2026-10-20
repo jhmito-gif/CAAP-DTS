@@ -1,4 +1,6 @@
-<div class="min-h-screen bg-gray-50/70 dark:bg-gray-900">
+{{-- Keeps the trail current while the page is open: pollActivity sends back
+     no HTML unless the record has actually moved. --}}
+<div class="min-h-screen bg-gray-50/70 dark:bg-gray-900" wire:poll.20s.visible="pollActivity">
 
     <section class="py-8">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
