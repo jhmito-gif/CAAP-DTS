@@ -106,18 +106,29 @@
                                 <tr wire:key="{{ $record?->id ?? $transaction->id }}"
                                     @if($record) onclick="window.location='{{ route('show-transactions', $record->id) }}'" @endif
                                     class="group {{ $record ? 'cursor-pointer' : '' }} transition-colors duration-100 hover:bg-blue-50/40 dark:hover:bg-blue-900/40">
+                                    @php
+                                        // This office's own number for the document leads; the
+                                        // sender's number follows. Until the office has one (or
+                                        // while office numbers are off) the record's number leads.
+                                        $ownNumber = ! \App\Support\OfficeReference::centralised() && filled($transaction->received_reference)
+                                            ? $transaction->received_reference
+                                            : null;
+                                        $senderNumber = $ownNumber && $record?->reference && $record->reference !== $ownNumber
+                                            ? $record->reference
+                                            : null;
+                                    @endphp
                                     <td class="px-4 py-3">
                                         <span class="font-semibold text-gray-800 dark:text-gray-100 group-hover:text-blue-600">
-                                            {{ $record?->reference ?? 'N/A' }}
+                                            {{ $ownNumber ?? $record?->reference ?? 'N/A' }}
                                         </span>
-                                        @if($record?->origin_reference && $record->origin_reference !== $record->reference)
-                                            <p class="truncate text-xs text-gray-400 dark:text-gray-500" title="{{ $record->origin_reference }}">
-                                                Origin ref: {{ $record->origin_reference }}
+                                        @if($senderNumber)
+                                            <p class="truncate text-xs text-gray-500 dark:text-gray-400" title="The sending office's number">
+                                                {{ $senderNumber }}@if($transaction->office) &middot; from {{ $transaction->office }}@endif
                                             </p>
                                         @endif
-                                        @if($transaction->received_reference && ! \App\Support\OfficeReference::centralised())
-                                            <p class="truncate text-xs font-medium text-emerald-600 dark:text-emerald-400" title="{{ $transaction->received_reference }}">
-                                                Reference ID: {{ $transaction->received_reference }}
+                                        @if($record?->origin_reference && ! in_array($record->origin_reference, [$record->reference, $ownNumber], true))
+                                            <p class="truncate text-xs text-gray-400 dark:text-gray-500" title="{{ $record->origin_reference }}">
+                                                Origin ref: {{ $record->origin_reference }}
                                             </p>
                                         @endif
                                         @if($record && ($holders[$record->id] ?? null))

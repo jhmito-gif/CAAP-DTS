@@ -38,10 +38,9 @@ class IncomingTable extends Component
        $year = now()->year;
     
     // Fetch the single latest record
-    $latest = Record::where(function ($query) {
-            $query->where('origin', Auth::user()->office)
-                  ->orWhere('owner', Auth::user()->office);
-        })
+    // This office's own latest record -- not another office's copy of a
+    // document that merely started here.
+    $latest = Record::where('owner', Auth::user()->office)
         ->whereYear('created_at', $year)
         ->latest('id')
         ->first();

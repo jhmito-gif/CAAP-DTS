@@ -56,7 +56,8 @@ it('still refuses an office with no link to the record', function () {
         ->assertRedirect(route('dashboard'));
 });
 
-it('opens records owned by another office on the shared record page from the outgoing list', function () {
+it('lists only the office\'s own records as outgoing, not another office\'s copy of its document', function () {
+    // HR logged PD's document on arrival: HR's record, under HR's number.
     $ownedElsewhere = recordLoggedByHrFromPd();
 
     $owned = Record::create([
@@ -71,6 +72,10 @@ it('opens records owned by another office on the shared record page from the out
 
     Livewire::test(OutgoingTable::class)
         ->assertSee(route('outgoing-transactions', $owned->id), false)
-        ->assertSee(route('show-transactions', $ownedElsewhere->id), false)
-        ->assertDontSee(route('outgoing-transactions', $ownedElsewhere->id), false);
+        ->assertDontSee('HR-2026-0001')
+        ->assertDontSee(route('show-transactions', $ownedElsewhere->id), false);
+
+    // PD can still open it from a link -- it is where the document came from.
+    Livewire::test(TransactionTable::class, ['recordId' => $ownedElsewhere->id])
+        ->assertNoRedirect();
 });
