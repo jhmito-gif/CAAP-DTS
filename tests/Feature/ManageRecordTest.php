@@ -66,6 +66,7 @@ it('lets the creator edit the subject, first routing entry and attachments befor
         ->set('remarks', 'Corrected remarks')
         ->call('toggleRemoveAttachment', $oldFile->id)
         ->set('newAttachments', [UploadedFile::fake()->image('new.png')])
+        ->set('uploadTypes', [\App\Models\DocumentCategory::value('id')])
         ->call('save')
         ->assertHasNoErrors()
         ->assertDispatched('record-updated');

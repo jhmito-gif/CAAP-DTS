@@ -22,6 +22,7 @@ use Livewire\WithFileUploads;
 class ManageRecord extends Component
 {
     use WithFileUploads;
+    use Concerns\PicksDocumentTypes;
 
     /** On a record page, deleting it leaves nothing to show -- go back to its list. */
     public bool $redirectAfterDelete = false;
@@ -60,7 +61,7 @@ class ManageRecord extends Component
         $first = $record->firstTransaction();
 
         $this->resetValidation();
-        $this->reset(['newAttachments', 'removeAttachmentIds']);
+        $this->reset(['newAttachments', 'uploadTypes', 'removeAttachmentIds']);
 
         $this->recordId = $record->id;
         $this->subject = (string) $record->subject;
@@ -88,7 +89,7 @@ class ManageRecord extends Component
         $rules = [
             'subject' => 'required|string|max:'.Record::SUBJECT_MAX,
             'newAttachments.*' => 'file|max:10240|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png',
-        ];
+        ] + $this->uploadTypeRules((array) $this->newAttachments);
 
         if ($isIncoming) {
             $rules['originReference'] = [
@@ -114,7 +115,7 @@ class ManageRecord extends Component
             'originReference' => 'origin reference',
             'office' => 'destination office',
             'newAttachments.*' => 'attachment',
-        ]);
+        ] + $this->uploadTypeAttributes((array) $this->newAttachments));
 
         DB::transaction(function () use ($record, $first, $isIncoming, $canEditRouting) {
             $record->subject = $this->subject;
@@ -151,12 +152,12 @@ class ManageRecord extends Component
                 ->get()
                 ->each->delete();
 
-            foreach ($this->newAttachments as $file) {
-                Attachment::storeEncrypted($record, $first, $file, Auth::user()->name);
+            foreach ($this->newAttachments as $index => $file) {
+                Attachment::storeEncrypted($record, $first, $file, Auth::user()->name, $this->uploadTypeFor($index));
             }
         });
 
-        $this->reset(['newAttachments', 'removeAttachmentIds']);
+        $this->reset(['newAttachments', 'uploadTypes', 'removeAttachmentIds']);
 
         $this->banner("Record {$record->reference} was updated.");
         $this->dispatch('close-edit-record-modal');
@@ -175,6 +176,7 @@ class ManageRecord extends Component
     {
         unset($this->newAttachments[$index]);
         $this->newAttachments = array_values($this->newAttachments);
+        $this->forgetUploadType($index);
     }
 
     #[On('delete-record')]
@@ -266,6 +268,7 @@ class ManageRecord extends Component
             'firstTransaction' => $first,
             'isIncoming' => (bool) $record?->isIncoming(),
             'canEditRouting' => $record !== null && $this->canEditRouting($first),
+            'documentTypes' => \App\Models\DocumentCategory::orderBy('name')->pluck('name', 'id'),
         ]);
     }
 }

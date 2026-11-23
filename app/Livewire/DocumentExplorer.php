@@ -92,6 +92,12 @@ class DocumentExplorer extends Component
         $this->search = '';
     }
 
+    /** Every file of one document type, wherever it lives; none returns to the library. */
+    public function openType(string $categoryId): void
+    {
+        $this->open(ctype_digit($categoryId) ? "type:{$categoryId}" : 'library');
+    }
+
     public function switchOffice(string $office): void
     {
         if (Auth::user()?->isAdmin() || $office === Auth::user()?->office) {
@@ -691,6 +697,12 @@ class DocumentExplorer extends Component
         $found = $searchingEverywhere
             ? app(DocumentSearch::class)->find($user, $needle)
             : collect();
+
+        // Searching from a document type looks only among files of that type.
+        if (str_starts_with($this->location, 'type:')) {
+            $typeId = (int) substr($this->location, 5);
+            $found = $found->filter(fn (object $hit) => (int) ($hit->category_id ?? 0) === $typeId)->values();
+        }
 
         if ($needle !== '' && ! $searchingEverywhere) {
             $lowered = mb_strtolower($needle);

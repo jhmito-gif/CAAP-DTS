@@ -51,6 +51,7 @@ it('requests signatures for every attached PDF when creating an outgoing record'
 
     fillOutgoingForm(Livewire::test(CreateOutgoing::class))
         ->set('attachments', [outgoingPdfUpload('memo.pdf'), outgoingPdfUpload('annex.pdf'), UploadedFile::fake()->image('photo.png')])
+        ->set('uploadTypes', array_fill(0, 3, \App\Models\DocumentCategory::value('id')))
         ->assertSee('Request signatures')
         ->set('signerOffice', 'HR')
         ->assertSee('Signer Alpha')
@@ -82,6 +83,7 @@ it('records where the sender marked each signature', function () {
 
     $component = fillOutgoingForm(Livewire::test(CreateOutgoing::class))
         ->set('attachments', [outgoingPdfUpload('memo.pdf')])
+        ->set('uploadTypes', [\App\Models\DocumentCategory::value('id')])
         ->set('signerOffice', 'HR')
         ->set('signers', [$first->id, $second->id]);
 
@@ -121,6 +123,7 @@ it('leaves the placement empty when the sender does not mark one', function () {
 
     fillOutgoingForm(Livewire::test(CreateOutgoing::class))
         ->set('attachments', [outgoingPdfUpload('memo.pdf')])
+        ->set('uploadTypes', [\App\Models\DocumentCategory::value('id')])
         ->set('signerOffice', 'HR')
         ->set('signers', [$signer->id])
         ->call('createRecord')
@@ -137,6 +140,7 @@ it('offers and sends no signature requests without a PDF attachment', function (
 
     fillOutgoingForm(Livewire::test(CreateOutgoing::class))
         ->set('attachments', [UploadedFile::fake()->image('photo.png')])
+        ->set('uploadTypes', [\App\Models\DocumentCategory::value('id')])
         ->assertDontSee('Request signatures')
         // Even a tampered request with signers but no PDF sends nothing.
         ->set('signers', [$signer->id])

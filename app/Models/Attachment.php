@@ -136,7 +136,7 @@ class Attachment extends Model
     /**
      * Store an uploaded file ENCRYPTED at rest on the private disk and record it.
      */
-    public static function storeEncrypted(Record $record, ?Transaction $transaction, \Illuminate\Http\UploadedFile $file, string $uploadedBy): self
+    public static function storeEncrypted(Record $record, ?Transaction $transaction, \Illuminate\Http\UploadedFile $file, string $uploadedBy, ?int $documentCategoryId = null): self
     {
         $ext = $file->getClientOriginalExtension();
         $path = "attachments/{$record->id}/" . Str::random(40) . ($ext ? ".{$ext}" : '');
@@ -159,6 +159,7 @@ class Attachment extends Model
             'uploaded_by' => $uploadedBy,
             'is_confidential' => (bool) $record->is_confidential,
             'is_encrypted' => true,
+            'document_category_id' => $documentCategoryId,
         ]);
     }
 

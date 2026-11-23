@@ -20,6 +20,7 @@ use App\Support\SignatureRequester;
 class CreateOutgoing extends Component
 {
     use WithFileUploads;
+    use Concerns\PicksDocumentTypes;
 
     public $reference;
 
@@ -65,6 +66,7 @@ class CreateOutgoing extends Component
     {
         unset($this->attachments[$index]);
         $this->attachments = array_values($this->attachments);
+        $this->forgetUploadType((int) $index);
 
         $this->forgetSignersWithoutPdf();
     }
@@ -128,10 +130,10 @@ class CreateOutgoing extends Component
         'confidentialToken' => [$this->isConfidential ? 'required' : 'nullable', 'string', 'min:4', 'max:100'],
         'signers' => 'array',
         'signers.*' => 'integer|exists:users,id',
-        ], $this->attachmentRules), [], [
+        ], $this->attachmentRules, $this->uploadTypeRules((array) $this->attachments)), [], [
             'confidentialToken' => 'access token',
             'signers.*' => 'signatory',
-        ]);
+        ] + $this->uploadTypeAttributes((array) $this->attachments));
 
         // Next number in this office's own sequence (shared with incoming), in
         // the format: Office-year-count_number
@@ -171,8 +173,8 @@ class CreateOutgoing extends Component
         // Store each uploaded file ENCRYPTED at rest on the private disk.
         $storedPdfs = collect();
 
-        foreach ($this->attachments as $file) {
-            $stored = Attachment::storeEncrypted($record, $transaction, $file, Auth::user()->name);
+        foreach ($this->attachments as $index => $file) {
+            $stored = Attachment::storeEncrypted($record, $transaction, $file, Auth::user()->name, $this->uploadTypeFor($index));
 
             if ($stored->is_pdf) {
                 // The temporary name is how the marked placements are keyed.
@@ -227,7 +229,7 @@ class CreateOutgoing extends Component
             . ($signerCount > 0 ? " Signature requested from {$signerCount} " . \Illuminate\Support\Str::plural('person', $signerCount) . '.' : '');
 
         session()->flash('message', $message);
-        $this->reset(['office', 'subject', 'remarks', 'status', 'attachments', 'isConfidential', 'viewers', 'confidentialToken', 'signers', 'placements']);
+        $this->reset(['office', 'subject', 'remarks', 'status', 'attachments', 'uploadTypes', 'isConfidential', 'viewers', 'confidentialToken', 'signers', 'placements']);
 
         $this->dispatch('recordAdded');
         $this->dispatch('close-send-modal');
@@ -282,6 +284,7 @@ class CreateOutgoing extends Component
             'hasPdfAttachment' => $hasPdfAttachment,
             'signerPersonnel' => $signerPersonnel,
             'pdfUploads' => $pdfUploads,
+            'documentTypes' => \App\Models\DocumentCategory::orderBy('name')->pluck('name', 'id'),
             'chosenSigners' => User::whereIn('id', collect($this->signers)->map(fn ($id) => (int) $id))
                 ->orderBy('name')
                 ->get(['id', 'name']),

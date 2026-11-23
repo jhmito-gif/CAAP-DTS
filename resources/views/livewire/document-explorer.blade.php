@@ -66,7 +66,21 @@
                 Delete
             </button>
 
-            <div class="ml-auto flex items-center gap-2">
+            <div class="ml-auto flex flex-wrap items-center gap-2">
+
+                {{-- Every file of one document type, wherever it was filed --}}
+                @if ($categories->isNotEmpty())
+                    <select
+                        aria-label="Document type"
+                        wire:change="openType($event.target.value)"
+                        class="rounded-md border-gray-200 bg-white py-1.5 pl-2 pr-7 text-xs shadow-sm dark:border-gray-700 dark:!bg-gray-800 dark:text-gray-100 {{ str_starts_with($location, 'type:') ? 'border-indigo-400 ring-1 ring-indigo-400' : '' }}"
+                    >
+                        <option value="">All document types</option>
+                        @foreach ($categories as $id => $name)
+                            <option value="{{ $id }}" @selected($location === "type:{$id}")>{{ $name }}</option>
+                        @endforeach
+                    </select>
+                @endif
 
                 <div class="flex items-center">
                     <input
@@ -212,8 +226,10 @@
                     </ul>
 
                     <div class="mt-2 flex items-center gap-2">
-                        <select x-model="uploadCategory" :disabled="sending" aria-label="Category" class="rounded-md border-gray-200 bg-white px-2 py-1 text-[11px] dark:border-gray-700 dark:!bg-gray-800 dark:text-gray-100">
-                            <option value="">No category</option>
+                        <select x-ref="uploadType" x-model="uploadCategory" @change="uploadError = ''" :disabled="sending" aria-label="Document type"
+                            :class="uploadError && ! uploadCategory ? 'border-rose-400 ring-1 ring-rose-400' : 'border-gray-200 dark:border-gray-700'"
+                            class="rounded-md bg-white px-2 py-1 text-[11px] dark:!bg-gray-800 dark:text-gray-100">
+                            <option value="">Document type…</option>
                             @foreach ($categories as $id => $name)
                                 <option value="{{ $id }}">{{ $name }}</option>
                             @endforeach
@@ -851,6 +867,14 @@
 
         async sendFiles() {
             if (this.sending || this.queued.length === 0) return
+
+            // Every file goes in with its document type, so it can be found by it.
+            if (@js($categories->isNotEmpty()) && ! this.uploadCategory) {
+                this.uploadError = 'Pick the document type first.'
+                this.$refs.uploadType?.focus()
+
+                return
+            }
 
             this.sending = true
             this.uploadError = ''

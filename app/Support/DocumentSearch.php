@@ -136,6 +136,7 @@ class DocumentSearch
                     'record_url' => $record ? route('show-transactions', $record->id) : null,
                     'score' => $this->score($text, $byName),
                     'name_hidden' => $hidden,
+                    'category_id' => $attachment->document_category_id,
                 ];
             })
             ->values();
@@ -176,6 +177,7 @@ class DocumentSearch
                     'record_url' => null,
                     'score' => $this->score($text, $byName),
                     'name_hidden' => false,
+                    'category_id' => $document->document_category_id,
                 ];
             })
             ->values();

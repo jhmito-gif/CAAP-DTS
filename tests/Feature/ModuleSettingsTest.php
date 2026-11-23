@@ -240,6 +240,7 @@ it('still sends an outgoing record while signing is off, without asking for sign
         ->set('subject', 'Memorandum')
         ->set('remarks', 'For information')
         ->set('attachments', [$pdf])
+        ->set('uploadTypes', [\App\Models\DocumentCategory::value('id')])
         // The form does not offer signatories...
         ->assertDontSee('Request signatures')
         // ...and a request smuggled in anyway is not acted on.
