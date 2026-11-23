@@ -33,11 +33,11 @@ class OutgoingTable extends Component
     {
         $userOffice = Auth::user()->office;
 
+        // The office's own records only. A document it sent that another
+        // office logged on arrival (origin = this office, owner = them) is
+        // that office's record, under their number, and stays out of here.
         $data = Record::search($this->search)
-            ->where(function ($query) use ($userOffice) {
-                $query->where('owner', $userOffice)
-                      ->orWhere('origin', $userOffice);
-            })
+            ->where('owner', $userOffice)
             ->orderBy('created_at', 'desc')
             ->paginate(in_array((int) $this->perPage, self::PER_PAGE, true) ? (int) $this->perPage : 10);
 

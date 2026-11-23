@@ -54,8 +54,9 @@ class DashboardController extends Controller
         | Outgoing Records
         |--------------------------------------------------------------------------
         */
+        // The same records the Outgoing list shows: the office's own.
         $outgoingRecords = Record::where(
-                'origin',
+                'owner',
                 $userOffice
             )
             ->count();
