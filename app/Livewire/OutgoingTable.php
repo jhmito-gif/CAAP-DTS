@@ -11,6 +11,9 @@ class OutgoingTable extends Component
 {
     use WithPagination;
 
+    /** The page sizes the "Per page" list offers; anything else falls back to 10. */
+    public const PER_PAGE = [3, 5, 10, 50, 100, 200];
+
     public $perPage = 10;
     public $search = '';
 
@@ -36,7 +39,7 @@ class OutgoingTable extends Component
                       ->orWhere('origin', $userOffice);
             })
             ->orderBy('created_at', 'desc')
-            ->paginate($this->perPage);
+            ->paginate(in_array((int) $this->perPage, self::PER_PAGE, true) ? (int) $this->perPage : 10);
 
         return view('livewire.outgoing-table', [
             'data' => $data,

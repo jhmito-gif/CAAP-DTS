@@ -142,9 +142,10 @@ class OutgoingTransaction extends Component
             ->get();
 
         $lastTransaction = $this->transactions->first();
-        $receivableTransaction = $this->transactions->first(function ($transaction) {
-            return $transaction->date_recieved === null;
-        });
+        // The latest movement still waiting for this office to receive it.
+        $receivableTransaction = $this->transactions->first(
+            fn ($transaction) => $transaction->isReceivableBy(Auth::user())
+        );
 
         $rasTransactions = Transaction::where('record_id', $this->recordId)
             ->orderBy('created_at')

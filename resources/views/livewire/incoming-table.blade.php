@@ -147,17 +147,18 @@
                                     </td>
                                     <td class="px-4 py-3">
                                         <div class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
+                                            {{-- Sent by -> received by ("?" until this office receives it) --}}
                                             <span class="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-[10px] font-semibold text-gray-600 dark:text-gray-300">
-                                                {{ strtoupper(substr($transaction->recieved_by ?? '?', 0, 1)) }}
+                                                {{ mb_strtoupper(mb_substr($transaction->forwarded_by ?? '?', 0, 1)) }}
                                             </span>
-                                            <span class="max-w-[90px] truncate">{{ $transaction->recieved_by }}</span>
+                                            <span class="max-w-[90px] truncate" title="Sent by {{ $transaction->forwarded_by }}">{{ $transaction->forwarded_by }}</span>
                                             <svg class="size-3 shrink-0 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                                             </svg>
                                             <span class="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/30 text-[10px] font-semibold text-blue-600 dark:text-blue-400">
-                                                {{ strtoupper(substr($transaction->forwarded_by ?? '?', 0, 1)) }}
+                                                {{ mb_strtoupper(mb_substr($transaction->recieved_by ?? '?', 0, 1)) }}
                                             </span>
-                                            <span class="max-w-[90px] truncate">{{ $transaction->forwarded_by }}</span>
+                                            <span class="max-w-[90px] truncate" title="{{ $transaction->recieved_by ? 'Received by ' . $transaction->recieved_by : 'Not yet received' }}">{{ $transaction->recieved_by }}</span>
                                         </div>
                                     </td>
                                     <td class="px-4 py-3">
@@ -229,6 +230,7 @@
             class="rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:!bg-gray-800 py-1.5 pl-2 pr-6 text-xs text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option value="3">3</option>
             <option value="5">5</option>
+            <option value="10">10</option>
             <option value="50">50</option>
             <option value="100">100</option>
             <option value="200">200</option>

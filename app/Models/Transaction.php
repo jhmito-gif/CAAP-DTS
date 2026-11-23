@@ -30,6 +30,25 @@ class Transaction extends Model
         return $query->whereIn('record_id', Record::query()->select('id')->search($value));
     }
 
+    /**
+     * Only the office a movement was sent to can say it arrived. Letting the
+     * sender (or any office in the chain) stamp it received would put a name
+     * on the trail from the wrong office and hide that the document never got
+     * there. Admins may still receive on an office's behalf.
+     */
+    public function isReceivableBy(?User $user): bool
+    {
+        if (! $user || $this->date_recieved !== null) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return filled($user->office) && $this->destination === $user->office;
+    }
+
     public function record(): BelongsTo
     {
         return $this->belongsTo(Record::class, 'record_id');
