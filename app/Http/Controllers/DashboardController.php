@@ -15,6 +15,29 @@ class DashboardController extends Controller
 
         /*
         |--------------------------------------------------------------------------
+        | No office, nothing to show
+        |--------------------------------------------------------------------------
+        | Every figure below belongs to the viewer's office. A user who has not
+        | been given one owns nothing -- and left to run, where('col', null)
+        | becomes "col IS NULL" and would match every record whose office was
+        | never filled in, i.e. other offices' records.
+        */
+        if (blank($userOffice)) {
+            return view('dashboard', [
+                'incomingRecords'    => 0,
+                'outgoingRecords'    => 0,
+                'awaitingReceipt'    => 0,
+                'receivedToday'      => 0,
+                'activityToday'      => 0,
+                'urgentCount'        => 0,
+                'urgentRecords'      => collect(),
+                'recentTransactions' => collect(),
+            ]);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
         | Incoming Records
         |--------------------------------------------------------------------------
         */

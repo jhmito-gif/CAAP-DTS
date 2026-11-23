@@ -35,6 +35,12 @@ trait ReceivesTransactions
             return;
         }
 
+        if (! $transaction->isReceivableBy(Auth::user())) {
+            $this->banner("Only {$transaction->destination} can mark this as received.", 'danger');
+
+            return;
+        }
+
         $transaction->update([
             'recieved_by' => Auth::user()->name,
             'date_recieved' => Carbon::now(),

@@ -394,8 +394,8 @@
                 @if (! empty($attachments))
                     <ul class="mt-2 space-y-1.5">
                         @foreach ($attachments as $index => $file)
-                            <li class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 px-3 py-2">
-                                <div class="flex min-w-0 items-center gap-2.5">
+                            <li wire:key="outgoing-file-{{ $file->getFilename() }}" class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 px-3 py-2 {{ $errors->has("uploadTypes.$index") ? 'border-red-300 dark:border-red-700' : '' }}">
+                                <div class="flex min-w-0 flex-1 items-center gap-2.5">
                                     <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-emerald-50 dark:bg-emerald-900/30 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
                                         {{ strtoupper(pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION) ?: 'FILE') }}
                                     </span>
@@ -409,6 +409,18 @@
                                     </div>
                                 </div>
 
+                                {{-- What kind of document this file is, for filtering on the Documents page --}}
+                                <select
+                                    wire:model="uploadTypes.{{ $index }}"
+                                    aria-label="Document type for {{ $file->getClientOriginalName() }}"
+                                    class="w-full rounded-md border-gray-300 dark:border-gray-700 bg-white dark:!bg-gray-800 py-1 pl-2 pr-7 text-xs text-gray-700 dark:text-gray-200 focus:border-emerald-500 focus:ring-emerald-500 sm:w-40"
+                                >
+                                    <option value="">Document type…</option>
+                                    @foreach ($documentTypes as $typeId => $typeName)
+                                        <option value="{{ $typeId }}">{{ $typeName }}</option>
+                                    @endforeach
+                                </select>
+
                                 <button
                                     type="button"
                                     wire:click="removeAttachment({{ $index }})"
@@ -419,6 +431,10 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                                     </svg>
                                 </button>
+
+                                @error("uploadTypes.$index")
+                                    <p class="w-full text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                                @enderror
                             </li>
                         @endforeach
                     </ul>

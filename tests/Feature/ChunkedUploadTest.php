@@ -36,6 +36,7 @@ function sendInPieces(string $bytes, string $name, array $finish = [], int $piec
         'upload' => $upload,
         'name' => $name,
         'office' => 'ITD',
+        'category' => \App\Models\DocumentCategory::value('id'),
     ], $finish));
 
     return ['pieces' => $sent, 'finish' => $response, 'upload' => $upload];
@@ -170,7 +171,8 @@ it('will not let one person collect another\'s pieces', function () {
         'upload' => $upload,
         'name' => 'memo.pdf',
         'office' => 'ITD',
-    ])->assertStatus(422);
+        'category' => \App\Models\DocumentCategory::value('id'),
+    ])->assertStatus(422)->assertJsonMissingValidationErrors('category');
 
     expect(Document::count())->toBe(0);
 });

@@ -768,6 +768,9 @@
                             @php
                                 $received = filled($transaction->date_recieved);
                                 $record = $transaction->record;
+
+                                // Confidential records routed here but not cleared for this viewer
+                                $masked = $record && $record->isMaskedFor(auth()->user());
                             @endphp
 
 
@@ -868,11 +871,23 @@
 
 
                                         {{-- Subject --}}
-                                        <p
-                                            class="mt-0.5 truncate text-xs text-gray-400 dark:text-gray-500"
-                                        >
-                                            {{ $record->subject }}
-                                        </p>
+                                        @if ($masked)
+                                            <p
+                                                class="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400"
+                                                title="Confidential — you are not an authorised viewer"
+                                            >
+                                                <svg class="size-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                                </svg>
+                                                Confidential record
+                                            </p>
+                                        @else
+                                            <p
+                                                class="mt-0.5 truncate text-xs text-gray-400 dark:text-gray-500"
+                                            >
+                                                {{ $record->subject }}
+                                            </p>
+                                        @endif
 
 
 
@@ -1098,11 +1113,23 @@
 
 
 
-                                        <p
-                                            class="mt-1 line-clamp-2 text-xs leading-5 text-gray-500 dark:text-gray-400"
-                                        >
-                                            {{ $urgent->subject }}
-                                        </p>
+                                        @if ($urgent->isMaskedFor(auth()->user()))
+                                            <p
+                                                class="mt-1 inline-flex items-center gap-1 text-xs font-semibold leading-5 text-rose-600 dark:text-rose-400"
+                                                title="Confidential — you are not an authorised viewer"
+                                            >
+                                                <svg class="size-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                                </svg>
+                                                Confidential record
+                                            </p>
+                                        @else
+                                            <p
+                                                class="mt-1 line-clamp-2 text-xs leading-5 text-gray-500 dark:text-gray-400"
+                                            >
+                                                {{ $urgent->subject }}
+                                            </p>
+                                        @endif
 
 
 

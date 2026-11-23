@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Attachment;
 use App\Models\Document;
+use App\Models\DocumentCategory;
 use App\Models\DocumentFolder;
 use App\Models\FolderShortcut;
 use App\Models\Record;
@@ -45,6 +46,7 @@ class DocumentExplorerQuery
             'records' => $this->records($user, $office, $argument),
             'record' => $this->recordFiles($user, (int) $argument),
             'recent' => $this->recent($user, $office),
+            'type' => $this->ofType($user, $office, (int) $argument),
             default => $this->library($user, $office, $argument === null ? null : (int) $argument),
         };
 
@@ -123,7 +125,7 @@ class DocumentExplorerQuery
         // Shortcuts to record files filed in this folder (never at the root).
         $shortcuts = $folder
             ? FolderShortcut::query()
-                ->with('attachment.record')
+                ->with(['attachment.record', 'attachment.category'])
                 ->where('folder_id', $folder->id)
                 ->get()
                 ->filter(fn (FolderShortcut $shortcut) => $shortcut->attachment
@@ -204,7 +206,7 @@ class DocumentExplorerQuery
 
     private function recordFiles(User $user, int $recordId): array
     {
-        $record = Record::with('attachments')->find($recordId);
+        $record = Record::with('attachments.category')->find($recordId);
 
         if (! $record || ! $record->isAccessibleBy($user)) {
             return ['entries' => collect(), 'trail' => [['label' => 'Records', 'location' => 'records']], 'folder' => null];
@@ -239,7 +241,7 @@ class DocumentExplorerQuery
             ->map(fn (Document $document) => $this->documentEntry($document));
 
         $attachments = Attachment::query()
-            ->with('record')
+            ->with(['record', 'category'])
             ->latest('created_at')
             ->limit(200)
             ->get()
@@ -255,6 +257,50 @@ class DocumentExplorerQuery
         return [
             'entries' => $entries,
             'trail' => [['label' => 'Recent', 'location' => 'recent']],
+            'folder' => null,
+        ];
+    }
+
+    /** Most files a document type can list at once, from each source. */
+    public const TYPE_LIMIT = 500;
+
+    /**
+     * Every file of one document type this user may open: this office's
+     * library uploads (outside folders closed to them) and the files on any
+     * record they can reach.
+     */
+    private function ofType(User $user, string $office, int $categoryId): array
+    {
+        $category = DocumentCategory::find($categoryId);
+
+        if (! $category) {
+            return ['entries' => collect(), 'trail' => [['label' => 'Document type', 'location' => 'library']], 'folder' => null];
+        }
+
+        $hidden = $this->access->hiddenFolderIds($user, $office);
+
+        $documents = Document::query()
+            ->with('category')
+            ->where('office', $office)
+            ->where('document_category_id', $category->id)
+            ->when($hidden, fn ($query) => $query->where(fn ($q) => $q->whereNull('folder_id')->orWhereNotIn('folder_id', $hidden)))
+            ->latest('created_at')
+            ->limit(self::TYPE_LIMIT)
+            ->get()
+            ->map(fn (Document $document) => $this->documentEntry($document));
+
+        $attachments = Attachment::query()
+            ->with(['record', 'category'])
+            ->where('document_category_id', $category->id)
+            ->whereIn('record_id', Record::query()->select('id')->accessibleBy($user))
+            ->latest('created_at')
+            ->limit(self::TYPE_LIMIT)
+            ->get()
+            ->map(fn (Attachment $attachment) => $this->attachmentEntry($attachment, $user));
+
+        return [
+            'entries' => $documents->concat($attachments)->values(),
+            'trail' => [['label' => $category->name, 'location' => "type:{$category->id}"]],
             'folder' => null,
         ];
     }
@@ -331,7 +377,7 @@ class DocumentExplorerQuery
             'key' => ($shortcutId ? "shortcut-{$shortcutId}" : "attachment-{$attachment->id}"),
             'name' => $attachment->displayNameFor($user, ! $locked),
             'location' => null,
-            'meta' => $record?->reference ?: 'Record file',
+            'meta' => collect([$record?->reference ?: 'Record file', $attachment->category?->name])->filter()->implode(' · '),
             'extension' => $attachment->extension,
             'kind' => $this->kind((string) $attachment->mime_type),
             'size' => (int) $attachment->size,

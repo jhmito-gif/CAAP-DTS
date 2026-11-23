@@ -81,7 +81,15 @@ class ChunkedUploadController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'office' => ['required', 'string', 'max:100'],
             'folder' => ['nullable', 'integer'],
-            'category' => ['nullable', 'integer', 'exists:document_categories,id'],
+            // Its document type, so the Documents page can list it with the
+            // rest of its kind. Required while there are types to pick from.
+            'category' => [
+                \App\Models\DocumentCategory::exists() ? 'required' : 'nullable',
+                'integer',
+                'exists:document_categories,id',
+            ],
+        ], [
+            'category.required' => 'Pick the document type before uploading.',
         ]);
 
         $user = Auth::user();

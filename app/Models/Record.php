@@ -118,6 +118,31 @@ class Record extends Model
     }
 
 
+    /**
+     * isAccessibleBy() as a query, for listing many records' files at once
+     * without checking them one by one. Keep the two in step.
+     */
+    public function scopeAccessibleBy($query, User $user)
+    {
+        $office = $user->office;
+
+        return $query->where(function ($q) use ($office, $user) {
+            // Without an office, only what the person is tagged on is theirs.
+            $q->whereIn('id', RecordTagging::query()->select('record_id')->where('user_id', $user->id));
+
+            if (blank($office)) {
+                return;
+            }
+
+            $q->orWhere('owner', $office)
+                ->orWhere('origin', $office)
+                ->orWhereIn('id', Transaction::query()->select('record_id')->whereNotNull('record_id')->where('destination', $office))
+                ->orWhereIn('id', Transaction::query()->select('record_id')->whereNotNull('record_id')->where('office', $office))
+                ->orWhereIn('id', Access::query()->select('record_id')->whereNotNull('record_id')->where('office', $office));
+        });
+    }
+
+
     /*
     |--------------------------------------------------------------------------
     | Confidential visibility

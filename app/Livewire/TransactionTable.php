@@ -121,9 +121,10 @@ class TransactionTable extends Component
             ->get();
 
         $lastTransaction = $transactions->first(); // already ordered DESC
-        $receivableTransaction = $transactions->first(function ($transaction) {
-            return $transaction->date_recieved === null;
-        });
+        // The latest movement still waiting for this office to receive it.
+        $receivableTransaction = $transactions->first(
+            fn ($transaction) => $transaction->isReceivableBy(Auth::user())
+        );
 
         $showSendButton = false;
 
