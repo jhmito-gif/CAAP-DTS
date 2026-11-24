@@ -21,7 +21,7 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->role == 'ADMIN';
+        return $this->role == 'ADMIN' && ! $this->isDeactivated();
     }
 
     /** @use HasFactory<UserFactory> */
@@ -86,12 +86,54 @@ class User extends Authenticatable implements FilamentUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'manages_documents' => 'boolean',
+            'deactivated_at' => 'datetime',
         ];
     }
 
 
     public function isAdmin(){
         return $this->role === self::ROLE_ADMIN;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Deactivation
+    |--------------------------------------------------------------------------
+    | Accounts are never deleted: a person's name is on the records they sent,
+    | received and signed. Someone who has left is deactivated instead -- they
+    | cannot sign in (password, two-factor, API token) and drop out of the
+    | people lists, and an admin can bring them back.
+    */
+    public function isDeactivated(): bool
+    {
+        return $this->deactivated_at !== null;
+    }
+
+    /** People who can still sign in -- the ones worth offering in a list. */
+    public function scopeActive($query)
+    {
+        return $query->whereNull($this->qualifyColumn('deactivated_at'));
+    }
+
+    public function deactivate(): void
+    {
+        $this->forceFill(['deactivated_at' => now()])->save();
+    }
+
+    public function reactivate(): void
+    {
+        $this->forceFill(['deactivated_at' => null])->save();
+    }
+
+    protected function auditAction(string $event): string
+    {
+        $changed = array_values(array_diff(array_keys($this->getChanges()), ['updated_at']));
+
+        if ($event === 'updated' && $changed === ['deactivated_at']) {
+            return $this->deactivated_at ? 'user.deactivated' : 'user.reactivated';
+        }
+
+        return "user.{$event}";
     }
 
     /** Saved e-signature image. */

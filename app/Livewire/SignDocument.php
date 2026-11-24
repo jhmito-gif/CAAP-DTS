@@ -57,6 +57,7 @@ class SignDocument extends Component
             $this->unlockToken = '';
 
             EsignLogger::log('record.unlocked', EsignLog::SUCCESS, ['request' => $signatureRequest]);
+            \App\Support\Audit::log('record.unlocked', $signatureRequest->record, [], ['via' => 'signing']);
 
             return;
         }
@@ -64,6 +65,7 @@ class SignDocument extends Component
         $this->unlockToken = '';
 
         EsignLogger::log('record.unlock_failed', EsignLog::FAILURE, ['request' => $signatureRequest]);
+        \App\Support\Audit::log('record.unlock_failed', $signatureRequest->record, [], ['via' => 'signing']);
 
         $this->addError('unlockToken', 'Incorrect access token.');
     }

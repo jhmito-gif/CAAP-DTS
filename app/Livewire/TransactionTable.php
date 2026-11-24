@@ -44,6 +44,8 @@ class TransactionTable extends Component
             return $this->redirectRoute('dashboard'); // Livewire-safe redirect
         }
 
+        $this->auditConfidentialView();
+
         // Load dropdowns
         $this->officeOptions = Office::pluck('name', 'name')->toArray();
         $this->statusOptions = Status::pluck('name', 'name')->toArray();

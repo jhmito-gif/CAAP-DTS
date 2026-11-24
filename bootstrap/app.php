@@ -17,6 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'module' => \App\Http\Middleware\EnsureModuleEnabled::class,
         ]);
+
+        // A deactivated account is signed out on its next request.
+        $middleware->web(append: [
+            \App\Http\Middleware\EnsureAccountIsActive::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

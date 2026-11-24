@@ -6,7 +6,9 @@ use Filament\Schemas\Schema;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
+use Filament\Notifications\Notification;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use App\Filament\Resources\UserResource\Pages\ListUsers;
 use App\Filament\Resources\UserResource\Pages\CreateUser;
 use App\Filament\Resources\UserResource\Pages\EditUser;
@@ -150,6 +152,13 @@ class UserResource extends Resource
                     ->tooltip('Looks after their office\'s document library')
                     ->boolean()
                     ->toggleable(),
+                TextColumn::make('status')
+                    ->state(fn (User $record): string => $record->isDeactivated() ? 'Deactivated' : 'Active')
+                    ->badge()
+                    ->color(fn (string $state): string => $state === 'Deactivated' ? 'danger' : 'success')
+                    ->description(fn (User $record): ?string => $record->deactivated_at
+                        ? 'since ' . $record->deactivated_at->timezone('Asia/Manila')->format('M j, Y')
+                        : null),
                 TextColumn::make('created_at')
                     ->label('Joined')
                     ->dateTime('M j, Y')
@@ -163,15 +172,64 @@ class UserResource extends Resource
                     ->multiple(),
                 SelectFilter::make('role')
                     ->options(User::ROLES),
+                TernaryFilter::make('deactivated_at')
+                    ->label('Status')
+                    ->nullable()
+                    ->placeholder('Everyone')
+                    ->trueLabel('Deactivated')
+                    ->falseLabel('Active'),
             ])
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make(),
+                    static::deactivateAction(),
+                    static::reactivateAction(),
                 ]),
             ])
             ->emptyStateHeading('No users found')
             ->emptyStateDescription('Add personnel so they can be assigned to offices and tagged on records.')
             ->emptyStateIcon('heroicon-o-users');
+    }
+
+    /**
+     * Someone who has left is deactivated, never deleted: they can no longer
+     * sign in, and their name stays on everything they handled. Not for your
+     * own account -- that would lock you out.
+     */
+    public static function deactivateAction(): Action
+    {
+        return Action::make('deactivate')
+            ->label('Deactivate')
+            ->icon('heroicon-o-no-symbol')
+            ->color('danger')
+            ->visible(fn (User $record): bool => ! $record->isDeactivated() && $record->id !== auth()->id())
+            ->requiresConfirmation()
+            ->modalHeading(fn (User $record): string => "Deactivate {$record->name}?")
+            ->modalDescription('They will be signed out and can no longer sign in, and they drop out of the people lists. Their name stays on every record they handled. You can reactivate them later.')
+            ->modalSubmitActionLabel('Deactivate')
+            ->action(function (User $record): void {
+                $record->deactivate();
+
+                Notification::make()->title("{$record->name} was deactivated")->success()->send();
+            });
+    }
+
+    public static function reactivateAction(): Action
+    {
+        return Action::make('reactivate')
+            ->label('Reactivate')
+            ->icon('heroicon-o-arrow-path')
+            ->color('success')
+            ->visible(fn (User $record): bool => $record->isDeactivated())
+            ->requiresConfirmation()
+            ->modalHeading(fn (User $record): string => "Reactivate {$record->name}?")
+            ->modalDescription('They will be able to sign in again with their existing password.')
+            ->modalSubmitActionLabel('Reactivate')
+            ->action(function (User $record): void {
+                $record->reactivate();
+
+                Notification::make()->title("{$record->name} can sign in again")->success()->send();
+            });
     }
 
     public static function getRelations(): array

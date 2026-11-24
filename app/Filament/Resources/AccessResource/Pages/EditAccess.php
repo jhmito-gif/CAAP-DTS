@@ -12,6 +12,8 @@ class EditAccess extends EditRecord
 
     protected function getHeaderActions(): array
     {
-        return [];
+        return [
+            AccessResource::revokeAction(redirectToList: true),
+        ];
     }
 }

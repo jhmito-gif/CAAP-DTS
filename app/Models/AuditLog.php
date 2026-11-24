@@ -18,11 +18,15 @@ class AuditLog extends Model
         'auth.login' => 'Signed in',
         'auth.logout' => 'Signed out',
         'auth.failed' => 'Failed sign-in',
+        'auth.blocked' => 'Sign-in refused: deactivated',
 
         'record.created' => 'Record created',
         'record.updated' => 'Record edited',
         'record.slip_opened' => 'Routing slip opened',
         'record.token_reset' => 'Access token reset',
+        'record.viewed' => 'Confidential record viewed',
+        'record.unlocked' => 'Confidential record unlocked',
+        'record.unlock_failed' => 'Wrong access token entered',
 
         'transaction.sent' => 'Document sent',
         'transaction.received' => 'Document received',
@@ -49,7 +53,7 @@ class AuditLog extends Model
 
         'access.created' => 'Record access granted',
         'access.updated' => 'Record access changed',
-        'access.deleted' => 'Record access removed',
+        'access.deleted' => 'Record access revoked',
         'record_tagging.created' => 'Person tagged on record',
         'record_tagging.deleted' => 'Person untagged from record',
         'internal_routing.created' => 'Handed to a colleague',
@@ -57,6 +61,8 @@ class AuditLog extends Model
 
         'user.created' => 'User created',
         'user.updated' => 'User changed',
+        'user.deactivated' => 'User deactivated',
+        'user.reactivated' => 'User reactivated',
         'office.created' => 'Office created',
         'office.updated' => 'Office changed',
         'status.created' => 'Status created',

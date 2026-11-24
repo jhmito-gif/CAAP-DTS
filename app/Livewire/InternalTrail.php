@@ -69,7 +69,7 @@ class InternalTrail extends Component
                 'required',
                 'integer',
                 Rule::notIn([(string) $user->id]),
-                Rule::exists('users', 'id')->where('office', $user->office),
+                Rule::exists('users', 'id')->where('office', $user->office)->whereNull('deactivated_at'),
             ],
             'action' => 'nullable|string|max:255',
             'remarks' => 'nullable|string|max:2000',
@@ -227,7 +227,7 @@ class InternalTrail extends Component
             // Accepting takes them to the signing page when one is waiting.
             'awaitingSignature' => $record && $this->pendingSignatureFor($user) !== null,
             'people' => $canForward
-                ? User::where('office', $user->office)->whereKeyNot($user->id)->orderBy('name')->get()
+                ? User::active()->where('office', $user->office)->whereKeyNot($user->id)->orderBy('name')->get()
                 : collect(),
         ]);
     }

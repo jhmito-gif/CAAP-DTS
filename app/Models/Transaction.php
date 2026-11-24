@@ -53,7 +53,7 @@ class Transaction extends Model
     /** A movement is created by sending; it is received, or given a number, later. */
     protected function auditAction(string $event): string
     {
-        $changed = array_diff(array_keys($this->getChanges()), ['updated_at']);
+        $changed = array_values(array_diff(array_keys($this->getChanges()), ['updated_at']));
 
         return match (true) {
             $event === 'created' => 'transaction.sent',
