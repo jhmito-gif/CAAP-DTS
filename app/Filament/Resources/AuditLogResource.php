@@ -67,7 +67,9 @@ class AuditLogResource extends Resource
                     ->formatStateUsing(fn (string $state, AuditLog $record): string => $record->label())
                     ->color(fn (string $state): string => match (true) {
                         str_ends_with($state, '.failed'), str_ends_with($state, '.deleted') => 'danger',
-                        $state === 'record.token_reset' => 'warning',
+                        in_array($state, ['auth.blocked', 'user.deactivated', 'record.unlock_failed'], true) => 'danger',
+                        in_array($state, ['record.token_reset', 'record.unlocked'], true) => 'warning',
+                        $state === 'user.reactivated' => 'success',
                         str_ends_with($state, '.created'), $state === 'transaction.sent', $state === 'transaction.received' => 'success',
                         str_ends_with($state, '.updated'), $state === 'transaction.reference_assigned' => 'info',
                         default => 'gray',

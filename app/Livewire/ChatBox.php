@@ -286,7 +286,7 @@ class ChatBox extends Component
 
     public function startPm(int $userId): void
     {
-        $other = User::find($userId);
+        $other = User::active()->find($userId);
         if (! $other || $other->id === Auth::id()) {
             return;
         }
@@ -367,8 +367,8 @@ class ChatBox extends Component
 
         // Prefer the record's creator (who holds the token) -- created_by is
         // stored as the creator's name -- then fall back to the owning office.
-        $owner = ($record->created_by ? User::where('name', $record->created_by)->first() : null)
-            ?? User::where('office', $record->owner)->orderBy('id')->first();
+        $owner = ($record->created_by ? User::active()->where('name', $record->created_by)->first() : null)
+            ?? User::active()->where('office', $record->owner)->orderBy('id')->first();
 
         if (! $owner || $owner->id === Auth::id()) {
             session()->flash('chat-flash', 'Could not find someone to request access from.');
@@ -430,7 +430,7 @@ class ChatBox extends Component
 
         // Directory for starting new chats (exclude self).
         $people = ($this->open && in_array($this->view, ['new-pm', 'new-group'], true))
-            ? User::where('id', '!=', Auth::id())
+            ? User::active()->where('id', '!=', Auth::id())
                 ->when($this->search !== '', fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
                 ->orderBy('name')->limit(50)->get()
             : collect();

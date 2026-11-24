@@ -8,7 +8,9 @@ use App\Filament\Resources\AccessResource\Pages\ListAccesses;
 use App\Models\Access;
 use App\Models\Office;
 use App\Models\Record;
+use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Notifications\Notification;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Resources\Resource;
@@ -35,7 +37,10 @@ class AccessResource extends Resource
 
     protected static ?string $pluralModelLabel = 'record access';
 
-    /** Nothing here is deleted from the admin panel; changes are made by editing. */
+    /**
+     * There is no Delete here. A grant is taken back with Revoke, which the
+     * audit log keeps as "Record access revoked" -- who, when, which office.
+     */
     public static function canDelete(Model $record): bool
     {
         return false;
@@ -112,11 +117,37 @@ class AccessResource extends Resource
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make(),
+                    static::revokeAction(),
                 ]),
             ])
             ->emptyStateHeading('No access grants yet')
             ->emptyStateDescription('Grant an office access to a specific record so it can view and print it.')
             ->emptyStateIcon('heroicon-o-key');
+    }
+
+    /** Takes the office's access to the record away, at once. */
+    public static function revokeAction(bool $redirectToList = false): Action
+    {
+        return Action::make('revoke')
+            ->label('Revoke')
+            ->icon('heroicon-o-no-symbol')
+            ->color('danger')
+            ->requiresConfirmation()
+            ->modalHeading(fn (Access $record): string => "Revoke {$record->office}'s access?")
+            ->modalDescription(fn (Access $record): string => "{$record->office} will no longer be able to open " . ($record->record?->reference ?? 'this record') . ' through this grant. The audit log keeps who revoked it and when.')
+            ->modalSubmitActionLabel('Revoke')
+            ->action(function (Access $record, $livewire) use ($redirectToList): void {
+                $office = $record->office;
+                $reference = $record->record?->reference;
+
+                $record->delete();
+
+                Notification::make()->title("{$office}'s access to {$reference} was revoked")->success()->send();
+
+                if ($redirectToList) {
+                    $livewire->redirect(static::getUrl('index'));
+                }
+            });
     }
 
     public static function getRelations(): array

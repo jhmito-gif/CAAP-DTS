@@ -3,6 +3,8 @@
 namespace App\Livewire\Concerns;
 
 use App\Models\Record;
+use App\Support\Audit;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Shared confidential-unlock behaviour for record detail components.
@@ -38,8 +40,28 @@ trait UnlocksConfidential
         if ($record->checkConfidentialToken($this->unlockToken)) {
             $this->confidentialUnlocked = true;
             $this->unlockToken = '';
+
+            Audit::log('record.unlocked', $record);
         } else {
+            $this->unlockToken = '';
+
+            Audit::log('record.unlock_failed', $record);
+
             $this->addError('unlockToken', 'Incorrect access token.');
+        }
+    }
+
+    /**
+     * Who opened a confidential record's page goes in the audit log -- also
+     * those who only see that it exists ("masked"). Ordinary records are not
+     * logged per view; that would bury the log.
+     */
+    protected function auditConfidentialView(): void
+    {
+        $record = $this->unlockableRecord();
+
+        if ($record?->is_confidential) {
+            Audit::log('record.viewed', $record, [], ['masked' => $record->isMaskedFor(Auth::user()) ?: null]);
         }
     }
 }

@@ -98,7 +98,7 @@ class TagPeople extends Component
             ->values();
 
         // Only people who exist get tagged.
-        $users = User::whereIn('id', $chosen)->get();
+        $users = User::active()->whereIn('id', $chosen)->get();
 
         $added = $users->reject(fn (User $user) => in_array($user->id, $existing, true));
         $removedIds = array_values(array_diff($existing, $users->pluck('id')->all()));
@@ -152,7 +152,7 @@ class TagPeople extends Component
         $record = Record::with('taggedUsers')->findOrFail($this->recordId);
 
         $personnel = filled($this->office)
-            ? User::where('office', $this->office)->orderBy('name')->get()
+            ? User::active()->where('office', $this->office)->orderBy('name')->get()
             : collect();
 
         return view('livewire.tag-people', [

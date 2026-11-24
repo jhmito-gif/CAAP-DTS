@@ -389,7 +389,7 @@ class DocumentExplorer extends Component
             return;
         }
 
-        if ($this->shareSubjectType === 'user' && ! User::whereKey($subject)->exists()) {
+        if ($this->shareSubjectType === 'user' && ! User::active()->whereKey($subject)->exists()) {
             $this->addError('shareSubject', 'There is no such person.');
 
             return;
@@ -674,7 +674,7 @@ class DocumentExplorer extends Component
             'sharingPolicies' => $sharing ? $sharing->policies()->orderBy('subject_type')->get() : collect(),
             'officeOptions' => Office::orderBy('name')->pluck('name'),
             'peopleOptions' => $sharing
-                ? User::orderBy('name')->get(['id', 'name', 'office'])
+                ? User::active()->orderBy('name')->get(['id', 'name', 'office'])
                 : collect(),
         ]);
     }

@@ -225,7 +225,7 @@ class Record extends Model
     /** A new access token on its own reads as a reset, not an edit. */
     protected function auditAction(string $event): string
     {
-        $changed = array_diff(array_keys($this->getChanges()), ['updated_at']);
+        $changed = array_values(array_diff(array_keys($this->getChanges()), ['updated_at']));
 
         return $event === 'updated' && $changed === ['confidential_token']
             ? 'record.token_reset'

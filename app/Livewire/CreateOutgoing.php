@@ -190,7 +190,7 @@ class CreateOutgoing extends Component
         $taggedCount = 0;
 
         if ($this->isConfidential && ! empty($this->viewers)) {
-            $viewerUsers = User::whereIn('id', collect($this->viewers)->map(fn ($id) => (int) $id))->get();
+            $viewerUsers = User::active()->whereIn('id', collect($this->viewers)->map(fn ($id) => (int) $id))->get();
 
             foreach ($viewerUsers as $viewer) {
                 \App\Models\RecordTagging::firstOrCreate(
@@ -208,7 +208,7 @@ class CreateOutgoing extends Component
 
         if (! empty($this->signers) && $storedPdfs->isNotEmpty() && Modules::enabled(Modules::ESIGN)) {
             $requester = app(SignatureRequester::class);
-            $signerUsers = User::whereIn('id', collect($this->signers)->map(fn ($id) => (int) $id))->get();
+            $signerUsers = User::active()->whereIn('id', collect($this->signers)->map(fn ($id) => (int) $id))->get();
 
             foreach ($storedPdfs as $pdf) {
                 foreach ($signerUsers as $signer) {
@@ -258,13 +258,13 @@ class CreateOutgoing extends Component
     public function render()
     {
         $viewerPersonnel = ($this->isConfidential && filled($this->viewerOffice))
-            ? User::where('office', $this->viewerOffice)->orderBy('name')->get()
+            ? User::active()->where('office', $this->viewerOffice)->orderBy('name')->get()
             : collect();
 
         $hasPdfAttachment = $this->hasPdfAttachment();
 
         $signerPersonnel = ($hasPdfAttachment && filled($this->signerOffice))
-            ? User::where('office', $this->signerOffice)->orderBy('name')->get()
+            ? User::active()->where('office', $this->signerOffice)->orderBy('name')->get()
             : collect();
 
         // The attached PDFs, previewable while still uploads, so the sender can

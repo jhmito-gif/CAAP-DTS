@@ -39,6 +39,8 @@ class OutgoingTransaction extends Component
             return redirect()->route('dashboard');
         }
 
+        $this->auditConfidentialView();
+
         $this->officeOptions = Office::pluck('name', 'name')->toArray();
         $this->statusOptions = Status::pluck('name', 'name')->toArray();
     }

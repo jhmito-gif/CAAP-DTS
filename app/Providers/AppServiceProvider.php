@@ -50,8 +50,18 @@ class AppServiceProvider extends ServiceProvider
             ? $audit::log('auth.logout', null, [], [], $event->user)
             : null);
 
-        $events->listen(\Illuminate\Auth\Events\Failed::class, fn ($event) => $audit::log(
-            'auth.failed', null, [], ['email' => $event->credentials['email'] ?? null], $event->user
-        ));
+        // Fortify's own sign-in check does not say whose account it was, so
+        // look it up by the email typed (never the password).
+        $events->listen(\Illuminate\Auth\Events\Failed::class, function ($event) use ($audit) {
+            $email = $event->credentials['email'] ?? null;
+            $user = $event->user ?? (filled($email) ? \App\Models\User::where('email', $email)->first() : null);
+
+            $audit::log('auth.failed', null, [], ['email' => $email], $user);
+        });
+
+        // An API token of a deactivated account stops working too.
+        \Laravel\Sanctum\Sanctum::authenticateAccessTokensUsing(
+            fn ($accessToken, bool $isValid) => $isValid && ! ($accessToken->tokenable?->isDeactivated() ?? false)
+        );
     }
 }

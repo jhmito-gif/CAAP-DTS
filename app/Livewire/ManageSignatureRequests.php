@@ -60,7 +60,7 @@ class ManageSignatureRequests extends Component
             return;
         }
 
-        $signer = User::find($userId);
+        $signer = User::active()->find($userId);
 
         if (! $signer) {
             return;
@@ -138,7 +138,7 @@ class ManageSignatureRequests extends Component
             : null;
 
         $candidates = ($attachment && ($this->search !== '' || $this->office !== ''))
-            ? User::query()
+            ? User::active()
                 ->when($this->office !== '', fn ($query) => $query->where('office', $this->office))
                 ->when($this->search !== '', fn ($query) => $query->where('name', 'like', "%{$this->search}%"))
                 ->whereNotIn('id', $attachment->signatureRequests->pluck('signer_id'))
