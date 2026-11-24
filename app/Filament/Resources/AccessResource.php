@@ -9,9 +9,6 @@ use App\Models\Access;
 use App\Models\Office;
 use App\Models\Record;
 use Filament\Actions\ActionGroup;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Resources\Resource;
@@ -20,6 +17,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Validation\Rules\Unique;
+use Illuminate\Database\Eloquent\Model;
 
 class AccessResource extends Resource
 {
@@ -36,6 +34,17 @@ class AccessResource extends Resource
     protected static ?string $modelLabel = 'access grant';
 
     protected static ?string $pluralModelLabel = 'record access';
+
+    /** Nothing here is deleted from the admin panel; changes are made by editing. */
+    public static function canDelete(Model $record): bool
+    {
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return false;
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -103,12 +112,6 @@ class AccessResource extends Resource
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make(),
-                    DeleteAction::make(),
-                ]),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
                 ]),
             ])
             ->emptyStateHeading('No access grants yet')

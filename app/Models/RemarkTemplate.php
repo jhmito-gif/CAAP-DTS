@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class RemarkTemplate extends Model
 {
+    use Concerns\Audited;
     protected $fillable = [
         'text',
     ];

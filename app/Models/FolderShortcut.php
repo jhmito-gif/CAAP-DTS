@@ -11,6 +11,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class FolderShortcut extends Model
 {
+    use Concerns\Audited;
+    public function auditLabel(): string
+    {
+        return ($this->attachment?->original_name ?? "file #{$this->attachment_id}") . " in folder #{$this->folder_id}";
+    }
+
     protected $fillable = [
         'folder_id',
         'attachment_id',

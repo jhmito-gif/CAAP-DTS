@@ -274,7 +274,7 @@
                                     </td>
 
 
-                                    {{-- Edit / delete + RAS audit trail --}}
+                                    {{-- Edit + RAS audit trail --}}
                                     <td class="whitespace-nowrap px-4 py-3 text-right">
 
                                         <x-record-actions :record="$record" class="mr-1.5 align-middle" />

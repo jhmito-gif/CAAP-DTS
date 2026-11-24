@@ -140,7 +140,7 @@ class CreateOutgoing extends Component
         $reference = ReferenceSequence::nextReferenceFor(Auth::user()->office);
 
         // Save record
-        $record = Record::create([
+        $record = new Record([
             'reference' => $reference,
             'subject' => $this->subject,
             'created_by' => Auth::user()->name,
@@ -149,11 +149,14 @@ class CreateOutgoing extends Component
             'is_confidential' => (bool) $this->isConfidential,
         ]);
 
-        // Store the access token (hashed) that gates the confidential record.
+        // The access token (hashed) that gates the confidential record goes in
+        // with the first save, so the audit log reads one creation, not a
+        // creation followed by a token reset.
         if ($this->isConfidential) {
             $record->setConfidentialToken($this->confidentialToken);
-            $record->save();
         }
+
+        $record->save();
 
         $transaction = Transaction::create([
             'record_id' => $record->id,

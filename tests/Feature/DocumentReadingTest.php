@@ -179,15 +179,13 @@ it('skips a kind of file it cannot read', function () {
     expect($row->fresh()->status)->toBe('skipped');
 });
 
-it('forgets the text when the file is deleted', function () {
+it('keeps a file, and what it says, for good', function () {
     Storage::fake('local');
 
     $document = readableDocument('ITD', 'Something to say.');
-    expect(DocumentText::where('source_id', $document->id)->exists())->toBeTrue();
 
-    $document->delete();
-
-    expect(DocumentText::where('source_type', 'document')->where('source_id', $document->id)->exists())->toBeFalse();
+    expect(fn () => $document->delete())->toThrow(LogicException::class)
+        ->and(DocumentText::where('source_type', 'document')->where('source_id', $document->id)->exists())->toBeTrue();
 });
 
 it('reads queued files from the command line', function () {

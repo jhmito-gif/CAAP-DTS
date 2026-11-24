@@ -182,7 +182,7 @@ it('keeps someone who does not manage documents from organising', function () {
         ->and($document->fresh()->folder_id)->toBeNull();
 });
 
-it('still offers uploading to any office member, and lets them delete what is theirs', function () {
+it('still offers uploading to any office member, and deleting to nobody', function () {
     Storage::fake('local');
 
     // Not a document manager: they may add files, just not reshape the tree.
@@ -193,10 +193,11 @@ it('still offers uploading to any office member, and lets them delete what is th
     Livewire::test(DocumentExplorer::class)
         ->assertViewHas('canUpload', true)
         ->assertViewHas('canOrganise', false)
-        ->set('selected', ["document-{$document->id}"])
-        ->call('deleteSelected');
+        ->assertDontSeeHtml('deleteSelected');
 
-    expect(Document::whereKey($document->id)->exists())->toBeFalse();
+    expect(method_exists(DocumentExplorer::class, 'deleteSelected'))->toBeFalse()
+        ->and(fn () => $document->delete())->toThrow(LogicException::class)
+        ->and(Document::whereKey($document->id)->exists())->toBeTrue();
 });
 
 it('does not offer uploading into another office’s library', function () {
@@ -219,17 +220,16 @@ it('appoints and stands down a document manager from the command line', function
     $this->artisan('documents:manager nobody@caap.gov.ph')->assertFailed();
 });
 
-it('will not delete a folder with things still in it', function () {
+it('keeps folders, empty or not', function () {
     $this->actingAs(documentManager());
 
-    $folder = DocumentFolder::create(['office' => 'ITD', 'name' => 'Busy', 'created_by' => 'x']);
-    libraryFile('ITD', $folder);
+    $busy = DocumentFolder::create(['office' => 'ITD', 'name' => 'Busy', 'created_by' => 'x']);
+    libraryFile('ITD', $busy);
+    $empty = DocumentFolder::create(['office' => 'ITD', 'name' => 'Empty', 'created_by' => 'x']);
 
-    Livewire::test(DocumentExplorer::class)
-        ->set('selected', ["folder-{$folder->id}"])
-        ->call('deleteSelected');
-
-    expect(DocumentFolder::whereKey($folder->id)->exists())->toBeTrue();
+    expect(fn () => $busy->delete())->toThrow(LogicException::class)
+        ->and(fn () => $empty->delete())->toThrow(LogicException::class)
+        ->and(DocumentFolder::whereKey([$busy->id, $empty->id])->count())->toBe(2);
 });
 
 it('puts the floating viewer on the documents page', function () {

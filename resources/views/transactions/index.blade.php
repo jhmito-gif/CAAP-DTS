@@ -9,6 +9,6 @@
         <livewire:pending-signatures :record-id="$recordID" />
     @endmodule
     <livewire:transaction-table :record-id="$recordID" />
-    <livewire:manage-record :redirect-after-delete="true" />
+    <livewire:manage-record />
     <livewire:assign-reference />
 </x-app-layout>

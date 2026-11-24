@@ -55,16 +55,7 @@
             {{-- Sent in pieces by the uploader below, not by Livewire. --}}
             <input type="file" multiple x-ref="picker" @change="queueFiles([...$event.target.files]); $event.target.value = ''" class="hidden" aria-label="Files to upload">
 
-            <button
-                type="button"
-                class="{{ $toolButton }}"
-                wire:click="deleteSelected"
-                wire:confirm="Delete the selected items? Folders must be empty first."
-                @disabled(empty($selected))
-            >
-                <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
-                Delete
-            </button>
+            {{-- No Delete: files and folders are kept. They can be renamed and moved. --}}
 
             <div class="ml-auto flex flex-wrap items-center gap-2">
 
@@ -456,7 +447,7 @@
         <p class="mt-2 text-[11px] text-gray-400">
             Double-click to open a file on its own page, or right-click to open it in a floating window.
             Drag onto a folder to move; drag a record file into a folder to file a link to it.
-            F2 renames, Delete removes.
+            F2 renames.
             @unless ($canOrganise)
                 You can upload to this library and open what is in it; creating and rearranging folders is for its document managers.
             @endunless
@@ -641,11 +632,6 @@
                     class="block w-full px-3 py-1.5 text-left font-medium text-gray-700 hover:bg-indigo-50 dark:text-gray-200 dark:hover:bg-indigo-900/30">Rename<span class="ml-2 text-[10px] text-gray-400">F2</span></button>
             </div>
         </template>
-
-        <template x-if="canOrganise">
-            <button type="button" role="menuitem" @click="remove(); menu.open = false"
-                class="block w-full px-3 py-1.5 text-left font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30">Delete<span class="ml-2 text-[10px] text-rose-300">Del</span></button>
-        </template>
     </div>
 </div>
 
@@ -778,10 +764,6 @@
             }
         },
 
-        remove() {
-            this.$wire.deleteSelected()
-        },
-
         onKey(event) {
             // Never while something is being typed into.
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName)) return
@@ -791,10 +773,6 @@
             if (event.key === 'F2' && this.canOrganise && selected.length === 1) {
                 event.preventDefault()
                 this.$wire.startRename(selected[0])
-            } else if (event.key === 'Delete' && this.canOrganise && selected.length > 0) {
-                event.preventDefault()
-
-                if (window.confirm('Delete the selected items? Folders must be empty first.')) this.remove()
             } else if (event.key === 'Enter' && selected.length === 1) {
                 event.preventDefault()
                 this.openEntry(selected[0])

@@ -227,7 +227,7 @@ it('uploads files into the office library, encrypted at rest and visible only to
         ->assertOk();
 });
 
-it('lets only the owning office edit and delete library documents', function () {
+it('lets only the owning office edit library documents, and nobody delete them', function () {
     $itd = User::factory()->create(['office' => 'ITD']);
     $document = libraryDocument($itd, 'draft.pdf');
     $category = DocumentCategory::create(['name' => 'Test Drafts']);
@@ -236,8 +236,7 @@ it('lets only the owning office edit and delete library documents', function () 
 
     Livewire::test(DocumentLibrary::class)
         ->call('editItem', 'document', $document->id)
-        ->assertNotDispatched('open-document-edit')
-        ->call('deleteDocument', $document->id);
+        ->assertNotDispatched('open-document-edit');
 
     expect(Document::find($document->id))->not->toBeNull();
 
@@ -260,10 +259,11 @@ it('lets only the owning office edit and delete library documents', function () 
         ->title->toBe('Final draft')
         ->document_category_id->toBe($category->id);
 
-    Livewire::test(DocumentLibrary::class)->call('deleteDocument', $document->id);
-
-    expect(Document::find($document->id))->toBeNull();
-    Storage::disk('local')->assertMissing($document->path);
+    // Not even the owning office deletes it.
+    expect(method_exists(DocumentLibrary::class, 'deleteDocument'))->toBeFalse()
+        ->and(fn () => $document->delete())->toThrow(LogicException::class)
+        ->and(Document::find($document->id))->not->toBeNull();
+    Storage::disk('local')->assertExists($document->path);
 });
 
 it('lets the managing office categorise routed files, and admins open any routed file', function () {

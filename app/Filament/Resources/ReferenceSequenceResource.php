@@ -7,8 +7,6 @@ use App\Filament\Resources\ReferenceSequenceResource\Pages\EditReferenceSequence
 use App\Filament\Resources\ReferenceSequenceResource\Pages\ListReferenceSequences;
 use App\Models\Office;
 use App\Models\ReferenceSequence;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -18,6 +16,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rules\Unique;
+use Illuminate\Database\Eloquent\Model;
 
 class ReferenceSequenceResource extends Resource
 {
@@ -34,6 +33,17 @@ class ReferenceSequenceResource extends Resource
     protected static string | \UnitEnum | null $navigationGroup = 'Settings';
 
     protected static ?int $navigationSort = 2;
+
+    /** Nothing here is deleted from the admin panel; changes are made by editing. */
+    public static function canDelete(Model $record): bool
+    {
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return false;
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -96,11 +106,6 @@ class ReferenceSequenceResource extends Resource
             ])
             ->recordActions([
                 EditAction::make(),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
             ]);
     }
 

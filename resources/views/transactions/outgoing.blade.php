@@ -9,7 +9,7 @@
         <livewire:pending-signatures :record-id="$recordID" />
     @endmodule
     <livewire:outgoing-transaction :record-id="$recordID" />
-    <livewire:manage-record :redirect-after-delete="true" />
+    <livewire:manage-record />
     <livewire:assign-reference />
     @module('esign')
         <livewire:manage-signature-requests />

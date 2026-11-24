@@ -41,6 +41,8 @@ class PdfController extends Controller
             // Form footer (CAAP-ODG-CCS-001 r2, "Page X of Y") on every page.
             \App\Support\RasFormFooter::apply($pdf);
 
+            \App\Support\Audit::log('record.slip_opened', $record, [], ['redacted' => $masked ?: null]);
+
             // Stream (view) the PDF in the browser
             return $pdf->stream('record-' . $record->id . '.pdf');
         }

@@ -52,6 +52,7 @@ class AttachmentController extends Controller
         abort_if($attachment->isConfidential(), 403, 'Confidential files are view-only and cannot be downloaded.');
 
         $this->logSignatureDocumentAccess($attachment, 'document.downloaded');
+        \App\Support\Audit::log('attachment.downloaded', $attachment);
 
         return response($attachment->contents(), 200, [
             'Content-Type' => $attachment->mime_type ?: 'application/octet-stream',
@@ -68,6 +69,7 @@ class AttachmentController extends Controller
         $this->authorizeAccess($attachment);
 
         $this->logSignatureDocumentAccess($attachment, 'document.viewed');
+        \App\Support\Audit::log('attachment.viewed', $attachment);
 
         return response($attachment->contents(), 200, [
             'Content-Type' => $attachment->mime_type ?: 'application/octet-stream',

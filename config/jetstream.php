@@ -62,7 +62,9 @@ return [
         // Features::profilePhotos(),
         Features::api(),
         // Features::teams(['invitations' => true]),
-        Features::accountDeletion(),
+        // No account deletion: records name the people who handled them, and
+        // accounts are kept for the audit trail.
+        // Features::accountDeletion(),
     ],
 
     /*

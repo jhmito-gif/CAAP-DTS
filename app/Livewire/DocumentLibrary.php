@@ -202,21 +202,6 @@ class DocumentLibrary extends Component
         $this->banner('Document details saved.');
     }
 
-    public function deleteDocument(int $id): void
-    {
-        $document = $this->manageableItem('document', $id);
-
-        if (! $document) {
-            $this->banner('You cannot delete this document.', 'danger');
-
-            return;
-        }
-
-        $document->delete();
-
-        $this->banner('Document deleted.');
-    }
-
     /**
      * Library uploads: their office or an admin. Routed files: the office that
      * manages the record's attachments (owner/origin) or an admin.

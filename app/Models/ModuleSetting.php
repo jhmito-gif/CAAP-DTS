@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class ModuleSetting extends Model
 {
+    use Concerns\Audited;
     protected $fillable = [
         'module',
         'enabled',

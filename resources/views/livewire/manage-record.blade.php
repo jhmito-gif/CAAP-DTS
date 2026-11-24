@@ -203,14 +203,11 @@
 
                         @if ($record->attachments->isNotEmpty())
                             <ul class="mb-2 space-y-1.5">
+                                {{-- Files stay with the record: new ones can be added, none removed. --}}
                                 @foreach ($record->attachments as $file)
-                                    @php
-                                        $removing = in_array($file->id, $removeAttachmentIds, true);
-                                    @endphp
-
                                     <li
                                         wire:key="edit-attachment-{{ $file->id }}"
-                                        class="flex items-center justify-between gap-3 rounded-lg border px-3 py-2 {{ $removing ? 'border-red-200 dark:border-red-800 bg-red-50/60 dark:bg-red-900/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800' }}"
+                                        class="flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:!bg-gray-800 px-3 py-2"
                                     >
                                         <div class="flex min-w-0 items-center gap-2.5">
                                             <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-gray-100 dark:bg-gray-900 text-[10px] font-bold text-gray-500 dark:text-gray-400">
@@ -218,22 +215,14 @@
                                             </span>
 
                                             <div class="min-w-0">
-                                                <p class="truncate text-xs font-semibold {{ $removing ? 'text-red-600 line-through dark:text-red-400' : 'text-gray-800 dark:text-gray-100' }}">
+                                                <p class="truncate text-xs font-semibold text-gray-800 dark:text-gray-100">
                                                     {{ $file->displayNameFor(auth()->user()) }}
                                                 </p>
                                                 <p class="text-[11px] text-gray-400 dark:text-gray-500">
-                                                    {{ $removing ? 'Will be removed when you save' : $file->human_size }}
+                                                    {{ $file->human_size }}
                                                 </p>
                                             </div>
                                         </div>
-
-                                        <button
-                                            type="button"
-                                            wire:click="toggleRemoveAttachment({{ $file->id }})"
-                                            class="shrink-0 rounded-md px-2 py-1 text-[11px] font-semibold transition {{ $removing ? 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700' : 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30' }}"
-                                        >
-                                            {{ $removing ? 'Undo' : 'Remove' }}
-                                        </button>
                                     </li>
                                 @endforeach
                             </ul>
@@ -342,93 +331,106 @@
     </div>
 
 
-
     {{-- ============================================================= --}}
-    {{-- DELETE RECORD MODAL --}}
+    {{-- RESET ACCESS TOKEN MODAL (confidential records) --}}
     {{-- ============================================================= --}}
     <div
         wire:ignore.self
         x-data="{ open: false }"
-        x-on:open-delete-record-modal.window="open = true"
-        x-on:close-delete-record-modal.window="open = false"
+        x-on:open-reset-token-modal.window="open = true"
+        x-on:close-reset-token-modal.window="open = false"
         x-on:keydown.escape.window="open = false"
         x-show="open"
         x-cloak
         class="fixed inset-0 z-50 flex items-center justify-center p-4"
-        role="alertdialog"
+        role="dialog"
         aria-modal="true"
-        aria-labelledby="deleteRecordModalLabel"
+        aria-labelledby="resetTokenModalLabel"
     >
 
-        {{-- Backdrop --}}
-        <div
-            x-show="open"
-            x-transition.opacity
-            @click="open = false"
-            class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm"
-        ></div>
+        <div x-show="open" x-transition.opacity @click="open = false" class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm"></div>
 
-        {{-- Panel --}}
-        <div
+        <form
             x-show="open"
             x-transition
             @click.stop
-            class="relative w-full max-w-md overflow-hidden rounded-2xl bg-white dark:!bg-gray-800 shadow-xl"
+            wire:submit.prevent="resetToken"
+            class="relative flex w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white dark:!bg-gray-800 shadow-xl"
         >
 
-            <div class="flex items-start gap-4 px-6 pb-4 pt-6">
+            <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-6 py-4">
+                <div class="flex min-w-0 items-center gap-3">
+                    <div class="flex size-9 shrink-0 items-center justify-center rounded-full bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
+                        <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H9v1.5H7.5v1.5H6a1.5 1.5 0 0 1-1.5-1.5v-1.629c0-.398.158-.78.44-1.062l5.616-5.615a6 6 0 1 1 8.909-4.494Z" />
+                        </svg>
+                    </div>
 
-                <div class="flex size-11 shrink-0 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400">
-                    <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                    </svg>
+                    <div class="min-w-0">
+                        <h5 id="resetTokenModalLabel" class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                            {{ $tokenRecord?->requiresToken() === false ? 'Set access token' : 'Reset access token' }}
+                        </h5>
+
+                        @if ($tokenRecord)
+                            <p class="truncate text-xs text-gray-400 dark:text-gray-500">{{ $tokenRecord->reference }} &middot; confidential</p>
+                        @endif
+                    </div>
                 </div>
 
-                <div class="min-w-0">
-                    <h5 id="deleteRecordModalLabel" class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                        Delete {{ $record?->reference ?? 'record' }}?
-                    </h5>
+                <button type="button" @click="open = false" class="rounded-lg p-1.5 text-gray-400 dark:text-gray-500 transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300" aria-label="Close">
+                    <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
 
-                    @if ($record)
-                        <p class="mt-1 truncate text-sm text-gray-600 dark:text-gray-300" title="{{ $record->subject }}">
-                            {{ $record->subject }}
-                        </p>
+            <div class="space-y-4 px-6 py-5">
 
-                        <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                            This permanently removes the record, its
-                            {{ $record->transactions_count }} {{ \Illuminate\Support\Str::plural('routing entry', $record->transactions_count) }}
-                            and {{ $record->attachments->count() }} {{ \Illuminate\Support\Str::plural('file', $record->attachments->count()) }}
-                            for every office. The reference number will not be reused.
-                        </p>
-                    @endif
+                <p class="rounded-lg border border-rose-200 dark:border-rose-800 bg-rose-50/60 dark:bg-rose-900/20 px-3 py-2 text-xs text-rose-800 dark:text-rose-200">
+                    The old token stops working right away. Cleared viewers will need the new one, so share it only with them. The reset is kept in the audit log.
+                </p>
+
+                <div>
+                    <label for="newAccessToken" class="{{ $label }}">New access token <span class="text-red-500 dark:text-red-400">*</span></label>
+                    <input id="newAccessToken" type="password" wire:model="newToken" autocomplete="new-password" placeholder="At least 4 characters" class="{{ $input }}">
+                    @error('newToken')
+                        <p class="{{ $error }}">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label for="newAccessTokenConfirmation" class="{{ $label }}">Type it again <span class="text-red-500 dark:text-red-400">*</span></label>
+                    <input id="newAccessTokenConfirmation" type="password" wire:model="newToken_confirmation" autocomplete="new-password" class="{{ $input }}">
+                </div>
+
+                <div>
+                    <label for="resetTokenAccountPassword" class="{{ $label }}">Your account password <span class="text-red-500 dark:text-red-400">*</span></label>
+                    <input id="resetTokenAccountPassword" type="password" wire:model="accountPassword" autocomplete="current-password" class="{{ $input }}">
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">The one you sign in with, to confirm it is you.</p>
+                    @error('accountPassword')
+                        <p class="{{ $error }}">{{ $message }}</p>
+                    @enderror
                 </div>
 
             </div>
 
             <div class="flex items-center justify-end gap-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900 px-6 py-4">
-
-                <button
-                    type="button"
-                    @click="open = false"
-                    class="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:!bg-gray-800 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 shadow-sm transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-100"
-                >
+                <button type="button" @click="open = false" class="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:!bg-gray-800 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 shadow-sm transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-100">
                     Cancel
                 </button>
 
                 <button
-                    type="button"
-                    wire:click="delete"
+                    type="submit"
                     wire:loading.attr="disabled"
-                    wire:target="delete"
-                    class="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
+                    wire:target="resetToken"
+                    class="inline-flex items-center justify-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                    <span wire:loading.remove wire:target="delete">Delete record</span>
-                    <span wire:loading wire:target="delete">Deleting...</span>
+                    <span wire:loading.remove wire:target="resetToken">{{ $tokenRecord?->requiresToken() === false ? 'Set token' : 'Reset token' }}</span>
+                    <span wire:loading wire:target="resetToken">Saving...</span>
                 </button>
-
             </div>
 
-        </div>
+        </form>
     </div>
 
 </div>

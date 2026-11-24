@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Access extends Model
 {
+    use Concerns\Audited;
     protected $fillable = [
         'record_id',
         'office',

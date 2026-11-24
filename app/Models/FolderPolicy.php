@@ -10,9 +10,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class FolderPolicy extends Model
 {
+    use Concerns\Audited;
     public const SUBJECTS = ['office', 'user', 'everyone'];
 
     public const LEVELS = ['view', 'edit', 'manage'];
+
+    public function auditLabel(): string
+    {
+        return "{$this->subject_type} {$this->subject} ({$this->level}) on folder #{$this->folder_id}";
+    }
 
     protected $fillable = [
         'folder_id',

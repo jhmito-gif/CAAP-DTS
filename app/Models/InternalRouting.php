@@ -12,6 +12,12 @@ use Illuminate\Support\Collection;
  */
 class InternalRouting extends Model
 {
+    use Concerns\Audited;
+    public function auditLabel(): string
+    {
+        return "{$this->office}: {$this->from_name} → {$this->to_name}";
+    }
+
     protected $fillable = [
         'record_id',
         'office',

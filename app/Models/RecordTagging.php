@@ -7,6 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RecordTagging extends Model
 {
+    use Concerns\Audited;
+    public function auditLabel(): string
+    {
+        return $this->user?->name ?? "user #{$this->user_id}";
+    }
+
     protected $fillable = [
         'record_id',
         'user_id',

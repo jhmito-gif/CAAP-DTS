@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Office extends Model
 {
+    use Concerns\Audited;
     protected $fillable = [
         'name', 'description'
     ];

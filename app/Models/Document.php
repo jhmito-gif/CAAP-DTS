@@ -16,7 +16,9 @@ use Illuminate\Support\Str;
  */
 class Document extends Model
 {
+    use Concerns\Audited;
     use DescribesFile;
+    use Concerns\NeverDeleted;
 
     protected $fillable = [
         'office',
@@ -39,6 +41,12 @@ class Document extends Model
         'size' => 'integer',
         'is_encrypted' => 'boolean',
     ];
+
+    /** Where and how the bytes are stored is not part of the story. */
+    protected function auditExcept(): array
+    {
+        return ['path', 'disk', 'is_encrypted', 'sha256'];
+    }
 
     public function category(): BelongsTo
     {
@@ -113,12 +121,6 @@ class Document extends Model
             if (app(\App\Support\DocumentReader::class)->readable((string) $document->mime_type)) {
                 DocumentText::queue('document', $document->id, $document->sha256);
             }
-        });
-
-        static::deleting(function (Document $document) {
-            Storage::disk($document->disk)->delete($document->path);
-
-            DocumentText::where('source_type', 'document')->where('source_id', $document->id)->delete();
         });
     }
 }

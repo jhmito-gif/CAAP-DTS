@@ -18,6 +18,9 @@ use Illuminate\Support\Facades\DB;
  */
 class DocumentFolder extends Model
 {
+    use Concerns\Audited;
+    use Concerns\NeverDeleted;
+
     protected $fillable = [
         'office',
         'parent_id',
