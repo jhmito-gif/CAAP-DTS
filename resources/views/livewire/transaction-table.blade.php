@@ -886,7 +886,7 @@
                                 data-received="{{ $isReceived ? '1' : '0' }}"
 
                                 data-date-received="{{ $isReceived
-                                    ? \Carbon\Carbon::parse($transact->date_recieved)->format('F j, Y g:i A')
+                                    ? $transact->receivedAtLabel()
                                     : ''
                                 }}"
 

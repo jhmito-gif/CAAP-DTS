@@ -1302,7 +1302,7 @@
                                                     <p
                                                         class="mt-1 text-sm font-semibold text-emerald-900"
                                                     >
-                                                        {{ \Carbon\Carbon::parse($transact->date_recieved)->format('F j, Y g:i A') }}
+                                                        {{ $transact->receivedAtLabel() }}
                                                     </p>
                                                 </div>
 

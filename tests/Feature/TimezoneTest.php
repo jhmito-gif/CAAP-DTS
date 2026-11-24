@@ -60,31 +60,23 @@ it('leaves legacy zero dates untouched', function () {
 });
 
 it('leaves date-only columns alone', function () {
-    $record = Record::create([
-        'reference' => 'ITD-2026-0002',
-        'subject' => 'Timezone check',
-        'created_by' => 'ITD Person',
-        'origin' => 'ITD',
-        'owner' => 'ITD',
-    ]);
+    // No app table keeps a bare date any more (the received date now keeps
+    // its time), so probe with one of our own.
+    \Illuminate\Support\Facades\Schema::create('tz_probe', function ($table) {
+        $table->id();
+        $table->date('day')->nullable();
+        $table->timestamps();
+    });
 
-    DB::table('transactions')->insert([
-        'record_id' => $record->id,
-        'remarks' => 'For action',
-        'status' => 'Pending',
-        'destination' => 'HR',
-        'office' => 'ITD',
-        'forwarded_by' => 'ITD Person',
-        // transactions.date_recieved is a date: a time shift must not move the day.
-        'date_recieved' => '2026-01-01',
+    DB::table('tz_probe')->insert([
+        // A time shift must not move a bare date's day.
+        'day' => '2026-01-01',
         'created_at' => '2026-01-01 00:30:00',
         'updated_at' => '2026-01-01 00:30:00',
     ]);
 
-    TimezoneShift::apply(8);
+    TimezoneShift::apply(-8);
 
-    expect((string) DB::table('transactions')->where('record_id', $record->id)->value('date_recieved'))
-        ->toStartWith('2026-01-01')
-        ->and((string) DB::table('transactions')->where('record_id', $record->id)->value('created_at'))
-        ->toStartWith('2026-01-01 08:30:00');
+    expect((string) DB::table('tz_probe')->value('day'))->toBe('2026-01-01')
+        ->and((string) DB::table('tz_probe')->value('created_at'))->toStartWith('2025-12-31 16:30:00');
 });

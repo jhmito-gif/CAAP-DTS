@@ -366,7 +366,7 @@
 
         $transactions = $record->transactions;
         $dateOfDocument = $ph($record->created_at, 'j F Y');
-        $receivedAt = optional($transactions->firstWhere('date_recieved', '!=', null))->date_recieved;
+        $firstReceipt = $transactions->firstWhere('date_recieved', '!=', null);
         // The originating office's number, falling back to this office's own for
         // a document it originated -- never blank on the slip.
         $originNumber = $record->originNumber();
@@ -470,7 +470,7 @@
             <td colspan="2" class="stack-cell">
                 <span class="label">Date / Time Received:</span>
                 <div class="stack-value">
-                    {{ $ph($receivedAt, 'j M Y g:i A') }}
+                    {{ $firstReceipt?->receivedAtLabel('j M Y g:i A', 'j M Y') }}
                 </div>
             </td>
         </tr>
@@ -539,7 +539,7 @@
                     {{ $hide($transaction->recieved_by ?? '') }}
                     @if ($transaction && $transaction->date_recieved)
                         <div class="muted">
-                            Received {{ $ph($transaction->date_recieved, 'j M Y g:i A') }}
+                            Received {{ $transaction->receivedAtLabel('j M Y g:i A', 'j M Y') }}
                         </div>
                     @endif
                 </td>

@@ -172,6 +172,8 @@ it('takes a switched-off module out of the menu', function () {
 it('lets a document waiting for a signature move on while signing is off', function () {
     [$record, $attachment] = moduleRecord();
     $signer = User::factory()->create(['office' => 'ITD']);
+    // The movement has been received, so only the signature can hold it back.
+    Transaction::where('record_id', $record->id)->update(['date_recieved' => now(), 'recieved_by' => 'ODG Person']);
 
     SignatureRequest::create([
         'attachment_id' => $attachment->id,
@@ -257,6 +259,8 @@ it('lets anyone in the office send a document out while internal routing is off'
     [$record] = moduleRecord();
     $holder = User::factory()->create(['name' => 'ITD Holder', 'office' => 'ITD']);
     $colleague = User::factory()->create(['name' => 'ITD Colleague', 'office' => 'ITD']);
+    // The movement has been received, so only the internal hold is in play.
+    Transaction::where('record_id', $record->id)->update(['date_recieved' => now(), 'recieved_by' => 'ODG Person']);
 
     InternalRouting::create([
         'record_id' => $record->id, 'office' => 'ITD',

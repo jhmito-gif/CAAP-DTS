@@ -92,6 +92,21 @@ class DocumentHandling
             return 'Your account is not assigned to an office.';
         }
 
+        // An office sends a document on only once it has it in hand: the
+        // latest movement to or from it must have been received. (The record
+        // pages hide Send until then; this holds for a crafted request too.)
+        $latest = $record->transactions()
+            ->where(fn ($query) => $query->where('office', $user->office)->orWhere('destination', $user->office))
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->first();
+
+        if ($latest && $latest->date_recieved === null) {
+            return $latest->destination === $user->office
+                ? 'Mark it as received before sending it on.'
+                : "{$latest->destination} has not received it yet.";
+        }
+
         if ($user->isAdmin()) {
             return null;
         }
