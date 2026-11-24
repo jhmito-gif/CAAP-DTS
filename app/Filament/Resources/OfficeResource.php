@@ -4,10 +4,7 @@ namespace App\Filament\Resources;
 
 use Filament\Schemas\Schema;
 use Filament\Actions\ActionGroup;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use App\Filament\Resources\OfficeResource\Pages\ListOffices;
 use App\Filament\Resources\OfficeResource\Pages\CreateOffice;
 use App\Filament\Resources\OfficeResource\Pages\EditOffice;
@@ -22,6 +19,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Database\Eloquent\Model;
 
 class OfficeResource extends Resource
 {
@@ -43,6 +41,17 @@ class OfficeResource extends Resource
     public static function getGloballySearchableAttributes(): array
     {
         return ['name', 'description'];
+    }
+
+    /** Nothing here is deleted from the admin panel; changes are made by editing. */
+    public static function canDelete(Model $record): bool
+    {
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return false;
     }
 
     public static function form(Schema $schema): Schema
@@ -93,12 +102,6 @@ class OfficeResource extends Resource
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make(),
-                    DeleteAction::make(),
-                ]),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
                 ]),
             ])
             ->emptyStateHeading('No offices yet')

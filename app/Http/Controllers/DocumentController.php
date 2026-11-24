@@ -23,6 +23,7 @@ class DocumentController extends Controller
     public function view(Document $document): Response
     {
         $this->authorizeAccess($document);
+        \App\Support\Audit::log('document.viewed', $document);
 
         return $this->serve($document, 'inline');
     }
@@ -30,6 +31,7 @@ class DocumentController extends Controller
     public function download(Document $document): Response
     {
         $this->authorizeAccess($document);
+        \App\Support\Audit::log('document.downloaded', $document);
 
         return $this->serve($document, 'attachment');
     }

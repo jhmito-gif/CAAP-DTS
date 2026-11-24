@@ -7,15 +7,13 @@ use App\Filament\Resources\DocumentCategoryResource\Pages\EditDocumentCategory;
 use App\Filament\Resources\DocumentCategoryResource\Pages\ListDocumentCategories;
 use App\Models\DocumentCategory;
 use Filament\Actions\ActionGroup;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class DocumentCategoryResource extends Resource
 {
@@ -32,6 +30,17 @@ class DocumentCategoryResource extends Resource
     protected static ?string $modelLabel = 'document category';
 
     protected static ?string $pluralModelLabel = 'document categories';
+
+    /** Nothing here is deleted from the admin panel; changes are made by editing. */
+    public static function canDelete(Model $record): bool
+    {
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return false;
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -74,13 +83,6 @@ class DocumentCategoryResource extends Resource
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make(),
-                    DeleteAction::make()
-                        ->modalDescription('Files in this category are kept and become uncategorised.'),
-                ]),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
                 ]),
             ])
             ->emptyStateHeading('No document categories yet')

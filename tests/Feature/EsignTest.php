@@ -388,8 +388,8 @@ it('keeps documents sent for signature from being removed', function () {
 
     $this->actingAs(User::factory()->create(['name' => 'Owner Person', 'office' => 'ITD']));
 
-    Livewire::test(OutgoingTransaction::class, ['recordId' => $signatureRequest->record_id])
-        ->call('deleteAttachment', $signatureRequest->attachment_id);
-
-    expect(Attachment::find($signatureRequest->attachment_id))->not->toBeNull();
+    // No file comes off a record now -- signed or not.
+    expect(method_exists(OutgoingTransaction::class, 'deleteAttachment'))->toBeFalse()
+        ->and(fn () => Attachment::find($signatureRequest->attachment_id)->delete())->toThrow(LogicException::class)
+        ->and(Attachment::find($signatureRequest->attachment_id))->not->toBeNull();
 });

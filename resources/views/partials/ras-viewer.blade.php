@@ -210,6 +210,18 @@
                     </svg>
                     Don&rsquo;t have the token? Request it in chat
                 </button>
+
+                {{-- Whoever may reset it (the creator, admins) can recover a forgotten token here. --}}
+                @can('resetAccessToken', $record)
+                    <button
+                        type="button"
+                        x-data
+                        @click="$wire.dispatch('reset-access-token', { recordId: {{ $record->id }} })"
+                        class="text-xs font-medium text-gray-500 hover:text-rose-600 dark:text-gray-400 dark:hover:text-rose-300 hover:underline"
+                    >
+                        Forgot it? Reset the access token
+                    </button>
+                @endcan
             </div>
         @else
             {{-- PDFs / images preview inline --}}

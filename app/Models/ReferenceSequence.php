@@ -6,6 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class ReferenceSequence extends Model
 {
+    use Concerns\Audited;
+    public function auditLabel(): string
+    {
+        return "{$this->office} {$this->year}";
+    }
+
     protected $fillable = [
         'office',
         'year',
@@ -82,6 +88,9 @@ class ReferenceSequence extends Model
 
         $sequence = static::firstOrNew(['office' => $office, 'year' => $year]);
         $sequence->next_number = max((int) $sequence->next_number, intval($matches[1]) + 1);
-        $sequence->save();
+
+        // Moved along by every record and send -- bookkeeping, not an act
+        // worth an audit entry. An admin changing it is recorded.
+        \App\Support\Audit::quietly(fn () => $sequence->save());
     }
 }

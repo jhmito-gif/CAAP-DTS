@@ -4,10 +4,7 @@ namespace App\Filament\Resources;
 
 use Filament\Schemas\Schema;
 use Filament\Actions\ActionGroup;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Tables\Filters\SelectFilter;
 use App\Models\Office;
 use App\Filament\Resources\RecordResource\Pages\ListRecords;
@@ -27,6 +24,7 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Database\Eloquent\Model;
 
 class RecordResource extends Resource
 {
@@ -56,6 +54,17 @@ class RecordResource extends Resource
             'Subject' => \Illuminate\Support\Str::limit($record->subject, 50),
             'Owner' => $record->owner,
         ];
+    }
+
+    /** Nothing here is deleted from the admin panel; changes are made by editing. */
+    public static function canDelete(Model $record): bool
+    {
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return false;
     }
 
     public static function form(Schema $schema): Schema
@@ -134,12 +143,6 @@ class RecordResource extends Resource
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make(),
-                    DeleteAction::make(),
-                ]),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
                 ]),
             ])
             ->emptyStateHeading('No records found')

@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\ReferenceSequenceResource\Pages;
 
 use App\Filament\Resources\ReferenceSequenceResource;
-use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditReferenceSequence extends EditRecord
@@ -12,8 +11,6 @@ class EditReferenceSequence extends EditRecord
 
     protected function getHeaderActions(): array
     {
-        return [
-            DeleteAction::make(),
-        ];
+        return [];
     }
 }

@@ -11,7 +11,9 @@ use Illuminate\Support\Str;
 
 class Attachment extends Model
 {
+    use Concerns\Audited;
     use DescribesFile;
+    use Concerns\NeverDeleted;
 
     protected $fillable = [
         'record_id',
@@ -110,6 +112,12 @@ class Attachment extends Model
     }
 
     /** Document library category, if one was set. */
+    /** Where and how the bytes are stored is not part of the story. */
+    protected function auditExcept(): array
+    {
+        return ['path', 'disk', 'is_encrypted', 'sha256'];
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(DocumentCategory::class, 'document_category_id');
@@ -175,15 +183,6 @@ class Attachment extends Model
             if (app(\App\Support\DocumentReader::class)->readable((string) $attachment->mime_type)) {
                 DocumentText::queue('attachment', $attachment->id, $attachment->sha256);
             }
-        });
-
-        static::deleting(function (Attachment $attachment) {
-            // Via the model so each signed version's file is removed too.
-            $attachment->signatures()->get()->each->delete();
-
-            Storage::disk($attachment->disk)->delete($attachment->path);
-
-            DocumentText::where('source_type', 'attachment')->where('source_id', $attachment->id)->delete();
         });
     }
 }

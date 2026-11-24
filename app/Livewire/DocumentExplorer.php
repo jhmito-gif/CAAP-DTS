@@ -24,7 +24,7 @@ use Livewire\Component;
 /**
  * The document explorer: a folder tree on the left, the contents of one place
  * on the right, and the organising actions a file explorer is expected to have
- * -- new folder, rename, delete, move by dragging, drop files in to upload.
+ * -- new folder, rename, move by dragging, drop files in to upload.
  *
  * Reading rules are unchanged: office scope on library uploads, record access
  * and the confidential rules on record files. Organising is limited to an
@@ -326,66 +326,6 @@ class DocumentExplorer extends Component
 
         if ($parts) {
             $this->banner(ucfirst(implode(', ', $parts)) . '.');
-        }
-    }
-
-    /**
-     * Delete the selected entries. Folders must be empty; record files are
-     * never deleted from here -- only the shortcut pointing at them.
-     */
-    public function deleteSelected(): void
-    {
-        $canOrganise = $this->mayOrganiseHere();
-        $removed = 0;
-
-        foreach ($this->selected as $key) {
-            [$type, $id] = $this->splitKey($key);
-
-            // Folders and filed links are part of the tree's shape.
-            if (in_array($type, ['folder', 'shortcut'], true) && ! $canOrganise) {
-                $this->banner($this->organiseBlocker() ?? 'You cannot change this folder.', 'danger');
-
-                continue;
-            }
-
-            if ($type === 'folder') {
-                $folder = DocumentFolder::where('office', $this->office)->find($id);
-
-                if (! $folder) {
-                    continue;
-                }
-
-                $hasChildren = $folder->children()->exists()
-                    || $folder->documents()->exists()
-                    || $folder->shortcuts()->exists();
-
-                if ($hasChildren) {
-                    $this->banner("\"{$folder->name}\" still has things in it.", 'danger');
-
-                    continue;
-                }
-
-                $folder->delete();
-                $removed++;
-            } elseif ($type === 'document') {
-                $document = Document::where('office', $this->office)->find($id);
-
-                if ($document?->canBeManagedBy(Auth::user())) {
-                    $document->delete();
-                    $removed++;
-                }
-            } elseif ($type === 'shortcut') {
-                FolderShortcut::find($id)?->delete();
-                $removed++;
-            } else {
-                $this->banner('A record file can only be removed from its record.', 'danger');
-            }
-        }
-
-        $this->selected = [];
-
-        if ($removed) {
-            $this->banner($removed . ' ' . str('item')->plural($removed) . ' deleted.');
         }
     }
 

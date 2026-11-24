@@ -97,42 +97,6 @@ class OutgoingTransaction extends Component
         $this->record->refresh();
     }
 
-    /**
-     * Permanently remove an attachment (file + record). Owning office or admin
-     * only -- used to purge a confidential file.
-     */
-    public function deleteAttachment($attachmentId): void
-    {
-        $attachment = \App\Models\Attachment::where('record_id', $this->recordId)
-            ->whereKey($attachmentId)
-            ->first();
-
-        if (! $attachment) {
-            return;
-        }
-
-        $user = Auth::user();
-        $isOwner = in_array($user->office, [$this->record->owner, $this->record->origin], true);
-
-        if (! $isOwner && ! $user->isAdmin()) {
-            session()->flash('error', 'Only the originating office or an admin can remove files.');
-            return;
-        }
-
-        // A locked confidential file is not named back to anyone, not even here.
-        $name = $attachment->displayNameFor($user, $this->confidentialUnlocked);
-
-        // Documents sent for signature keep their audit trail.
-        if ($attachment->signatureRequests()->exists()) {
-            session()->flash('error', "\"{$name}\" was sent for signature and cannot be removed.");
-            return;
-        }
-
-        $attachment->delete(); // model hook deletes the underlying file
-
-        session()->flash('message', "\"{$name}\" was permanently removed.");
-    }
-
     public function render()
     {
         $this->record->load('taggedUsers', 'attachments');

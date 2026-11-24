@@ -16,6 +16,7 @@ use App\Notifications\CustomResetPassword;
 
 class User extends Authenticatable implements FilamentUser
 {
+    use Concerns\Audited;
     use HasApiTokens;
 
     public function canAccessPanel(Panel $panel): bool

@@ -535,7 +535,7 @@
                             </a>
 
 
-                            {{-- Edit / Delete (creator until received elsewhere, or admin) --}}
+                            {{-- Edit (creator until received elsewhere, or admin) --}}
                             <x-record-actions :record="$record" variant="header" />
 
                         </div>

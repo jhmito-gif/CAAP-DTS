@@ -10,22 +10,22 @@ use App\Models\Transaction;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
 /**
- * Edit / delete modals for a record, opened from the incoming and outgoing
- * lists and the record pages. Who may act is decided by RecordPolicy.
+ * The edit modal for a record, opened from the incoming and outgoing
+ * lists and the record pages, and the access-token reset for confidential
+ * records. Who may act is decided by RecordPolicy.
  */
 class ManageRecord extends Component
 {
     use WithFileUploads;
     use Concerns\PicksDocumentTypes;
-
-    /** On a record page, deleting it leaves nothing to show -- go back to its list. */
-    public bool $redirectAfterDelete = false;
 
     public ?int $recordId = null;
 
@@ -36,12 +36,17 @@ class ManageRecord extends Component
     public $status = '';
     public $remarks = '';
 
-    /** New files to attach, and ids of existing attachments to remove -- applied on save. */
+    /** New files to attach, applied on save. Files already on a record are never removed. */
     public $newAttachments = [];
-    public array $removeAttachmentIds = [];
 
     public $officeOptions = [];
     public $statusOptions = [];
+
+    // Access token reset (confidential records)
+    public ?int $tokenRecordId = null;
+    public string $newToken = '';
+    public string $newToken_confirmation = '';
+    public string $accountPassword = '';
 
     public function mount(): void
     {
@@ -61,7 +66,7 @@ class ManageRecord extends Component
         $first = $record->firstTransaction();
 
         $this->resetValidation();
-        $this->reset(['newAttachments', 'uploadTypes', 'removeAttachmentIds']);
+        $this->reset(['newAttachments', 'uploadTypes']);
 
         $this->recordId = $record->id;
         $this->subject = (string) $record->subject;
@@ -144,20 +149,12 @@ class ManageRecord extends Component
                 $first->save();
             }
 
-            // Delete via the model (not a bulk query) so each file is removed.
-            // Files sent for signature keep their audit trail and are never removed here.
-            $record->attachments()
-                ->whereIn('id', $this->removeAttachmentIds)
-                ->whereDoesntHave('signatureRequests')
-                ->get()
-                ->each->delete();
-
             foreach ($this->newAttachments as $index => $file) {
                 Attachment::storeEncrypted($record, $first, $file, Auth::user()->name, $this->uploadTypeFor($index));
             }
         });
 
-        $this->reset(['newAttachments', 'uploadTypes', 'removeAttachmentIds']);
+        $this->reset(['newAttachments', 'uploadTypes']);
 
         $this->banner("Record {$record->reference} was updated.");
         $this->dispatch('close-edit-record-modal');
@@ -165,11 +162,90 @@ class ManageRecord extends Component
         $this->dispatch('recordAdded');
     }
 
-    public function toggleRemoveAttachment(int $attachmentId): void
+    #[On('reset-access-token')]
+    public function startTokenReset(int $recordId): void
     {
-        $this->removeAttachmentIds = in_array($attachmentId, $this->removeAttachmentIds, true)
-            ? array_values(array_diff($this->removeAttachmentIds, [$attachmentId]))
-            : [...$this->removeAttachmentIds, $attachmentId];
+        $record = Record::find($recordId);
+
+        if (! $this->allowedTokenReset($record)) {
+            return;
+        }
+
+        $this->resetValidation();
+        $this->reset(['newToken', 'newToken_confirmation', 'accountPassword']);
+        $this->tokenRecordId = $record->id;
+
+        $this->dispatch('open-reset-token-modal');
+    }
+
+    /**
+     * Replaces a confidential record's access token without needing the old
+     * one -- that is the point when it was forgotten. The person confirms
+     * with their own account password, so an unattended session cannot be
+     * used to take over a record, and the reset lands in the audit log.
+     */
+    public function resetToken(): void
+    {
+        $record = Record::find($this->tokenRecordId);
+
+        if (! $this->allowedTokenReset($record)) {
+            $this->dispatch('close-reset-token-modal');
+            return;
+        }
+
+        $throttle = 'reset-access-token:' . Auth::id();
+
+        if (RateLimiter::tooManyAttempts($throttle, 5)) {
+            $this->addError('accountPassword', 'Too many tries. Wait ' . RateLimiter::availableIn($throttle) . ' seconds and try again.');
+            return;
+        }
+
+        try {
+            $this->validate([
+                'newToken' => ['required', 'string', 'min:4', 'max:100', 'confirmed'],
+                'accountPassword' => ['required', 'string', 'current_password'],
+            ], [
+                'accountPassword.current_password' => 'That is not your account password.',
+            ], [
+                'newToken' => 'new access token',
+                'accountPassword' => 'your account password',
+            ]);
+        } catch (ValidationException $e) {
+            if (isset($e->validator->failed()['accountPassword']['CurrentPassword'])) {
+                RateLimiter::hit($throttle, 60);
+            }
+
+            throw $e;
+        }
+
+        RateLimiter::clear($throttle);
+
+        $record->setConfidentialToken($this->newToken);
+        $record->save();
+
+        $this->reset(['tokenRecordId', 'newToken', 'newToken_confirmation', 'accountPassword']);
+
+        $this->banner("The access token for {$record->reference} was reset. The old one no longer opens it; share the new one only with cleared viewers.");
+        $this->dispatch('close-reset-token-modal');
+        $this->dispatch('record-updated');
+    }
+
+    private function allowedTokenReset(?Record $record): bool
+    {
+        if (! $record) {
+            $this->banner('That record no longer exists.', 'danger');
+            return false;
+        }
+
+        if (Gate::denies('resetAccessToken', $record)) {
+            $this->banner($record->is_confidential
+                ? "Only the record's creator or an admin can reset the access token for {$record->reference}."
+                : "{$record->reference} is not confidential, so it has no access token.", 'danger');
+
+            return false;
+        }
+
+        return true;
     }
 
     public function removeNewAttachment(int $index): void
@@ -177,47 +253,6 @@ class ManageRecord extends Component
         unset($this->newAttachments[$index]);
         $this->newAttachments = array_values($this->newAttachments);
         $this->forgetUploadType($index);
-    }
-
-    #[On('delete-record')]
-    public function confirmDelete(int $recordId): void
-    {
-        $record = Record::find($recordId);
-
-        if (! $this->allowed($record, 'delete')) {
-            return;
-        }
-
-        $this->recordId = $record->id;
-
-        $this->dispatch('open-delete-record-modal');
-    }
-
-    public function delete()
-    {
-        $record = Record::find($this->recordId);
-
-        if (! $this->allowed($record, 'delete')) {
-            $this->dispatch('close-delete-record-modal');
-            return;
-        }
-
-        $reference = $record->reference;
-        $list = $record->isIncoming() ? 'incoming-record' : 'outgoing-record';
-
-        $record->delete();
-        $this->recordId = null;
-
-        if ($this->redirectAfterDelete) {
-            session()->flash('flash.banner', "Record {$reference} was deleted.");
-            session()->flash('flash.bannerStyle', 'success');
-
-            return $this->redirectRoute($list);
-        }
-
-        $this->banner("Record {$reference} was deleted.");
-        $this->dispatch('close-delete-record-modal');
-        $this->dispatch('recordAdded');
     }
 
     /**
@@ -269,6 +304,7 @@ class ManageRecord extends Component
             'isIncoming' => (bool) $record?->isIncoming(),
             'canEditRouting' => $record !== null && $this->canEditRouting($first),
             'documentTypes' => \App\Models\DocumentCategory::orderBy('name')->pluck('name', 'id'),
+            'tokenRecord' => $this->tokenRecordId ? Record::find($this->tokenRecordId) : null,
         ]);
     }
 }

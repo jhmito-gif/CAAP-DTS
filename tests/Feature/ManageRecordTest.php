@@ -46,7 +46,7 @@ function outgoingRecordCreatedBy(User $creator, array $firstTransaction = []): R
     return $record;
 }
 
-it('lets the creator edit the subject, first routing entry and attachments before it is received', function () {
+it('lets the creator edit the subject and first routing entry, and add files, before it is received', function () {
     Storage::fake('local');
 
     $creator = User::factory()->create(['name' => 'Creator Person', 'office' => 'ITD']);
@@ -64,7 +64,6 @@ it('lets the creator edit the subject, first routing entry and attachments befor
         ->set('office', 'Finance')
         ->set('status', 'For Action')
         ->set('remarks', 'Corrected remarks')
-        ->call('toggleRemoveAttachment', $oldFile->id)
         ->set('newAttachments', [UploadedFile::fake()->image('new.png')])
         ->set('uploadTypes', [\App\Models\DocumentCategory::value('id')])
         ->call('save')
@@ -79,10 +78,11 @@ it('lets the creator edit the subject, first routing entry and attachments befor
         ->and($first->destination)->toBe('Finance')
         ->and($first->status)->toBe('For Action')
         ->and($first->remarks)->toBe('Corrected remarks')
-        ->and(Attachment::find($oldFile->id))->toBeNull()
-        ->and($record->attachments()->pluck('original_name')->all())->toBe(['new.png']);
+        // The file already there stays; the new one joins it.
+        ->and(Attachment::find($oldFile->id))->not->toBeNull()
+        ->and($record->attachments()->pluck('original_name')->sort()->values()->all())->toBe(['new.png', 'old.png']);
 
-    Storage::disk('local')->assertMissing($oldFile->path);
+    Storage::disk('local')->assertExists($oldFile->path);
 });
 
 it('locks the record for its creator once another office has received it', function () {
@@ -98,17 +98,16 @@ it('locks the record for its creator once another office has received it', funct
         ->call('edit', $record->id)
         ->assertNotDispatched('open-edit-record-modal')
         ->assertDispatched('banner-message')
-        // Even a tampered request cannot save or delete.
+        // Even a tampered request cannot save.
         ->set('recordId', $record->id)
         ->set('subject', 'Sneaky edit')
-        ->call('save')
-        ->call('delete');
+        ->call('save');
 
     expect($record->fresh())->not->toBeNull()
         ->and($record->fresh()->subject)->toBe('Original subject');
 });
 
-it('does not let anyone other than the creator edit or delete a record', function () {
+it('does not let anyone other than the creator edit a record', function () {
     $creator = User::factory()->create(['name' => 'Creator Person', 'office' => 'ITD']);
     $colleague = User::factory()->create(['name' => 'Colleague Person', 'office' => 'ITD']);
     $record = outgoingRecordCreatedBy($creator);
@@ -119,37 +118,32 @@ it('does not let anyone other than the creator edit or delete a record', functio
     $this->actingAs($colleague);
 
     Livewire::test(ManageRecord::class)
-        ->call('confirmDelete', $record->id)
-        ->assertNotDispatched('open-delete-record-modal')
-        ->set('recordId', $record->id)
-        ->call('delete');
+        ->call('edit', $record->id)
+        ->assertNotDispatched('open-edit-record-modal');
 
     expect(Record::find($record->id))->not->toBeNull();
 });
 
-it('lets admins delete a received record along with its routing history and files', function () {
+it('lets nobody delete a record, admins included', function () {
     Storage::fake('local');
 
     $creator = User::factory()->create(['name' => 'Creator Person', 'office' => 'ITD']);
     $admin = User::factory()->create(['name' => 'Admin Person', 'office' => 'ITD', 'role' => User::ROLE_ADMIN]);
-    $record = outgoingRecordCreatedBy($creator, ['recieved_by' => 'HR Person', 'date_recieved' => now()]);
+    $record = outgoingRecordCreatedBy($creator);
     $file = Attachment::storeEncrypted($record, $record->firstTransaction(), UploadedFile::fake()->image('slip.png'), $creator->name);
 
-    expect($admin->can('update', $record))->toBeTrue();
+    expect($creator->can('delete', $record))->toBeFalse()
+        ->and($admin->can('delete', $record))->toBeFalse()
+        ->and(method_exists(ManageRecord::class, 'delete'))->toBeFalse()
+        // Not even from code.
+        ->and(fn () => $record->delete())->toThrow(LogicException::class)
+        ->and(fn () => $file->delete())->toThrow(LogicException::class);
 
-    $this->actingAs($admin);
+    expect(Record::find($record->id))->not->toBeNull()
+        ->and(Transaction::where('record_id', $record->id)->exists())->toBeTrue()
+        ->and(Attachment::find($file->id))->not->toBeNull();
 
-    Livewire::test(ManageRecord::class)
-        ->call('confirmDelete', $record->id)
-        ->assertDispatched('open-delete-record-modal')
-        ->call('delete')
-        ->assertDispatched('recordAdded');
-
-    expect(Record::find($record->id))->toBeNull()
-        ->and(Transaction::where('record_id', $record->id)->exists())->toBeFalse()
-        ->and(Attachment::find($file->id))->toBeNull();
-
-    Storage::disk('local')->assertMissing($file->path);
+    Storage::disk('local')->assertExists($file->path);
 });
 
 it('corrects the origin reference of an incoming record and its routing snapshots', function () {
@@ -188,18 +182,4 @@ it('corrects the origin reference of an incoming record and its routing snapshot
     expect($record->fresh()->origin_reference)->toBe('FIN-2026-0042')
         ->and($transaction->origin_reference)->toBe('FIN-2026-0042')
         ->and($transaction->destination)->toBe('ITD');
-});
-
-it('returns to the list after deleting from a record page', function () {
-    $creator = User::factory()->create(['name' => 'Creator Person', 'office' => 'ITD']);
-    $record = outgoingRecordCreatedBy($creator);
-
-    $this->actingAs($creator);
-
-    Livewire::test(ManageRecord::class, ['redirectAfterDelete' => true])
-        ->call('confirmDelete', $record->id)
-        ->call('delete')
-        ->assertRedirect(route('outgoing-record'));
-
-    expect(Record::find($record->id))->toBeNull();
 });

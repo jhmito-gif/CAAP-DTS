@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Record extends Model
 {
+    use Concerns\Audited;
+    use Concerns\NeverDeleted;
+
     /**
      * How long a subject may be. The column itself is TEXT, so this is about
      * what a person can reasonably be asked to read on a routing slip, not a
@@ -197,7 +200,8 @@ class Record extends Model
     |--------------------------------------------------------------------------
     | A confidential record carries a hashed token. Even cleared viewers must
     | supply it to open the RAS or its files. Storing it hashed means it can be
-    | reset (no data is ever lost) but never read back.
+    | reset (no data is ever lost) but never read back. Resetting is for the
+    | creator and admins (RecordPolicy::resetAccessToken).
     */
     public function requiresToken(): bool
     {
@@ -216,6 +220,16 @@ class Record extends Model
         }
 
         return filled($plain) && \Illuminate\Support\Facades\Hash::check($plain, $this->confidential_token);
+    }
+
+    /** A new access token on its own reads as a reset, not an edit. */
+    protected function auditAction(string $event): string
+    {
+        $changed = array_diff(array_keys($this->getChanges()), ['updated_at']);
+
+        return $event === 'updated' && $changed === ['confidential_token']
+            ? 'record.token_reset'
+            : "record.{$event}";
     }
 
 
@@ -397,22 +411,4 @@ class Record extends Model
         return $this->transactions()->orderBy('created_at')->orderBy('id')->first();
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Delete Related Transactions
-    |--------------------------------------------------------------------------
-    */
-    protected static function booted()
-    {
-        static::deleting(function ($record) {
-            $record->transactions()->delete();
-
-            // Delete via the model (not a bulk query) so each file is removed.
-            $record->attachments->each->delete();
-
-            // Explicit access grants have no FK cascade.
-            Access::where('record_id', $record->id)->delete();
-        });
-    }
 }

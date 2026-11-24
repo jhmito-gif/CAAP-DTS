@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\OfficeResource\Pages;
 
-use Filament\Actions\DeleteAction;
 use App\Filament\Resources\OfficeResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -13,8 +12,6 @@ class EditOffice extends EditRecord
 
     protected function getHeaderActions(): array
     {
-        return [
-            DeleteAction::make(),
-        ];
+        return [];
     }
 }

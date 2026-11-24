@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Transaction extends Model
 {
+    use Concerns\Audited;
     protected $fillable = [
         'record_id', 
         'internal_reference',
@@ -47,6 +48,24 @@ class Transaction extends Model
         }
 
         return filled($user->office) && $this->destination === $user->office;
+    }
+
+    /** A movement is created by sending; it is received, or given a number, later. */
+    protected function auditAction(string $event): string
+    {
+        $changed = array_diff(array_keys($this->getChanges()), ['updated_at']);
+
+        return match (true) {
+            $event === 'created' => 'transaction.sent',
+            $event === 'updated' && in_array('date_recieved', $changed, true) && $this->date_recieved !== null => 'transaction.received',
+            $event === 'updated' && $changed === ['received_reference'] => 'transaction.reference_assigned',
+            default => "transaction.{$event}",
+        };
+    }
+
+    public function auditLabel(): string
+    {
+        return ($this->office ?: '?') . ' → ' . ($this->destination ?: '?');
     }
 
     public function record(): BelongsTo
