@@ -32,10 +32,12 @@ class Transaction extends Model
     }
 
     /**
-     * Only the office a movement was sent to can say it arrived. Letting the
-     * sender (or any office in the chain) stamp it received would put a name
-     * on the trail from the wrong office and hide that the document never got
-     * there. Admins may still receive on an office's behalf.
+     * Only the office a movement was sent to can say it arrived -- admins
+     * included. Letting the sender (or an admin from any office) stamp it
+     * received would put a name on the trail from the wrong office, hide that
+     * the document never got there, and let the receiving office send it on
+     * before it had it in hand. An admin who belongs to the receiving office
+     * receives it like any of its members.
      */
     public function isReceivableBy(?User $user): bool
     {
@@ -43,11 +45,28 @@ class Transaction extends Model
             return false;
         }
 
-        if ($user->isAdmin()) {
-            return true;
+        return filled($user->office) && $this->destination === $user->office;
+    }
+
+    /**
+     * When it was received, as the slip and the record pages show it.
+     * Receipts made before the time of day was kept (the column used to hold
+     * only the date) read as the day alone, not a made-up 12:00 AM.
+     */
+    public function receivedAtLabel(string $format = 'F j, Y g:i A', string $dayFormat = 'F j, Y'): string
+    {
+        if ($this->date_recieved === null) {
+            return '';
         }
 
-        return filled($user->office) && $this->destination === $user->office;
+        // A handful of legacy rows carry a zero date ('0000-00-00').
+        if (str_starts_with((string) $this->date_recieved, '0000-00-00')) {
+            return 'date not recorded';
+        }
+
+        $at = \Carbon\Carbon::parse($this->date_recieved);
+
+        return $at->format('H:i:s') === '00:00:00' ? $at->format($dayFormat) : $at->format($format);
     }
 
     /** A movement is created by sending; it is received, or given a number, later. */

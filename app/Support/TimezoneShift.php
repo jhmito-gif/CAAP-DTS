@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Schema;
  * Moves every stored datetime by a number of hours. Used once, when the app
  * stopped running in UTC and started running in Asia/Manila: the values in the
  * database were written as UTC wall-clock time and must be re-read as local
- * time. Date-only columns (a received date, for instance) are left alone.
+ * time. Date-only columns are left alone.
  */
 class TimezoneShift
 {
