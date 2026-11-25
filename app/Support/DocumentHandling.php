@@ -84,27 +84,60 @@ class DocumentHandling
     }
 
     /**
-     * Why this person cannot send the document to another office, or null.
+     * Whether this office has the document in hand, and so may send it on.
+     *
+     * It has it once it has received the latest movement sent to it. If
+     * nothing was ever sent to it, it has it when it started the document:
+     * the record is its own, or it sent the document first. What it has sent
+     * out since does not take it away: an office may send one document to
+     * several offices at once (parallel routing) without waiting for each of
+     * them to receive it.
      */
-    public static function sendBlocker(Record $record, ?User $user): ?string
+    public static function hasInHand(Record $record, ?string $office): bool
+    {
+        if (blank($office)) {
+            return false;
+        }
+
+        $incoming = $record->transactions()
+            ->where('destination', $office)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->first();
+
+        if ($incoming) {
+            return $incoming->date_recieved !== null;
+        }
+
+        return in_array($office, [$record->owner, $record->origin], true)
+            || $record->transactions()->where('office', $office)->exists();
+    }
+
+    /**
+     * Why this person cannot send the document to another office, or null.
+     * With a destination, also refuses a second copy to an office that has
+     * not received the one already on its way.
+     */
+    public static function sendBlocker(Record $record, ?User $user, ?string $destination = null): ?string
     {
         if (! $user || blank($user->office)) {
             return 'Your account is not assigned to an office.';
         }
 
-        // An office sends a document on only once it has it in hand: the
-        // latest movement to or from it must have been received. (The record
-        // pages hide Send until then; this holds for a crafted request too.)
-        $latest = $record->transactions()
-            ->where(fn ($query) => $query->where('office', $user->office)->orWhere('destination', $user->office))
-            ->orderByDesc('created_at')
-            ->orderByDesc('id')
-            ->first();
-
-        if ($latest && $latest->date_recieved === null) {
-            return $latest->destination === $user->office
+        // An office sends a document on only once it has it in hand. (The
+        // record pages hide Send until then; this holds for a crafted request
+        // too, admins included.)
+        if (! static::hasInHand($record, $user->office)) {
+            return $record->transactions()->where('destination', $user->office)->exists()
                 ? 'Mark it as received before sending it on.'
-                : "{$latest->destination} has not received it yet.";
+                : 'Your office has not received this document.';
+        }
+
+        if (filled($destination) && $record->transactions()
+            ->where('destination', $destination)
+            ->whereNull('date_recieved')
+            ->exists()) {
+            return "{$destination} has not yet received the copy already sent to it.";
         }
 
         if ($user->isAdmin()) {

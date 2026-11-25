@@ -56,7 +56,7 @@ class OutgoingTransaction extends Component
         $record = Record::findOrFail($this->recordId);
 
         // The person holding it releases it, once they have done what was asked.
-        if ($blocker = DocumentHandling::sendBlocker($record, Auth::user())) {
+        if ($blocker = DocumentHandling::sendBlocker($record, Auth::user(), $this->office)) {
             session()->flash('error', $blocker);
 
             return;
@@ -107,7 +107,6 @@ class OutgoingTransaction extends Component
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $lastTransaction = $this->transactions->first();
         // The latest movement still waiting for this office to receive it.
         $receivableTransaction = $this->transactions->first(
             fn ($transaction) => $transaction->isReceivableBy(Auth::user())
@@ -118,7 +117,9 @@ class OutgoingTransaction extends Component
             ->orderBy('id')
             ->get();
 
-        $this->showSendButton = $lastTransaction && $lastTransaction->date_recieved !== null;
+        // Send while this office has it in hand -- also while copies it sent
+        // to other offices are still on their way (parallel routing).
+        $this->showSendButton = DocumentHandling::hasInHand($this->record, Auth::user()->office);
 
         // This office's own reference ID for the document, set from the header
         // button whether or not the movement has been received yet.
