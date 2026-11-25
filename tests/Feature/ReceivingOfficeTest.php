@@ -128,6 +128,54 @@ it('does not let the receiving office send it on before receiving it', function 
     expect(Transaction::where('record_id', $record->id)->count())->toBe(2);
 });
 
+it('lets the sending office send the same document to several offices at once', function (string $page) {
+    [$record] = sentFromCpoToOdg();
+
+    // ODG has not received its copy; CPO still sends one to HR and to Legal.
+    $this->actingAs(User::factory()->create(['name' => 'CPO Clerk', 'office' => 'CPO']));
+
+    $component = Livewire::test($page, ['recordId' => $record->id])->assertViewHas('showSendButton', true);
+
+    foreach (['HR', 'LEGAL'] as $office) {
+        $component->set('office', $office)->set('status', 'Pending')->set('remarks', 'For comment')->call('sendTransaction');
+    }
+
+    expect(Transaction::where('record_id', $record->id)->whereNull('date_recieved')->pluck('destination')->sort()->values()->all())
+        ->toBe(['HR', 'LEGAL', 'ODG']);
+})->with(['owner page' => OutgoingTransaction::class, 'record page' => TransactionTable::class]);
+
+it('lets an office that received it send it on in parallel too', function () {
+    [$record, $movement] = sentFromCpoToOdg();
+    $movement->update(['recieved_by' => 'ODG Clerk', 'date_recieved' => now()]);
+
+    $this->actingAs(User::factory()->create(['name' => 'ODG Clerk', 'office' => 'ODG']));
+
+    $component = Livewire::test(TransactionTable::class, ['recordId' => $record->id]);
+
+    foreach (['HR', 'LEGAL'] as $office) {
+        $component->set('office', $office)->set('status', 'Pending')->set('remarks', 'For action')->call('sendTransaction');
+    }
+
+    $component->assertViewHas('showSendButton', true);
+
+    expect(Transaction::where('record_id', $record->id)->where('office', 'ODG')->count())->toBe(2);
+});
+
+it('does not send a second copy to an office still waiting for the first', function () {
+    [$record] = sentFromCpoToOdg();
+
+    $this->actingAs(User::factory()->create(['name' => 'CPO Clerk', 'office' => 'CPO']));
+
+    Livewire::test(OutgoingTransaction::class, ['recordId' => $record->id])
+        ->set('office', 'ODG')->set('status', 'Pending')->set('remarks', 'Again')
+        ->call('sendTransaction');
+
+    expect(Transaction::where('record_id', $record->id)->count())->toBe(1)
+        ->and(\App\Support\DocumentHandling::sendBlocker($record, auth()->user(), 'ODG'))
+        ->toBe('ODG has not yet received the copy already sent to it.')
+        ->and(\App\Support\DocumentHandling::sendBlocker($record, auth()->user(), 'HR'))->toBeNull();
+});
+
 it('keeps the time a document was received, not just the day', function () {
     [$record, $movement] = sentFromCpoToOdg();
     $this->travelTo(now()->setTime(15, 42, 10));
